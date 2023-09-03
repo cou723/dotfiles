@@ -87,28 +87,16 @@ if type dust > /dev/null 2>&1; then
   alias du='dust'
 fi
 
-
 # util
 alias cd~="cd /mnt/c/Users/coura/"
 alias witch="which"
-alias fishconfig="code ~/.config/fish/config.fish"
-alias vfishconfig="vim ~/.config/fish/config.fish"
-alias bashrc="code ~/.bashrc"
-alias vbashrc="vim ~/.bashrc"
-alias starconfig="code ~/.config/starship.toml"
 alias pd="cd ../;ls"
 alias untgz="tar -xzvf"
 alias che="chezmoi"
 alias reload="source ~/.zshrc"
 
 # config
-alias fishconfig="code ~/.config/fish/config.fish"
-alias vfishconfig="vim ~/.config/fish/config.fish"
-alias zshconfig="code ~/.zshrc"
-alias zshconfig="vim ~/.zshrc"
-alias bashrc="code ~/.bashrc"
-alias vbashrc="vim ~/.bashrc"
-alias starconfig="code ~/.config/starship.toml"
+alias zshconfig="che edit ~/.zshrc"
 
 # git
 if type git > /dev/null 2>&1; then
@@ -205,4 +193,3 @@ export PATH="$JDK_HOME:$PATH"
 export PATH="/usr/local/cuda/bin:$PATH"
 # homebrew
 export PATH="/home/linuxbrew/.linuxbrew/bin:$PATH"
-
