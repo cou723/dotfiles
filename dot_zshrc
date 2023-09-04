@@ -36,6 +36,8 @@ zinit light zdharma-continuum/fast-syntax-highlighting
 zinit light zsh-users/zsh-completions
 zinit light zdharma/history-search-multi-word
 zinit light mollifier/anyframe
+zinit light mattmc3/zsh-safe-rm
+zinit light robertzk/send.zsh
 
 # plugin settings
 function peco-history-selection() {
