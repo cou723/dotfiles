@@ -1,3 +1,3 @@
 # dotfiles
 
-`https://raw.githubusercontent.com/cou723/cou723/main/inits/private_init.sh`
+`curl https://raw.githubusercontent.com/cou723/cou723/main/inits/private_init.sh | sh`
