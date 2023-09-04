@@ -19,8 +19,8 @@ fi
 setopt AUTO_CD
 setopt AUTO_PARAM_KEYS
 
-bindkey '^[[1;5C' emacs-forward-word
-bindkey '^[^[[D' emacs-backward-word
+bindkey "^[[1;5C" forward-word
+bindkey "^[[1;5D" backward-word
 
 # zinit init
 source "$HOME/.local/share/zinit/zinit.git/zinit.zsh"
@@ -110,6 +110,7 @@ alias pd="cd ../;ls"
 alias untgz="tar -xzvf"
 alias che="chezmoi"
 alias reload="source ~/.zshrc"
+alias co="code ."
 
 # config
 alias zshconfig="che edit ~/.zshrc"
