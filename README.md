@@ -1,3 +1,3 @@
 # dotfiles
 
-sudo curl https://raw.githubusercontent.com/cou723/cou723/main/ubuntu_init.sh | sh
+`https://raw.githubusercontent.com/cou723/cou723/main/inits/private_init.sh`
