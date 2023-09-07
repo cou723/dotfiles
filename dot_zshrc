@@ -24,6 +24,10 @@ bindkey "^[[1;5D" backward-word
 bindkey '^[[H' beginning-of-line
 bindkey '^[[F' end-of-line
 
+autoload -Uz compinit
+compinit
+
+
 # zinit init
 source "$HOME/.local/share/zinit/zinit.git/zinit.zsh"
 autoload -Uz _zinit
