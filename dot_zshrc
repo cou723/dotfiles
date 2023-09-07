@@ -21,6 +21,8 @@ setopt AUTO_PARAM_KEYS
 
 bindkey "^[[1;5C" forward-word
 bindkey "^[[1;5D" backward-word
+bindkey '^[[H' beginning-of-line
+bindkey '^[[F' end-of-line
 
 # zinit init
 source "$HOME/.local/share/zinit/zinit.git/zinit.zsh"
