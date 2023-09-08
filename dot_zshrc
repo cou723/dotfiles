@@ -18,6 +18,9 @@ fi
 # zsh settings
 setopt AUTO_CD
 setopt AUTO_PARAM_KEYS
+export HISTSIZE=1000
+export SAVEHIST=100000
+export HISTFILE=${HOME}/.zsh_history
 
 bindkey "^[[1;5C" forward-word
 bindkey "^[[1;5D" backward-word
