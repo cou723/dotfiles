@@ -147,11 +147,13 @@ if type npm > /dev/null 2>&1; then
   alias n="npm"
   alias nr="npm run"
   alias ni="npm install"
+  alias nx="npx"
 fi
 if type pnpm > /dev/null 2>&1; then
   alias p="pnpm"
   alias pr="pnpm run"
   alias pi="pnpm install"
+  alias px="pnpm dlx"
 fi
 
 # python
