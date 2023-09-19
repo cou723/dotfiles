@@ -55,7 +55,7 @@ zinit light robertzk/send.zsh
 
 # plugin settings
 function peco-history-selection() {
-    BUFFER=`history -n 1 | tac  | awk '!a[$0]++' | peco`
+    BUFFER=`history -n 1 | tac  | awk '!a[$0]++' | fzf`
     CURSOR=$#BUFFER
     zle reset-prompt
 }
