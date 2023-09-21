@@ -34,6 +34,7 @@ bindkey "^[[3" delete-char
 zstyle ':completion:*:setopt:*' menu true select
 zstyle ':completion:*:default' list-colors di=4 ex=33 '=*.c=35'
 zstyle ':completion:*:(cd|less):*' matcher 'm:{a-z}={A-Z}'
+
 autoload -Uz compinit
 compinit
 
@@ -132,6 +133,7 @@ alias co="code ."
 
 # config
 alias zshconfig="che edit ~/.zshrc"
+alias vimconfig="che edit ./config/nvim/init.vim"
 
 # git
 if type git > /dev/null 2>&1; then
