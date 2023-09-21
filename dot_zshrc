@@ -57,13 +57,8 @@ zinit light mattmc3/zsh-safe-rm
 zinit light robertzk/send.zsh
 
 # plugin settings
-function fzf-history-selection() {
-    BUFFER=`history -n 1 | tac  | awk '!a[$0]++' | fzf`
-    CURSOR=$#BUFFER
-    zle reset-prompt
-}
-zle -N fzf-history-selection
-bindkey '^R' fzf-history-selection
+source /usr/share/doc/fzf/examples/key-bindings.zsh
+
 autoload -Uz chpwd_recent_dirs cdr add-zsh-hook
 add-zsh-hook chpwd chpwd_recent_dirs
 
