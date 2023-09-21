@@ -31,12 +31,12 @@ bindkey '^[[H' beginning-of-line
 bindkey '^[[F' end-of-line
 bindkey "^[[3" delete-char
 
-zstyle ':completion:*:setopt:*' menu true select
-zstyle ':completion:*:default' list-colors di=4 ex=33 '=*.c=35'
-zstyle ':completion:*:(cd|less):*' matcher 'm:{a-z}={A-Z}'
-
 autoload -Uz compinit
 compinit
+zstyle ':completion:*:default' list-colors di=4 ex=33 '=*.c=35'
+zstyle ':completion:*:(cd|less):*' matcher 'm:{a-z}={A-Z}'
+zstyle ':completion:*' menu select
+
 
 
 # zinit init
