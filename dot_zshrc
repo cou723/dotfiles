@@ -100,8 +100,6 @@ bindkey '^G' ghq-fzf
 # To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
 
-fzf --preview "bat --color=always --style=numbers --line-range=:500 {}"
-
 # -----------------alias-----------------
 # ls(exa)
 if type exa > /dev/null 2>&1; then
