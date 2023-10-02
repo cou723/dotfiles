@@ -1,10 +1,3 @@
-# for almalinux on wsl
-pid=`ps -eo pid,cmd|grep -e '^ *[0-9]* systemd$'|sed -e 's/^[ ]*\([0-9]*\).*/\1/'`
-if [ "$pid" != "1" ]; then
-       echo 'Starting genie:'
-       /usr/bin/genie -s
-fi
-
 # Enable Powerlevel10k instant prompt. Should stay close to the top of ~/.zshrc.
 # Initialization code that may require console input (password prompts, [y/n]
 # confirmations, etc.) must go above this block; everything else may go below.
