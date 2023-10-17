@@ -20,7 +20,12 @@ setopt AUTO_PARAM_KEYS
 setopt print_eight_bit
 setopt auto_cd
 setopt no_beep
-export HISTSIZE=1000
+setopt hist_expire_dups_first
+setopt hist_ignore_all_dups
+setopt hist_ignore_dups
+setopt hist_save_no_dups
+setopt share_history
+export HISTSIZE=100000
 export SAVEHIST=100000
 export HISTFILE=${HOME}/.zsh_history
 
@@ -35,8 +40,6 @@ compinit
 zstyle ':completion:*:default' list-colors di=4 ex=33 '=*.c=35'
 zstyle ':completion:*:(cd|less):*' matcher 'm:{a-z}={A-Z}'
 zstyle ':completion:*' menu select
-
-
 
 # zinit init
 source "$HOME/.local/share/zinit/zinit.git/zinit.zsh"
@@ -56,10 +59,17 @@ zinit light mattmc3/zsh-safe-rm
 zinit light robertzk/send.zsh
 
 # plugin settings
-source /usr/share/doc/fzf/examples/key-bindings.zsh
+# source /usr/share/doc/fzf/examples/key-bindings.zsh
 
-autoload -Uz chpwd_recent_dirs cdr add-zsh-hook
-add-zsh-hook chpwd chpwd_recent_dirs
+# autoload -Uz chpwd_recent_dirs cdr add -zsh-hook
+# add-zsh-hook chpwd chpwd_recent_dirs
+
+function select-history() {
+  BUFFER=$(history -n -r 1 | fzf --no-sort +m --query "$LBUFFER" --prompt="History > ")
+  CURSOR=$#BUFFER
+}
+zle -N select-history
+bindkey '^r' select-history
 
 function fzf-cdr () {
     local selected_dir="$(cdr -l | sed 's/^[0-9]\+ \+//' | fzf --prompt="cdr >" --query "$LBUFFER")"
