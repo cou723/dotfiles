@@ -61,6 +61,14 @@ source /usr/share/doc/fzf/examples/key-bindings.zsh
 autoload -Uz chpwd_recent_dirs cdr add-zsh-hook
 add-zsh-hook chpwd chpwd_recent_dirs
 
+function fzf-history-selection() {
+    BUFFER=`history -n 1 | tac  | awk '!a[$0]++' | fzf`
+    CURSOR=$#BUFFER
+    zle reset-prompt
+}
+zle -N fzf-history-selection
+bindkey '^R' fzf-history-selection
+
 function fzf-cdr () {
     local selected_dir="$(cdr -l | sed 's/^[0-9]\+ \+//' | fzf --prompt="cdr >" --query "$LBUFFER")"
     if [ -n "$selected_dir" ]; then
@@ -232,3 +240,6 @@ export PATH="/usr/local/cuda/bin:$PATH"
 
 # homebrew
 export PATH="/home/linuxbrew/.linuxbrew/bin:$PATH"
+
+# code
+export PATH="/mnt/c/Program Files/Microsoft VS Code/bin:$PATH"
