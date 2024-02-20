@@ -228,9 +228,10 @@ export VOLTA_HOME="$HOME/.volta"
 add_path "$VOLTA_HOME/bin"
 
 # pyenv
-if type pyenv > /dev/null 2>&1; then
   export PYENV_ROOT="$HOME/.pyenv"
   command -v pyenv >/dev/null || export PATH="$PYENV_ROOT/bin:$PATH"
+if type pyenv > /dev/null 2>&1; then
+
   eval "$(pyenv init -)"
 fi
 
