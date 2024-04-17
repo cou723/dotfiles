@@ -1,6 +1,6 @@
 function add_path() {
     local input_string="$1"  # 引数から文字列を受け取る
-    
+
     if [ -z "$input_string" ]; then
         echo "警告: 引数が空です。"
     else
@@ -116,6 +116,7 @@ bindkey '^G' ghq-fzf
 git config pull.rebase false
 git config --global user.name "cou"
 git config --global user.email "courange.c@gmail.com"
+git config --global init.defaultBranch main
 
 # -----------------alias-----------------
 # ls(exa)
@@ -232,7 +233,7 @@ add_path "$VOLTA_HOME/bin"
 export PYENV_ROOT="$HOME/.pyenv"
 command -v pyenv >/dev/null || export PATH="$PYENV_ROOT/bin:$PATH"
 if type pyenv > /dev/null 2>&1; then
-    
+
     eval "$(pyenv init -)"
 fi
 
