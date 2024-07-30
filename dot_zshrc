@@ -114,7 +114,7 @@ bindkey '^G' ghq-fzf
 # To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
 
-git config pull.rebase false
+git config --global pull.rebase false
 git config --global user.name "cou"
 git config --global user.email "courange.c@gmail.com"
 git config --global init.defaultBranch main
@@ -273,4 +273,14 @@ if type docker > /dev/null 2>&1; then
     alias dc="docker compose"
     alias dkr="docker run"
     alias dkb="docker build"
+fi
+
+# for gui
+export GTK_IM_MODULE=fcitx
+export QT_IM_MODULE=fcitx
+export XMODIFIERS=@im=fcitx
+export DefaultIMModule=fcitx
+if [ $SHLVL = 1 ] ; then
+  (fcitx-autostart > /dev/null 2>&1 &)
+  xset -r 49  > /dev/null 2>&1
 fi
