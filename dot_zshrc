@@ -115,13 +115,15 @@ bindkey '^G' ghq-fzf
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
 
 git config --global pull.rebase false
-git config --global user.name "cou"
-git config --global user.email "courange.c@gmail.com"
+git config --global user.name "yukiU"
+git config --global user.email "yuki.ueyama.001@layerx.co.jp"
 git config --global init.defaultBranch main
 
 # -----------------path-----------------
 
 . "$HOME/.cargo/env"
+
+add_path "$HOME/.cargo/bin"
 
 # volta
 export VOLTA_HOME="$HOME/.volta"
@@ -275,6 +277,11 @@ if type docker > /dev/null 2>&1; then
     alias dkb="docker build"
 fi
 
+# direnv
+if type direnv > /dev/null 2>&1; then
+    eval "$(direnv hook zsh)"
+fi
+
 # for gui
 export GTK_IM_MODULE=fcitx
 export QT_IM_MODULE=fcitx
@@ -284,3 +291,5 @@ if [ $SHLVL = 1 ] ; then
   (fcitx-autostart > /dev/null 2>&1 &)
   xset -r 49  > /dev/null 2>&1
 fi
+
+add_path "$HOME/.rb/bin"
