@@ -115,8 +115,8 @@ bindkey '^G' ghq-fzf
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
 
 git config --global pull.rebase false
-git config --global user.name "yukiU"
-git config --global user.email "yuki.ueyama.001@layerx.co.jp"
+git config --global user.name "cou"
+git config --global user.email "courange.c@gmail.com"
 git config --global init.defaultBranch main
 git config --global push.autoSetupRemote true
 
