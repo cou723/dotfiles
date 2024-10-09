@@ -44,6 +44,7 @@ bindkey "^[[1;5D" backward-word
 bindkey '^[[H' beginning-of-line
 bindkey '^[[F' end-of-line
 bindkey "^[[3" delete-char
+bindkey '^H' backward-kill-word
 
 autoload -Uz compinit
 compinit
@@ -119,6 +120,8 @@ git config --global user.name "cou"
 git config --global user.email "courange.c@gmail.com"
 git config --global init.defaultBranch main
 git config --global push.autoSetupRemote true
+git config --global core.quotepath false
+git config --global core.pager "less -r"
 
 # -----------------path-----------------
 
@@ -208,7 +211,7 @@ alias vimconfig="che edit ./config/nvim/init.vim"
 # git
 if type git > /dev/null 2>&1; then
     alias ga="git add"
-    alias ga.="git add ."
+    alias gap="git add -p"
     alias gicm="git commit -m"
     alias gica="git commit --amend"
     alias gpsh="git push"
@@ -282,6 +285,9 @@ fi
 if type direnv > /dev/null 2>&1; then
     eval "$(direnv hook zsh)"
 fi
+
+# go
+export PATH=$PATH:/usr/local/go/bin
 
 # for gui
 export GTK_IM_MODULE=fcitx
