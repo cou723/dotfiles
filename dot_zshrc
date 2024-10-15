@@ -186,6 +186,9 @@ if type exa > /dev/null 2>&1; then
     alias la='exa --long --icons --git -a'
     alias lt='exa --tree --icons --git'
     alias ltl='exa --tree --long --icons --git --level=2'
+else
+    alias ll='ls -l'
+    alias la='ls -a'
 fi
 
 # cat(bat)
