@@ -147,6 +147,10 @@ add_path "$DENO_INSTALL/bin"
 
 # pnpm path
 export PNPM_HOME="/home/cou/.local/share/pnpm"
+case ":$PATH:" in
+    *":$PNPM_HOME:"*) ;;
+    *) export PATH="$PNPM_HOME:$PATH" ;;
+esac
 add_path $PNPM_HOME
 
 # android path
