@@ -68,6 +68,7 @@ zinit light zdharma/history-search-multi-word
 zinit light mollifier/anyframe
 zinit light mattmc3/zsh-safe-rm
 zinit light robertzk/send.zsh
+zinit light hlissner/zsh-autopair
 
 # plugin settings
 # source /usr/share/doc/fzf/examples/key-bindings.zsh
@@ -220,6 +221,7 @@ if type git > /dev/null 2>&1; then
     alias ga="git add"
     alias ga.="git add -p"
     alias gap="git add -p"
+    alias gt="git status --untracked-files=all"
     alias gicm="git commit -m"
     alias gica="git commit --amend"
     alias gpsh="git push"
@@ -230,6 +232,7 @@ if type git > /dev/null 2>&1; then
     alias gm="git merge"
     alias gd="git diff"
     alias gl="git log"
+    alias glo="git log --oneline"
     alias gcl="git clone"
     alias gsc="git switch -c"
 fi
@@ -316,3 +319,7 @@ if [ $SHLVL = 1 ] ; then
 fi
 
 add_path "$HOME/.rb/bin"
+
+add_path "$HOME/.moon/bin"
+
+add_path "$HOME/.local/bin"
