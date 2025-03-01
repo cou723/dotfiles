@@ -302,6 +302,8 @@ fi
 
 # go
 export PATH=$PATH:/usr/local/go/bin
+export GOPATH=$HOME/go
+export GOROOT=/usr/local/go
 
 # google
 if [ -f '/home/cou/google-cloud-sdk/path.zsh.inc' ]; then . '/home/cou/google-cloud-sdk/path.zsh.inc'; fi
@@ -323,3 +325,8 @@ add_path "$HOME/.rb/bin"
 add_path "$HOME/.moon/bin"
 
 add_path "$HOME/.local/bin"
+
+export DPRINT_INSTALL="/home/cou/.dprint"
+add_path "$DPRINT_INSTALL/bin:$PATH"
+
+[[ "$TERM_PROGRAM" == "vscode" ]] && . "$(code --locate-shell-integration-path zsh)"
