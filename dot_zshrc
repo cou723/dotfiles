@@ -126,9 +126,15 @@ git config --global core.pager "less -r"
 
 # -----------------path-----------------
 
-. "$HOME/.cargo/env"
+add_path "$HOME/.local/bin"
 
+export DPRINT_INSTALL="/home/cou/.dprint"
+add_path "$DPRINT_INSTALL/bin"
+
+# rust
+. "$HOME/.cargo/env"
 add_path "$HOME/.cargo/bin"
+add_path "$HOME/.local/bin/gcc-arm-10.3-2021.07-x86_64-arm-none-linux-gnueabihf/bin"
 
 # volta
 export VOLTA_HOME="$HOME/.volta"
@@ -172,12 +178,17 @@ add_path "/usr/local/cuda/bin"
 add_path "/home/linuxbrew/.linuxbrew/bin"
 
 # code
-export PATH="/mnt/c/Program Files/Microsoft VS Code/bin:$PATH"
 add_path "/mnt/c/Program Files/Microsoft VS Code/bin"
 
 # bun
 export BUN_INSTALL="$HOME/.bun"
 add_path "$BUN_INSTALL/bin"
+
+# ruby
+add_path "$HOME/.rb/bin"
+
+# moonbit
+add_path "$HOME/.moon/bin"
 
 # -----------------alias-----------------
 # ls(exa)
@@ -319,14 +330,3 @@ if [ $SHLVL = 1 ] ; then
   (fcitx-autostart > /dev/null 2>&1 &)
   xset -r 49  > /dev/null 2>&1
 fi
-
-add_path "$HOME/.rb/bin"
-
-add_path "$HOME/.moon/bin"
-
-add_path "$HOME/.local/bin"
-
-export DPRINT_INSTALL="/home/cou/.dprint"
-add_path "$DPRINT_INSTALL/bin:$PATH"
-
-[[ "$TERM_PROGRAM" == "vscode" ]] && . "$(code --locate-shell-integration-path zsh)"
