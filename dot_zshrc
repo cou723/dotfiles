@@ -190,6 +190,10 @@ add_path "$HOME/.rb/bin"
 # moonbit
 add_path "$HOME/.moon/bin"
 
+#v
+add_path "$HOME/v"
+
+
 # -----------------alias-----------------
 # ls(exa)
 if type exa > /dev/null 2>&1; then
