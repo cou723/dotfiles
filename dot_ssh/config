@@ -1,0 +1,10 @@
+Host github.com
+  User git
+  IdentityFile ~/.ssh/id_rsa.pub
+  IdentitiesOnly yes
+
+Host github-yuki.com
+  HostName github.com
+  User git
+  IdentityFile ~/.ssh/for_yuki_ueyama.pub
+  IdentitiesOnly yes
