@@ -1,0 +1,13 @@
+{
+  "allowed_tools": [
+    "Bash(ls *)",
+    "Bash(git add *)",
+    "Bash(pnpm run build)",
+    "Bash(pnpm test)",
+    "Bash(pnpm run lint)",
+    "Bash(pnpm run format)",
+    "Bash(pnpm run type-check)",
+    "Bash(pnpm run typecheck)",
+    "Bash(tsc --noEmit)"
+  ]
+}
