@@ -259,3 +259,6 @@ if [ $SHLVL = 1 ] ; then
 fi
 
 export SSH_AUTH_SOCK=$HOME/.ssh/agent.sock
+
+rm -rf ~/.ssh/agent.sock
+socat UNIX-LISTEN:$SSH_AUTH_SOCK,fork EXEC:"npiperelay.exe -ei -s //./pipe/openssh-ssh-agent",nofork &
