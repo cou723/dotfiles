@@ -3,6 +3,7 @@
     "Bash(ls *)",
     "Bash(find *)",
     "Bash(grep *)",
+    "Bash(rg *)",
     "Bash(git add *)",
     "Bash(pnpm run build)",
     "Bash(pnpm test)",
