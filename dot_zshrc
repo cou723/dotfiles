@@ -36,6 +36,7 @@ bindkey "^[[1;5D" backward-word
 bindkey '^[[H' beginning-of-line
 bindkey '^[[F' end-of-line
 bindkey "^[[3" delete-char
+bindkey -r '^H'
 bindkey '^H' backward-kill-word
 
 autoload -Uz compinit
