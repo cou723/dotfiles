@@ -31,14 +31,6 @@ export HISTSIZE=100000
 export SAVEHIST=100000
 export HISTFILE=${HOME}/.zsh_history
 
-bindkey "^[[1;5C" forward-word
-bindkey "^[[1;5D" backward-word
-bindkey '^[[H' beginning-of-line
-bindkey '^[[F' end-of-line
-bindkey "^[[3" delete-char
-bindkey -r '^H'
-bindkey '^H' backward-kill-word
-
 autoload -Uz compinit
 compinit
 zstyle ':completion:*:default' list-colors di=4 ex=33 '=*.c=35'
@@ -263,3 +255,13 @@ export SSH_AUTH_SOCK=$HOME/.ssh/agent.sock
 
 rm -rf ~/.ssh/agent.sock
 socat UNIX-LISTEN:$SSH_AUTH_SOCK,fork EXEC:"npiperelay.exe -ei -s //./pipe/openssh-ssh-agent",nofork &
+
+bindkey -r "^[[1;5C"
+bindkey "^[[1;5C" forward-word
+bindkey -r "^[[1;5D"
+bindkey "^[[1;5D" backward-word
+bindkey '^[[H' beginning-of-line
+bindkey '^[[F' end-of-line
+bindkey "^[[3" delete-char
+bindkey -r '^H'
+bindkey '^H' backward-kill-word
