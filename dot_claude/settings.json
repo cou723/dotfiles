@@ -1,19 +1,32 @@
 {
-  "allowed_tools": [
-    "Bash(ls *)",
-    "Bash(find *)",
-    "Bash(grep *)",
-    "Bash(rg *)",
-    "Bash(git add *)",
-    "Bash(pnpm run build)",
-    "Bash(pnpm test)",
-    "Bash(pnpm run lint)",
-    "Bash(pnpm lint)",
-    "Bash(pnpm run format)",
-    "Bash(pnpm format)",
-    "Bash(pnpm run type-check)",
-    "Bash(pnpm type-check)",
-    "Bash(pnpm run typecheck)",
-    "Bash(tsc --noEmit)"
-  ]
+  "permissions": {
+    "allow": [
+      "Bash(ls *)",
+      "Bash(find *)",
+      "Bash(grep *)",
+      "Bash(rg *)",
+      "Bash(git add *)",
+
+      "Bash(pnpm run build)",
+      "Bash(pnpm test)",
+      "Bash(pnpm run lint)",
+      "Bash(pnpm lint)",
+      "Bash(pnpm run format)",
+      "Bash(pnpm format)",
+      "Bash(pnpm run type-check)",
+      "Bash(pnpm type-check)",
+      "Bash(pnpm run typecheck)",
+      "Bash(pnpm install:*)",
+      "Bash(pnpm remove:*)",
+      "Bash(pnpm add:*)",
+      "Bash(tsc --noEmit)",
+
+      "Bash(uv run *)",
+      "Bash(make lint)",
+      "Bash(make format)",
+      "Bash(make typecheck)",
+
+      "Bash(moon run *)"
+    ]
+  }
 }
