@@ -253,8 +253,31 @@ fi
 
 export SSH_AUTH_SOCK=$HOME/.ssh/agent.sock
 
-rm -rf ~/.ssh/agent.sock
-socat UNIX-LISTEN:$SSH_AUTH_SOCK,fork EXEC:"npiperelay.exe -ei -s //./pipe/openssh-ssh-agent",nofork &
+if [ -z $SSH_AUTH_SOCK ]; then
+# forwardingされえなければAgentを設定
+    if [ -d /mnt/c/oss/wsl-gpg-agent ]; then
+        # on wsl2
+        export SSH_AUTH_SOCK=~/.ssh/agent.sock
+
+        ALREADY_RUNNING=$(ps -auxww | grep -q "[n]piperelay.exe -ei -s //./pipe/openssh-ssh-agent")
+        if [ $? -ne 0 ]; then
+            rm -f $SSH_AUTH_SOCK
+            (setsid socat UNIX-LISTEN:$SSH_AUTH_SOCK,fork EXEC:"/mnt/c/oss/wsl-gpg-agent/npiperelay.exe -ei -s //./pipe/openssh-ssh-agent",nofork & ) #> /dev/null 2>&1
+        fi
+    else
+
+        # other
+        SSH_KEY_LIFE_TIME_SEC=3600
+        SSH_AGENT_FILE=$HOME/.ssh-agent
+        test -f $SSH_AGENT_FILE && source $SSH_AGENT_FILE > /dev/null 2>&1
+        if [ $( ps -ef | grep ssh-agent | grep -v grep | wc -l ) -eq 0 ]; then
+            ssh-agent -t $SSH_KEY_LIFE_TIME_SEC > $SSH_AGENT_FILE
+	    source $SSH_AGENT_FILE > /dev/null 2>&1
+        fi
+    fi
+
+fi
+
 
 bindkey -r "^[[1;5C"
 bindkey "^[[1;5C" forward-word
@@ -265,3 +288,8 @@ bindkey '^[[F' end-of-line
 bindkey "^[[3" delete-char
 bindkey -r '^H'
 bindkey '^H' backward-kill-word
+
+# darkmode
+export GTK_THEME=Adwaita:dark
+export XDG_CURRENT_DESKTOP=GNOME
+export QT_STYLE_OVERRIDE=Adwaita-Dark
