@@ -6,7 +6,6 @@
       "Bash(grep *)",
       "Bash(rg *)",
       "Bash(git add *)",
-
       "Bash(pnpm run build)",
       "Bash(pnpm test)",
       "Bash(pnpm run lint)",
@@ -20,13 +19,22 @@
       "Bash(pnpm remove:*)",
       "Bash(pnpm add:*)",
       "Bash(tsc --noEmit)",
-
       "Bash(uv run *)",
       "Bash(make lint)",
       "Bash(make format)",
       "Bash(make typecheck)",
-
       "Bash(moon run *)"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "TodoWrite",
+        "hooks": {
+          "type": "command",
+          "command": "echo 'TodoWriteツールは非推奨です。代わりにtask_manager MCPツールを使用してください。' && exit 1"
+        }
+      }
     ]
   }
 }
