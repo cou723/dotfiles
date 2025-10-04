@@ -251,10 +251,12 @@ if [ $SHLVL = 1 ] ; then
   xset -r 49  > /dev/null 2>&1
 fi
 
-export SSH_AUTH_SOCK=$HOME/.ssh/agent.sock
 
+if [ -f /proc/sys/fs/binfmt_misc/WSLInterop ]; then
+export SSH_AUTH_SOCK=$HOME/.ssh/agent.sock
 rm -rf ~/.ssh/agent.sock
 socat UNIX-LISTEN:$SSH_AUTH_SOCK,fork EXEC:"npiperelay.exe -ei -s //./pipe/openssh-ssh-agent",nofork &
+fi
 
 bindkey -r "^[[1;5C"
 bindkey "^[[1;5C" forward-word
