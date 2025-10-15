@@ -1,7 +1,6 @@
 Host github.com
   User git
   HostName github.com
-  IdentityAgent ~/.ssh/agent.sock
 
 Host github-yuki.com
   HostName github.com
