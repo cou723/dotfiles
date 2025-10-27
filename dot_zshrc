@@ -251,7 +251,7 @@ fi
 
 
 if [ -f /proc/sys/fs/binfmt_misc/WSL* ]; then
-    echo "WSL Detected"
+    # echo "WSL Detected"
     export SSH_AUTH_SOCK=$HOME/.ssh/agent.sock
 
     # ソケットがまだ作られていなければ、socat+npiperelayでブリッジ起動
@@ -260,7 +260,7 @@ if [ -f /proc/sys/fs/binfmt_misc/WSL* ]; then
     ( setsid socat UNIX-LISTEN:$SSH_AUTH_SOCK,fork EXEC:"/mnt/c/Users/coura/AppData/Local/Microsoft/WinGet/Links/npiperelay.exe -ei -s //./pipe/openssh-ssh-agent",nofork & ) >/dev/null 2>&1
     fi
 else
-    echo "Non WSL Loaded"
+    # echo "Non WSL Loaded"
     export SSH_AUTH_SOCK="$HOME/.1password/agent.sock"
 fi
 
