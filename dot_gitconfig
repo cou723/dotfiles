@@ -23,7 +23,7 @@
   format = ssh
 
 [gpg "ssh"]
-  program = "/mnt/c/Users/coura/AppData/Local/1Password/app/8/op-ssh-sign-wsl"
+  program = "op-ssh-sign-wsl.exe"
 
 [commit]
   gpgsign = true

@@ -164,6 +164,7 @@ if type git > /dev/null 2>&1; then
     alias gd="git diff"
     alias gl=" git log --oneline --graph"
     alias gsc="git switch -c"
+    alias gs="git switch"
 fi
 
 # npm
@@ -249,9 +250,13 @@ if [ $SHLVL = 1 ] ; then
   xset -r 49  > /dev/null 2>&1
 fi
 
+is_wsl=0
+if grep -qi microsoft /proc/version 2>/dev/null; then
+  is_wsl=1
+fi
 
-if [ -f /proc/sys/fs/binfmt_misc/WSL* ]; then
-    # echo "WSL Detected"
+if [ "$is_wsl" = "1" ]; then
+    echo "WSL Detected"
     export SSH_AUTH_SOCK=$HOME/.ssh/agent.sock
 
     # ソケットがまだ作られていなければ、socat+npiperelayでブリッジ起動
@@ -260,7 +265,7 @@ if [ -f /proc/sys/fs/binfmt_misc/WSL* ]; then
     ( setsid socat UNIX-LISTEN:$SSH_AUTH_SOCK,fork EXEC:"/mnt/c/Users/coura/AppData/Local/Microsoft/WinGet/Links/npiperelay.exe -ei -s //./pipe/openssh-ssh-agent",nofork & ) >/dev/null 2>&1
     fi
 else
-    # echo "Non WSL Loaded"
+    echo "Non WSL Loaded"
     export SSH_AUTH_SOCK="$HOME/.1password/agent.sock"
 fi
 
