@@ -1,0 +1,99 @@
+function add_path() {
+    local input_string="$1"  # 引数から文字列を受け取る
+
+    if [ -z "$input_string" ]; then
+        echo "警告: 引数が空です。"
+    else
+        export PATH="$input_string:$PATH"
+    fi
+}
+
+# ~/.profile: executed by the command interpreter for login shells.
+# This file is not read by bash(1), if ~/.bash_profile or ~/.bash_login
+# exists.
+# see /usr/share/doc/bash/examples/startup-files for examples.
+# the files are located in the bash-doc package.
+
+# the default umask is set in /etc/profile; for setting the umask
+# for ssh logins, install and configure the libpam-umask package.
+#umask 022
+
+# if running bash
+if [ -n "$BASH_VERSION" ]; then
+    # include .bashrc if it exists
+    if [ -f "$HOME/.bashrc" ]; then
+	. "$HOME/.bashrc"
+    fi
+fi
+
+# set PATH so it includes user's private bin if it exists
+add_path "$HOME/bin"
+
+add_path "$HOME/.local/bin"
+
+. "$HOME/.cargo/env"
+export VOLTA_HOME="$HOME/.volta"
+
+add_path "$VOLTA_HOME/bin"
+
+export DPRINT_INSTALL="$HOME/.dprint"
+add_path "$DPRINT_INSTALL/bin"
+
+# rust
+. "$HOME/.cargo/env"
+add_path "$HOME/.cargo/bin"
+add_path "$HOME/.local/bin/gcc-arm-10.3-2021.07-x86_64-arm-none-linux-gnueabihf/bin"
+
+# volta
+export VOLTA_HOME="$HOME/.volta"
+add_path "$VOLTA_HOME/bin"
+
+# pyenv
+export PYENV_ROOT="$HOME/.pyenv"
+command -v pyenv >/dev/null || export PATH="$PYENV_ROOT/bin:$PATH"
+if type pyenv > /dev/null 2>&1; then
+    if [ -f ".python-version" ]; then
+        eval "$(pyenv init -)"
+    fi
+fi
+
+# deno path
+export DENO_INSTALL="$HOME/.deno"
+add_path "$DENO_INSTALL/bin"
+
+# pnpm path
+export PNPM_HOME="$HOME/.local/share/pnpm"
+case ":$PATH:" in
+    *":$PNPM_HOME:"*) ;;
+    *) export PATH="$PNPM_HOME:$PATH" ;;
+esac
+add_path $PNPM_HOME
+
+# android path
+export ANDROID_HOME=$HOME/Android/Sdk
+add_path "$ANDROID_HOME/emulator"
+add_path "$ANDROID_HOME/tools"
+add_path "$ANDROID_HOME/tools/bin"
+add_path "$ANDROID_HOME/platform-tools"
+
+# jdk
+export JDK_HOME="/usr/lib/jvm/java-11-openjdk-amd64"
+add_path $JDK_HOME
+
+# CUDA
+add_path "/usr/local/cuda/bin"
+
+# homebrew
+add_path "/home/linuxbrew/.linuxbrew/bin"
+
+# code
+add_path "/mnt/c/Program Files/Microsoft VS Code/bin"
+
+# ruby
+add_path "$HOME/.rb/bin"
+
+# moonbit
+add_path "$HOME/.moon/bin"
+
+# kiro
+add_path '/mnt/c/Users/coura/AppData/Local/Programs/kiro/bin'

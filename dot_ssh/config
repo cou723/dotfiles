@@ -1,0 +1,8 @@
+Host github.com
+  User git
+  HostName github.com
+
+Host github-yuki.com
+  HostName github.com
+  User git
+  IdentityFile ~/.ssh/for_yuki_ueyama.pub
