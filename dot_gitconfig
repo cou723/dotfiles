@@ -1,0 +1,29 @@
+[push]
+	default = current
+	autoSetupRemote = true
+[user]
+	email = courange.c@gmail.com
+	name = cou
+	signingkey = ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDk5oc9L31pmCwakjS8xx3Nyn4thgRiPKypvQCkZv9l0Hcw+qot6K9/f+l8dwHgC0TYtClHk8mG6ssKBh5VhyR1JX1YhiDmPrntM3+fvXBFeHg2SkojowU+bqiVSRSiDhKTsPsh0YAC8z6G3Yi68T6ZivW3H2r7dzq40xBEx+xeAIjN/5esAiGqmnqWpUMorio8xdin+hJ2SyQ2xFMOmn5Arz5NUkOPZCjH1DMTnipXLkK4EGwRl4xh9Bey7MrUVCVpZ2M2EM9lECXD4p3I+8VGOFlbYw2oCLaCQCwWjQUqDmafcVH6uKqgE7ubNEFbP03X9ZVLLRU8l+g8msbNpgwZm8eEXK/+QeUbLmc360v5pO+NpPeqjkMEBl2Jv7kyBRSbFTkT2UnWiAX3dSvOJLltPPTa9Qqd3n2Y+ok3DH/6BfpgnNG+7kMYt/8ZjiJkhtZraN98hEGU1tOrhqPpGKiZTgRCIth3dgp77wk2DQ2ew0wXfWOA8bvzSxgDx64BAI0=
+[pull]
+	rebase = false
+[init]
+	defaultBranch = main
+[core]
+	quotepath = false
+	pager = less -r
+[credential "https://github.com"]
+	helper =
+	helper = !/usr/bin/gh auth git-credential
+[credential "https://gist.github.com"]
+	helper =
+	helper = !/usr/bin/gh auth git-credential
+
+[gpg]
+  format = ssh
+
+[gpg "ssh"]
+  program = "op-ssh-sign-wsl.exe"
+
+[commit]
+  gpgsign = true
