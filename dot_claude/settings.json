@@ -1,0 +1,19 @@
+{
+  "env": {
+    "ANTHROPIC_AUTH_TOKEN": "6437d93639064cf89a0205819476bdf9.f0vR5hVf0de7XsD8",
+    "ANTHROPIC_BASE_URL": "https://api.z.ai/api/anthropic",
+    "API_TIMEOUT_MS": "3000000",
+    "ANTHROPIC_DEFAULT_HAIKU_MODEL": "glm-4.5-air",
+    "ANTHROPIC_DEFAULT_SONNET_MODEL": "glm-4.7",
+    "ANTHROPIC_DEFAULT_OPUS_MODEL": "glm-4.7"
+  },
+  "permissions": {
+    "allow": [
+      "WebSearch"
+    ]
+  },
+  "preferredNotifChannel": "terminal_bell",
+  "enabledPlugins": {
+    "pyright-lsp@claude-plugins-official": true
+  }
+}
