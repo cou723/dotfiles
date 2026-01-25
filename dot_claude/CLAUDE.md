@@ -28,8 +28,8 @@
       - 返り値を用いて失敗を表現すること
   - TypeScript
     - 推奨ツール(明示されない限り以下のものを使用)
-      - linter: biome.js
-      - formatter: biome.js
+      - linter: biome.js|eslint
+      - formatter: biome.js|prettier
       - package manager: pnpm
       - testing framework: vitest
     - 標準のDateの「メソッド」（データの構造体として使う分には問題ない）はタイムゾーン準拠で挙動が変わるため、非推奨です。date-fnsなどを使用せよ
@@ -40,13 +40,10 @@
       - Effect.tsが使われているプロジェクトの場合、Effect.tsの流儀に沿った形で書く
   - Python
     - 推奨ツール
-      - Package・Runtime Manager：UV
-      - Linter：Ruff
-      - TypeChecker：Mypy
+      - Package・Runtime Manager：UV(明示されていない場合に限る)
+      - TypeChecker：Pyright
     - 非推奨事項
       - **グローバルにあるpip**を使ったパッケージの追加
-        - `uv add`を推奨
-    - 実行する際は必ず仮想環境のPythonを使用してください。ex:`uv run main.py` or `source .venv/activate && uv run main.py`
 - ドキュメント
   - ドキュメントについて機能の追加や変更をした際にはドキュメントが古い内容になっていないか**毎回**確認しなさい
   - ドキュメントに該当するファイルは以下の通り
