@@ -1,0 +1,5 @@
+- 推奨ツール
+    - Package・Runtime Manager：uv
+    - TypeChecker：Pyright
+- 非推奨事項
+    - **グローバルにあるpip**を使ったパッケージの追加
