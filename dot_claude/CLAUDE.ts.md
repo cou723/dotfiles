@@ -1,0 +1,11 @@
+- 推奨ツール(明示されない限り以下のものを使用)
+    - linter, formatter: biome.js|eslint
+    - package manager: pnpm
+    - testing framework: vitest
+- 標準のDateの「メソッド」（データの構造体として使う分には問題ない）はタイムゾーン準拠で挙動が変わるため、非推奨です。date-fnsなどを使用せよ
+- `as any`は原則禁止です。`as unknown as T`も基本的には非推奨です。
+    - ただし、`as unknown as T`はコメントでそれを使わないといけない理由を明示した限り使用してよいです。
+- 例外表現
+    - 返り値で表現する
+    - catchは型安全でないため非推奨。どうしても使う場合は型安全に書く
+    - Effect.tsが使われているプロジェクトの場合、Effect.tsの流儀に沿った形で書く
