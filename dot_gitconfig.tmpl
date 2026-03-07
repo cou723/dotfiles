@@ -22,5 +22,15 @@
 [gpg]
   format = ssh
 
+[gpg "ssh"]
+  program = "op-ssh-sign-wsl.exe"
+
+
+{{ if (.chezmoi.kernel.osrelease | lower | contains "microsoft") }}
+[gpg "ssh"]
+  program = "op-ssh-sign-wsl.exe"
+
+{{ end }}
+
 [commit]
   gpgsign = true
