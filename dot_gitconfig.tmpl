@@ -13,17 +13,17 @@
 	quotepath = false
 	pager = less -r
 [credential "https://github.com"]
-	helper =
 	helper = !/usr/bin/gh auth git-credential
 [credential "https://gist.github.com"]
-	helper =
 	helper = !/usr/bin/gh auth git-credential
 
 [gpg]
   format = ssh
 
+{{ if (.chezmoi.kernel.osrelease | lower | contains "microsoft") }}
 [gpg "ssh"]
   program = "op-ssh-sign-wsl.exe"
+{{ end }}
 
 [commit]
   gpgsign = true
