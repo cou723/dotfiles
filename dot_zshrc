@@ -459,4 +459,8 @@ run() {
     return 1
   fi
 }
-alias cw="NODE_ENV=development node --import tsx/esm /home/coura/ghq/github.com/cou723/claude_workflow/main.ts"
+# Claude Workflow
+cw() {
+  local original_dir="$(pwd)"
+  (cd /home/coura/ghq/github.com/cou723/claude_workflow && CW_WORKING_DIR="$original_dir" pnpm run dev "$@")
+}
