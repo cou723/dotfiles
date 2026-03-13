@@ -169,30 +169,36 @@ fi
 
 # npm
 if type npm > /dev/null 2>&1; then
-    alias n="npm"
-    alias nr="npm run"
-    alias ni="npm install"
-    alias na="npm install --save"
-    alias nad="npm install --save-dev"
     alias nx="npx"
+    if [[ -f "package-lock.json" ]]; then
+        alias n="npm"
+        alias nr="npm run"
+        alias ni="npm install"
+        alias na="npm install --save"
+        alias nad="npm install --save-dev"
+    fi
 fi
 
 if type pnpm > /dev/null 2>&1; then
-    alias p="pnpm"
-    alias pr="pnpm run"
-    alias pa="pnpm add"
-    alias pad="pnpm add --dev"
-    alias pi="pnpm install"
     alias px="pnpm dlx"
+    if [[ -f "pnpm-lock.yaml" ]]; then
+        alias p="pnpm"
+        alias pr="pnpm run"
+        alias pa="pnpm add"
+        alias pad="pnpm add --dev"
+        alias pi="pnpm install"
+    fi
 fi
 
 if type bun > /dev/null 2>&1; then
-    alias b="bun"
-    alias ba="bun add"
-    alias bad="bun add --dev"
-    alias br="bun run"
-    alias bi="bun install"
     alias bx="bunx"
+    if [[ -f "bun.lockb" || -f "bun.lock" ]]; then
+        alias b="bun"
+        alias ba="bun add"
+        alias bad="bun add --dev"
+        alias br="bun run"
+        alias bi="bun install"
+    fi
 fi
 
 # python
@@ -201,6 +207,13 @@ alias penv="python3 -m venv venv"
 alias pact=". venv/bin/activate"
 if type poetry > /dev/null 2>&1; then
     alias poe="poetry"
+fi
+if [[ -f "Makefile" ]]; then
+    alias m="make"
+    alias mr="make run"
+    alias ml="make lint"
+    alias mt="make type-check"
+    alias mf="make format"
 fi
 
 # github
@@ -256,7 +269,7 @@ if grep -qi microsoft /proc/version 2>/dev/null; then
 fi
 
 if [ "$is_wsl" = "1" ]; then
-    echo "WSL Detected"
+    export IS_WSL=1
     export SSH_AUTH_SOCK=$HOME/.ssh/agent.sock
 
     # ソケットがまだ作られていなければ、socat+npiperelayでブリッジ起動
@@ -265,7 +278,7 @@ if [ "$is_wsl" = "1" ]; then
     ( setsid socat UNIX-LISTEN:$SSH_AUTH_SOCK,fork EXEC:"/mnt/c/Users/coura/AppData/Local/Microsoft/WinGet/Links/npiperelay.exe -ei -s //./pipe/openssh-ssh-agent",nofork & ) >/dev/null 2>&1
     fi
 else
-    echo "Non WSL Loaded"
+    export IS_WSL=0
     export SSH_AUTH_SOCK="$HOME/.1password/agent.sock"
 fi
 
@@ -284,3 +297,167 @@ bindkey '^H' backward-kill-word
 export GTK_THEME=Adwaita:dark
 export XDG_CURRENT_DESKTOP=GNOME
 export QT_STYLE_OVERRIDE=Adwaita-Dark
+
+# Lint function
+lint() {
+  if [ -f "Cargo.toml" ]; then
+    cargo clippy "$@"
+  elif [ -f "go.mod" ]; then
+    go vet ./...
+  elif [ -f "pnpm-lock.yaml" ]; then
+    pnpm run lint
+  elif [ -f "yarn.lock" ]; then
+    yarn run lint
+  elif [ -f "package-lock.json" ]; then
+    npm run lint
+  elif [ -f "Makefile" ]; then
+    make lint
+  else
+    echo "Error: No project file found (Cargo.toml, go.mod, package manager lock file, or Makefile)" >&2
+    return 1
+  fi
+}
+
+# Format function
+format() {
+  if [ -f "Cargo.toml" ]; then
+    cargo fmt
+  elif [ -f "go.mod" ]; then
+    go fmt ./...
+  elif [ -f "pnpm-lock.yaml" ]; then
+    if grep -q '"format"' package.json 2>/dev/null; then
+      pnpm run format
+    elif grep -q '"fmt"' package.json 2>/dev/null; then
+      pnpm run fmt
+    else
+      echo "Error: No format/fmt script found in package.json" >&2
+      return 1
+    fi
+  elif [ -f "yarn.lock" ]; then
+    if grep -q '"format"' package.json 2>/dev/null; then
+      yarn run format
+    elif grep -q '"fmt"' package.json 2>/dev/null; then
+      yarn run fmt
+    else
+      echo "Error: No format/fmt script found in package.json" >&2
+      return 1
+    fi
+  elif [ -f "package-lock.json" ]; then
+    if grep -q '"format"' package.json 2>/dev/null; then
+      npm run format
+    elif grep -q '"fmt"' package.json 2>/dev/null; then
+      npm run fmt
+    else
+      echo "Error: No format/fmt script found in package.json" >&2
+      return 1
+    fi
+  elif [ -f "Makefile" ]; then
+    if grep -q '^format:' Makefile 2>/dev/null; then
+      make format
+    elif grep -q '^fmt:' Makefile 2>/dev/null; then
+      make fmt
+    else
+      echo "Error: No format/fmt target found in Makefile" >&2
+      return 1
+    fi
+  else
+    echo "Error: No project file found" >&2
+    return 1
+  fi
+}
+
+# Type-check function
+tc() {
+  if [ -f "Cargo.toml" ]; then
+    cargo check
+  elif [ -f "go.mod" ]; then
+    # Go projects skip type-check (type checking is built into compilation)
+    echo "Go project detected: type checking is handled by go build/run" >&2
+    return 0
+  elif [ -f "pnpm-lock.yaml" ]; then
+    if grep -q '"type-check"' package.json 2>/dev/null; then
+      pnpm run type-check
+    elif grep -q '"typecheck"' package.json 2>/dev/null; then
+      pnpm run typecheck
+    else
+      echo "Error: No type-check/typecheck script found in package.json" >&2
+      return 1
+    fi
+  elif [ -f "yarn.lock" ]; then
+    if grep -q '"type-check"' package.json 2>/dev/null; then
+      yarn run type-check
+    elif grep -q '"typecheck"' package.json 2>/dev/null; then
+      yarn run typecheck
+    else
+      echo "Error: No type-check/typecheck script found in package.json" >&2
+      return 1
+    fi
+  elif [ -f "package-lock.json" ]; then
+    if grep -q '"type-check"' package.json 2>/dev/null; then
+      npm run type-check
+    elif grep -q '"typecheck"' package.json 2>/dev/null; then
+      npm run typecheck
+    else
+      echo "Error: No type-check/typecheck script found in package.json" >&2
+      return 1
+    fi
+  elif [ -f "Makefile" ]; then
+    if grep -q '^type-check:' Makefile 2>/dev/null; then
+      make type-check
+    elif grep -q '^typecheck:' Makefile 2>/dev/null; then
+      make typecheck
+    else
+      echo "Error: No type-check/typecheck target found in Makefile" >&2
+      return 1
+    fi
+  else
+    echo "Error: No project file found" >&2
+    return 1
+  fi
+}
+
+# Run function
+run() {
+  if [ -f "Cargo.toml" ]; then
+    cargo run "$@"
+  elif [ -f "go.mod" ]; then
+    if [ $# -eq 0 ]; then
+      go run .
+    else
+      go run "$@"
+    fi
+  elif [ -f "pnpm-lock.yaml" ]; then
+    if grep -q '"dev"' package.json 2>/dev/null; then
+      pnpm run dev
+    elif grep -q '"start"' package.json 2>/dev/null; then
+      pnpm run start
+    else
+      echo "Error: No dev/start script found in package.json" >&2
+      return 1
+    fi
+  elif [ -f "yarn.lock" ]; then
+    if grep -q '"dev"' package.json 2>/dev/null; then
+      yarn run dev
+    elif grep -q '"start"' package.json 2>/dev/null; then
+      yarn run start
+    else
+      echo "Error: No dev/start script found in package.json" >&2
+      return 1
+    fi
+  elif [ -f "package-lock.json" ]; then
+    if grep -q '"dev"' package.json 2>/dev/null; then
+      npm run dev
+    elif grep -q '"start"' package.json 2>/dev/null; then
+      npm run start
+    else
+      echo "Error: No dev/start script found in package.json" >&2
+      return 1
+    fi
+  elif [ -f "Makefile" ]; then
+    make run
+  else
+    echo "Error: No project file found" >&2
+    return 1
+  fi
+}
+alias cw="NODE_ENV=development node --import tsx/esm /home/coura/ghq/github.com/cou723/claude_workflow/main.ts"
