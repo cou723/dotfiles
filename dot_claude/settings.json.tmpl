@@ -18,24 +18,32 @@
     ]
   },
   "hooks": {
-    "PreToolUse": [
-      {
-        "matcher": "*",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "cd ~/.claude/hooks && NODE_OPTIONS='--import=./node_modules/@mizunashi_mana/claude-code-hook-sdk/dist/src/index.js' node block-env.mjs"
-          }
-        ]
-      }
-    ],
     "Stop": [
       {
         "matcher": "",
         "hooks": [
           {
             "type": "command",
+            {{ if (.chezmoi.kernel.osrelease | lower | contains "microsoft") }}
+            "command": "powershell.exe -ExecutionPolicy RemoteSigned -Command \"New-BurntToastNotification -Text 'WSL ClaudeCode', 'Claude Codeが入力を待っています...'\""
+            {{ else }}
             "command": "paplay /usr/share/sounds/freedesktop/stereo/bell.oga"
+            {{ end }}
+          }
+        ]
+      }
+    ],
+    "Notification": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            {{ if (.chezmoi.kernel.osrelease | lower | contains "microsoft") }}
+            "command": "powershell.exe -ExecutionPolicy RemoteSigned -Command \"New-BurntToastNotification -Text 'WSL ClaudeCode', 'Claude Codeが入力を待っています...'\""
+            {{ else }}
+            "command": "paplay /usr/share/sounds/freedesktop/stereo/bell.oga"
+            {{ end }}
           }
         ]
       }
