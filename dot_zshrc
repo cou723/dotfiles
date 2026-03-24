@@ -140,11 +140,6 @@ alias untgz="tar -xzvf"
 alias che="chezmoi"
 alias reload="source ~/.zshrc"
 alias co="code ."
-alias cu="cursor ."
-
-# config
-alias zshconfig="che edit ~/.zshrc"
-alias vimconfig="che edit ./config/nvim/init.vim"
 
 # git
 if type git > /dev/null 2>&1; then
@@ -222,11 +217,8 @@ if type gh > /dev/null 2>&1; then
     alias ghic="gh issue create"
 fi
 
-# c
-# alias m="make"
-# alias mc="make clean"
-# alias mf="make fclean"
-# alias mr="make re"
+alias cl="claude"
+alias clp="claude --permission-mode plan"
 
 # docker
 if type docker > /dev/null 2>&1; then
@@ -458,9 +450,4 @@ run() {
     echo "Error: No project file found" >&2
     return 1
   fi
-}
-# Claude Workflow
-cw() {
-  local original_dir="$(pwd)"
-  (cd /home/coura/ghq/github.com/cou723/claude_workflow && CW_WORKING_DIR="$original_dir" pnpm run dev "$@")
 }

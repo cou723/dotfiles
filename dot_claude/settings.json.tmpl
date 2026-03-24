@@ -1,7 +1,7 @@
 {
   "$schema": "https://json.schemastore.org/claude-code-settings.json",
   "env": {
-    "ANTHROPIC_AUTH_TOKEN": "6437d93639064cf89a0205819476bdf9.f0vR5hVf0de7XsD8",
+    "ANTHROPIC_AUTH_TOKEN": "e22a0063346d4dc0a9acd2eb27581c36.BJunQzpkymmp2OYz",
     "ANTHROPIC_BASE_URL": "https://api.z.ai/api/anthropic",
     "API_TIMEOUT_MS": "3000000",
     "ANTHROPIC_DEFAULT_HAIKU_MODEL": "glm-4.5-air",
@@ -18,24 +18,32 @@
     ]
   },
   "hooks": {
-    "PreToolUse": [
-      {
-        "matcher": "*",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "cd ~/.claude/hooks && NODE_OPTIONS='--import=./node_modules/@mizunashi_mana/claude-code-hook-sdk/dist/src/index.js' node block-env.mjs"
-          }
-        ]
-      }
-    ],
     "Stop": [
       {
         "matcher": "",
         "hooks": [
           {
             "type": "command",
+            {{ if (.chezmoi.kernel.osrelease | lower | contains "microsoft") }}
+            "command": "powershell.exe -ExecutionPolicy RemoteSigned -Command \"New-BurntToastNotification -Text 'WSL ClaudeCode', 'Claude Codeが入力を待っています...'\""
+            {{ else }}
             "command": "paplay /usr/share/sounds/freedesktop/stereo/bell.oga"
+            {{ end }}
+          }
+        ]
+      }
+    ],
+    "Notification": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            {{ if (.chezmoi.kernel.osrelease | lower | contains "microsoft") }}
+            "command": "powershell.exe -ExecutionPolicy RemoteSigned -Command \"New-BurntToastNotification -Text 'WSL ClaudeCode', 'Claude Codeが入力を待っています...'\""
+            {{ else }}
+            "command": "paplay /usr/share/sounds/freedesktop/stereo/bell.oga"
+            {{ end }}
           }
         ]
       }
