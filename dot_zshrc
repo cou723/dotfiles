@@ -55,7 +55,7 @@ zinit light robertzk/send.zsh
 zinit light hlissner/zsh-autopair
 
 # plugin settings
-# source /usr/share/doc/fzf/examples/key-bindings.zsh
+# source /usr/share/doc/fzf/ezamples/key-bindings.zsh
 
 # autoload -Uz chpwd_recent_dirs cdr add -zsh-hook
 # add-zsh-hook chpwd chpwd_recent_dirs
@@ -110,13 +110,13 @@ git config --global core.pager "less -r"
 
 
 # -----------------alias-----------------
-# ls(exa)
-if type exa > /dev/null 2>&1; then
-    alias ls='exa --grid --icons --git'
-    alias ll='exa --long --icons --git'
-    alias la='exa --long --icons --git -a'
-    alias lt='exa --tree --icons --git'
-    alias ltl='exa --tree --long --icons --git --level=2'
+# ls(eza)
+if type eza > /dev/null 2>&1; then
+    alias ls='eza --grid --icons --git'
+    alias ll='eza --long --icons --git'
+    alias la='eza --long --icons --git -a'
+    alias lt='eza --tree --icons --git'
+    alias ltl='eza --tree --long --icons --git --level=2'
 else
     alias ll='ls -l'
     alias la='ls -a'
@@ -124,7 +124,7 @@ fi
 
 # cat(bat)
 if type bat > /dev/null 2>&1; then
-    alias cat='bat'
+    alias cat='bat --theme="Visual Studio Dark+"'
 fi
 
 # du(dust)
@@ -288,166 +288,3 @@ bindkey '^H' backward-kill-word
 export GTK_THEME=Adwaita:dark
 export XDG_CURRENT_DESKTOP=GNOME
 export QT_STYLE_OVERRIDE=Adwaita-Dark
-
-# Lint function
-lint() {
-  if [ -f "Cargo.toml" ]; then
-    cargo clippy "$@"
-  elif [ -f "go.mod" ]; then
-    go vet ./...
-  elif [ -f "pnpm-lock.yaml" ]; then
-    pnpm run lint
-  elif [ -f "yarn.lock" ]; then
-    yarn run lint
-  elif [ -f "package-lock.json" ]; then
-    npm run lint
-  elif [ -f "Makefile" ]; then
-    make lint
-  else
-    echo "Error: No project file found (Cargo.toml, go.mod, package manager lock file, or Makefile)" >&2
-    return 1
-  fi
-}
-
-# Format function
-format() {
-  if [ -f "Cargo.toml" ]; then
-    cargo fmt
-  elif [ -f "go.mod" ]; then
-    go fmt ./...
-  elif [ -f "pnpm-lock.yaml" ]; then
-    if grep -q '"format"' package.json 2>/dev/null; then
-      pnpm run format
-    elif grep -q '"fmt"' package.json 2>/dev/null; then
-      pnpm run fmt
-    else
-      echo "Error: No format/fmt script found in package.json" >&2
-      return 1
-    fi
-  elif [ -f "yarn.lock" ]; then
-    if grep -q '"format"' package.json 2>/dev/null; then
-      yarn run format
-    elif grep -q '"fmt"' package.json 2>/dev/null; then
-      yarn run fmt
-    else
-      echo "Error: No format/fmt script found in package.json" >&2
-      return 1
-    fi
-  elif [ -f "package-lock.json" ]; then
-    if grep -q '"format"' package.json 2>/dev/null; then
-      npm run format
-    elif grep -q '"fmt"' package.json 2>/dev/null; then
-      npm run fmt
-    else
-      echo "Error: No format/fmt script found in package.json" >&2
-      return 1
-    fi
-  elif [ -f "Makefile" ]; then
-    if grep -q '^format:' Makefile 2>/dev/null; then
-      make format
-    elif grep -q '^fmt:' Makefile 2>/dev/null; then
-      make fmt
-    else
-      echo "Error: No format/fmt target found in Makefile" >&2
-      return 1
-    fi
-  else
-    echo "Error: No project file found" >&2
-    return 1
-  fi
-}
-
-# Type-check function
-tc() {
-  if [ -f "Cargo.toml" ]; then
-    cargo check
-  elif [ -f "go.mod" ]; then
-    # Go projects skip type-check (type checking is built into compilation)
-    echo "Go project detected: type checking is handled by go build/run" >&2
-    return 0
-  elif [ -f "pnpm-lock.yaml" ]; then
-    if grep -q '"type-check"' package.json 2>/dev/null; then
-      pnpm run type-check
-    elif grep -q '"typecheck"' package.json 2>/dev/null; then
-      pnpm run typecheck
-    else
-      echo "Error: No type-check/typecheck script found in package.json" >&2
-      return 1
-    fi
-  elif [ -f "yarn.lock" ]; then
-    if grep -q '"type-check"' package.json 2>/dev/null; then
-      yarn run type-check
-    elif grep -q '"typecheck"' package.json 2>/dev/null; then
-      yarn run typecheck
-    else
-      echo "Error: No type-check/typecheck script found in package.json" >&2
-      return 1
-    fi
-  elif [ -f "package-lock.json" ]; then
-    if grep -q '"type-check"' package.json 2>/dev/null; then
-      npm run type-check
-    elif grep -q '"typecheck"' package.json 2>/dev/null; then
-      npm run typecheck
-    else
-      echo "Error: No type-check/typecheck script found in package.json" >&2
-      return 1
-    fi
-  elif [ -f "Makefile" ]; then
-    if grep -q '^type-check:' Makefile 2>/dev/null; then
-      make type-check
-    elif grep -q '^typecheck:' Makefile 2>/dev/null; then
-      make typecheck
-    else
-      echo "Error: No type-check/typecheck target found in Makefile" >&2
-      return 1
-    fi
-  else
-    echo "Error: No project file found" >&2
-    return 1
-  fi
-}
-
-# Run function
-run() {
-  if [ -f "Cargo.toml" ]; then
-    cargo run "$@"
-  elif [ -f "go.mod" ]; then
-    if [ $# -eq 0 ]; then
-      go run .
-    else
-      go run "$@"
-    fi
-  elif [ -f "pnpm-lock.yaml" ]; then
-    if grep -q '"dev"' package.json 2>/dev/null; then
-      pnpm run dev
-    elif grep -q '"start"' package.json 2>/dev/null; then
-      pnpm run start
-    else
-      echo "Error: No dev/start script found in package.json" >&2
-      return 1
-    fi
-  elif [ -f "yarn.lock" ]; then
-    if grep -q '"dev"' package.json 2>/dev/null; then
-      yarn run dev
-    elif grep -q '"start"' package.json 2>/dev/null; then
-      yarn run start
-    else
-      echo "Error: No dev/start script found in package.json" >&2
-      return 1
-    fi
-  elif [ -f "package-lock.json" ]; then
-    if grep -q '"dev"' package.json 2>/dev/null; then
-      npm run dev
-    elif grep -q '"start"' package.json 2>/dev/null; then
-      npm run start
-    else
-      echo "Error: No dev/start script found in package.json" >&2
-      return 1
-    fi
-  elif [ -f "Makefile" ]; then
-    make run
-  else
-    echo "Error: No project file found" >&2
-    return 1
-  fi
-}
