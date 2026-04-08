@@ -11,16 +11,16 @@
 	defaultBranch = main
 [core]
 	quotepath = false
-	pager = less -r
+	pager = delta
+
 [credential "https://github.com"]
 	helper = !/usr/bin/gh auth git-credential
 [credential "https://gist.github.com"]
 	helper = !/usr/bin/gh auth git-credential
 
-[core]
-    pager = delta
 [interactive]
     diffFilter = delta --color-only
+
 [delta]
     features = side-by-side line-numbers
     syntax-theme = Visual Studio Dark+
@@ -35,3 +35,6 @@
 
 [commit]
   gpgsign = true
+
+[merge]
+    conflictStyle = zdiff3
