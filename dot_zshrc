@@ -109,15 +109,6 @@ bindkey '^G' ghq-fzf
 # To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
 
-git config --global pull.rebase false
-git config --global user.name "cou"
-git config --global user.email "courange.c@gmail.com"
-git config --global init.defaultBranch main
-git config --global push.autoSetupRemote true
-git config --global core.quotepath false
-git config --global core.pager "less -r"
-
-
 # -----------------alias-----------------
 # ls(eza)
 if type eza > /dev/null 2>&1; then
@@ -228,7 +219,9 @@ fi
 
 alias cl="claude"
 alias clp="claude --permission-mode plan"
-alias clw='node /home/coura/ghq/github.com/cou723/claude_workflow/main.ts'
+alias clda='claude --permission-mode dontAsk '
+alias lcl='ANTHROPIC_BASE_URL=http://192.168.10.110:1234 claude'
+alias lclda='ANTHROPIC_BASE_URL=http://192.168.10.110:1234 claude --permission-mode dontAsk'
 
 # docker
 if type docker > /dev/null 2>&1; then

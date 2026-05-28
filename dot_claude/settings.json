@@ -3,9 +3,6 @@
   "permissions": {
     "allow": [
       "WebSearch"
-    ],
-    "additionalDirectories": [
-      "~/.claude/skills"
     ]
   },
   "hooks": {
@@ -46,7 +43,17 @@
     "security-guidance@claude-plugins-official": true,
     "commit-commands@claude-plugins-official": true,
     "claude-code-setup@claude-plugins-official": true,
-    "pr-review-toolkit@claude-plugins-official": true
+    "pr-review-toolkit@claude-plugins-official": true,
+    "plugin-dev@claude-plugins-official": true,
+    "mcp-server-dev@claude-plugins-official": true
+  },
+  "extraKnownMarketplaces": {
+    "effect-ts": {
+      "source": {
+        "source": "github",
+        "repo": "andrueandersoncs/claude-skill-effect-ts"
+      }
+    }
   },
   "tui": "fullscreen"
 }
