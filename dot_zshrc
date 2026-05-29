@@ -248,14 +248,7 @@ if [ -f '~/google-cloud-sdk/completion.zsh.inc' ]; then . '~/google-cloud-sdk/co
 
 
 # for gui
-export GTK_IM_MODULE=fcitx
-export QT_IM_MODULE=fcitx
-export XMODIFIERS=@im=fcitx
-export DefaultIMModule=fcitx
-if [ $SHLVL = 1 ] ; then
-  (fcitx-autostart > /dev/null 2>&1 &)
-  xset -r 49  > /dev/null 2>&1
-fi
+
 
 is_wsl=0
 if grep -qi microsoft /proc/version 2>/dev/null; then
@@ -263,17 +256,23 @@ if grep -qi microsoft /proc/version 2>/dev/null; then
 fi
 
 if [ "$is_wsl" = "1" ]; then
-    export IS_WSL=1
-    export SSH_AUTH_SOCK=$HOME/.ssh/agent.sock
-
-    # ソケットがまだ作られていなければ、socat+npiperelayでブリッジ起動
-    if ! ss -a | grep -q "$SSH_AUTH_SOCK"; then
-    rm -f "$SSH_AUTH_SOCK"
-    ( setsid socat UNIX-LISTEN:$SSH_AUTH_SOCK,fork EXEC:"/mnt/c/Users/coura/AppData/Local/Microsoft/WinGet/Links/npiperelay.exe -ei -s //./pipe/openssh-ssh-agent",nofork & ) >/dev/null 2>&1
-    fi
+    alias ssh='ssh.exe'
 else
+    export GTK_IM_MODULE=fcitx
+    export QT_IM_MODULE=fcitx
+    export XMODIFIERS=@im=fcitx
+    export DefaultIMModule=fcitx
+    if [ $SHLVL = 1 ] ; then
+    (fcitx-autostart > /dev/null 2>&1 &)
+    xset -r 49  > /dev/null 2>&1
+    fi
     export IS_WSL=0
     export SSH_AUTH_SOCK="$HOME/.1password/agent.sock"
+    # darkmode
+    export GTK_THEME=Adwaita:dark
+    export XDG_CURRENT_DESKTOP=GNOME
+    export QT_STYLE_OVERRIDE=Adwaita-Dark
+
 fi
 
 
@@ -286,8 +285,3 @@ bindkey '^[[F' end-of-line
 bindkey "^[[3" delete-char
 bindkey -r '^H'
 bindkey '^H' backward-kill-word
-
-# darkmode
-export GTK_THEME=Adwaita:dark
-export XDG_CURRENT_DESKTOP=GNOME
-export QT_STYLE_OVERRIDE=Adwaita-Dark
