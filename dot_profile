@@ -74,9 +74,6 @@ add_path $JDK_HOME
 # CUDA
 add_path "/usr/local/cuda/bin"
 
-# homebrew
-add_path "/home/linuxbrew/.linuxbrew/bin"
-
 # code
 add_path "/mnt/c/Program Files/Microsoft VS Code/bin"
 
@@ -86,5 +83,4 @@ add_path "$HOME/.rb/bin"
 # moonbit
 add_path "$HOME/.moon/bin"
 
-# kiro
-add_path '/mnt/c/Users/coura/AppData/Local/Programs/kiro/bin'
+add_path "$HOME/.nix-profile/bin"
