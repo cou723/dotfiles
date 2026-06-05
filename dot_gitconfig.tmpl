@@ -29,7 +29,7 @@
 [gpg]
   format = ssh
 
-{{ if (.chezmoi.kernel.osrelease | lower | contains "microsoft") }}
+{{ if and (hasKey .chezmoi.kernel "osrelease") (.chezmoi.kernel.osrelease | lower | contains "microsoft") }}
 [gpg "ssh"]
   program = "op-ssh-sign-wsl.exe"
 {{ end }}

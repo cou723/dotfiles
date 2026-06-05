@@ -285,3 +285,6 @@ bindkey '^[[F' end-of-line
 bindkey "^[[3" delete-char
 bindkey -r '^H'
 bindkey '^H' backward-kill-word
+
+# Fix: prevent Nix glibc librt from conflicting with Chrome/Playwright
+export LD_LIBRARY_PATH="/home/coura/.local/lib-shims${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
