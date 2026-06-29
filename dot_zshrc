@@ -220,8 +220,8 @@ fi
 alias cl="claude"
 alias clp="claude --permission-mode plan"
 alias clda='claude --permission-mode dontAsk '
-alias lcl='ANTHROPIC_BASE_URL=http://192.168.10.110:1234 claude'
-alias lclda='ANTHROPIC_BASE_URL=http://192.168.10.110:1234 claude --permission-mode dontAsk'
+alias lcl='ANTHROPIC_BASE_URL=$LOCAL_LLM_URL claude'
+alias lclda='ANTHROPIC_BASE_URL=$LOCAL_LLM_URL claude --permission-mode dontAsk'
 
 # docker
 if type docker > /dev/null 2>&1; then
@@ -288,3 +288,6 @@ bindkey '^H' backward-kill-word
 
 # Fix: prevent Nix glibc librt from conflicting with Chrome/Playwright
 export LD_LIBRARY_PATH="/home/coura/.local/lib-shims${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+
+# Local secrets (not managed by chezmoi, generated from 1Password via chezmoi template)
+[[ -f ~/.secrets ]] && source ~/.secrets

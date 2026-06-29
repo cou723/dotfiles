@@ -2,9 +2,20 @@
   "$schema": "https://json.schemastore.org/claude-code-settings.json",
   "permissions": {
     "allow": [
-      "WebSearch"
+      "WebSearch",
+      "mcp__brave-search__brave_web_search"
     ]
   },
+  "mcpServers": {
+    "brave-search": {
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-brave-search"],
+      "env": {
+        "BRAVE_API_KEY": "{{ env "BRAVE_API_KEY" | default "" }}"
+      }
+    }
+  },
+  "model": "sonnet",
   "hooks": {
     "Stop": [
       {
@@ -55,5 +66,6 @@
       }
     }
   },
-  "tui": "fullscreen"
+  "tui": "fullscreen",
+  "agentPushNotifEnabled": true
 }
