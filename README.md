@@ -13,10 +13,15 @@ chezmoi init --apply https://github.com/cou723/dotfiles.git
 シークレットは 1Password CLI (`op`) 経由で取得される。インストール後、`chezmoi apply` を再実行すること。
 
 ```sh
-# macOS
+# macOS / Linux ネイティブ
 brew install 1password-cli
-# Linux
-# https://developer.1password.com/docs/cli/get-started/
+
+# WSL の場合
+# Windows 側に 1Password をインストールし、デスクトップアプリの
+# 設定 → デベロッパー →「1Password CLI との統合を使用する」をON にすると
+# op.exe が使えるようになる。
+# このリポジトリには op.exe へのラッパー (~/.local/bin/op) が含まれているため
+# chezmoi init --apply 後はそのまま使える。
 ```
 
 ### 1Password アイテムの作成
@@ -86,3 +91,4 @@ chezmoi update    # git pull + apply を一発で実行
 | `dot_gitconfig.tmpl` | `~/.gitconfig` |
 | `dot_claude/settings.json.tmpl` | `~/.claude/settings.json` |
 | `dot_secrets.tmpl` | `~/.secrets` |
+| `dot_local/bin/op` | `~/.local/bin/op` (WSL 用 op.exe ラッパー) |
