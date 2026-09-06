@@ -217,11 +217,14 @@ if type gh > /dev/null 2>&1; then
     alias ghic="gh issue create"
 fi
 
+export LOCAL_LLM_URL=http://$(ip route | awk '/default/ {print $3}'):12345
+
 alias cl="claude"
-alias clp="claude --permission-mode plan"
+alias cla="claude --permission-mode auto"
 alias clda='claude --permission-mode dontAsk '
-alias lcl='ANTHROPIC_BASE_URL=$LOCAL_LLM_URL claude'
-alias lclda='ANTHROPIC_BASE_URL=$LOCAL_LLM_URL claude --permission-mode dontAsk'
+alias lcl='ANTHROPIC_BASE_URL=$LOCAL_LLM_URL ANTHROPIC_API_KEY=dummy claude'
+alias lcla='ANTHROPIC_BASE_URL=$LOCAL_LLM_URL ANTHROPIC_API_KEY=dummy claude --permission-mode auto'
+alias lclda='ANTHROPIC_BASE_URL=$LOCAL_LLM_URL ANTHROPIC_API_KEY=dummy claude --permission-mode dontAsk'
 
 # docker
 if type docker > /dev/null 2>&1; then

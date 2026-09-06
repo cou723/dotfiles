@@ -59,6 +59,7 @@ case ":$PATH:" in
     *) export PATH="$PNPM_HOME:$PATH" ;;
 esac
 add_path $PNPM_HOME
+add_path "$PNPM_HOME/bin"
 
 # android path
 export ANDROID_HOME=$HOME/Android/Sdk
