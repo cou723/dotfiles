@@ -1,5 +1,7 @@
 source ~/.profile
 
+setopt interactivecomments
+
 if command -v code >/dev/null 2>&1; then
     export GIT_EDITOR="code --wait"
     export VISUAL="code --wait"
@@ -215,16 +217,14 @@ if type gh > /dev/null 2>&1; then
     alias ghil="gh issue list"
     alias ghi="gh issue"
     alias ghic="gh issue create"
+    # used by opencode github MCP (remote server, PAT-style Bearer auth)
+    export GITHUB_PERSONAL_ACCESS_TOKEN="$(gh auth token)"
 fi
 
 export LOCAL_LLM_URL=http://$(ip route | awk '/default/ {print $3}'):12345
 
-alias cl="claude"
-alias cla="claude --permission-mode auto"
-alias clda='claude --permission-mode dontAsk '
-alias lcl='ANTHROPIC_BASE_URL=$LOCAL_LLM_URL ANTHROPIC_API_KEY=dummy claude'
-alias lcla='ANTHROPIC_BASE_URL=$LOCAL_LLM_URL ANTHROPIC_API_KEY=dummy claude --permission-mode auto'
-alias lclda='ANTHROPIC_BASE_URL=$LOCAL_LLM_URL ANTHROPIC_API_KEY=dummy claude --permission-mode dontAsk'
+alias ai="opencode --mini"
+alias aic="opencode --mini --continue"
 
 # docker
 if type docker > /dev/null 2>&1; then
@@ -294,3 +294,7 @@ export LD_LIBRARY_PATH="/home/coura/.local/lib-shims${LD_LIBRARY_PATH:+:$LD_LIBR
 
 # Local secrets (not managed by chezmoi, generated from 1Password via chezmoi template)
 [[ -f ~/.secrets ]] && source ~/.secrets
+
+# opencode
+export PATH=/home/coura/.opencode/bin:$PATH
+export OPENCODE_DISABLE_MOUSE=1
