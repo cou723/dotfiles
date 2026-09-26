@@ -1,0 +1,4 @@
+# OpenCode のプラグイン依存を、package-lock.json 一致で再現
+run = [
+  { name = "opencode-plugin", cmd = "npm ci --prefix ~/.config/opencode" },
+]
