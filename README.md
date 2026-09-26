@@ -20,15 +20,9 @@ brew install 1password-cli
 # Windows 側に 1Password をインストールし、デスクトップアプリの
 # 設定 → デベロッパー →「1Password CLI との統合を使用する」をON にすると
 # op.exe が使えるようになる。
-# このリポジトリには op.exe へのラッパー (~/.local/bin/op) が含まれているため
+# このリポジトリには op.exe へのラッパー (~/.local/bin/executable_op) が含まれているため
 # chezmoi init --apply 後はそのまま使える。
 ```
-
-### 1Password アイテムの作成
-
-| Vault | Item 名 | フィールド | 用途 |
-|-------|---------|-----------|------|
-| Personal | Brave Search API | password | Brave Search MCP サーバー |
 
 ### シークレットの反映
 
@@ -67,12 +61,20 @@ git push
 chezmoi update    # git pull + apply を一発で実行
 ```
 
+### OpenCode を起動する
+
+```sh
+ai    # opencode mini（最小 UI）
+aic   # opencode mini --continue（直前の会話から継続）
+```
+
+GitHub MCP を使う場合、`GITHUB_PERSONAL_ACCESS_TOKEN` は `gh auth token` の結果が `~/.zshrc` から自動エクスポートされるため、別途設定しなくてよい。
+
 ## シークレットの扱い
 
 | ファイル | 管理方法 | 備考 |
 |---------|---------|------|
 | `~/.secrets` | chezmoi template が生成 | git 管理外。`op` で値を取得 |
-| `~/.claude/settings.json` | chezmoi template | `BRAVE_API_KEY` は `$BRAVE_API_KEY` 経由 |
 
 **シークレットを追加するとき:**
 
@@ -89,6 +91,6 @@ chezmoi update    # git pull + apply を一発で実行
 | `dot_zshrc` | `~/.zshrc` |
 | `dot_profile` | `~/.profile` |
 | `dot_gitconfig.tmpl` | `~/.gitconfig` |
-| `dot_claude/settings.json.tmpl` | `~/.claude/settings.json` |
+| `dot_p10k.zsh` | `~/.p10k.zsh` |
 | `dot_secrets.tmpl` | `~/.secrets` |
-| `dot_local/bin/op` | `~/.local/bin/op` (WSL 用 op.exe ラッパー) |
+| `dot_local/bin/executable_op` | `~/.local/bin/executable_op` (WSL 用 op.exe ラッパー) |
