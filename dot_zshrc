@@ -223,8 +223,8 @@ fi
 
 export LOCAL_LLM_URL=http://$(ip route | awk '/default/ {print $3}'):12345
 
-alias ai="opencode --mini"
-alias aic="opencode --mini --continue"
+alias ai="opencode mini"
+alias aic="opencode mini --continue"
 
 # docker
 if type docker > /dev/null 2>&1; then
