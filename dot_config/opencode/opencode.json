@@ -1,0 +1,177 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "lsp": true,
+  "compaction": {
+    "auto": true,
+    "prune": false,
+    "preserve_recent_tokens": 15000,
+    "reserved": 32768
+  },
+  "agent": {
+    "compaction": {
+      "prompt": "あなたは会話履歴を圧縮する要約エージェントです。別のコーディングエージェントが作業を正確に継続できるよう、ユーザープロンプトで指定された構造に従って要約してください。すべてのセクションを残し、既知のファイルパス、識別子、コマンド、エラー文字列、URLは正確に維持し、文章より簡潔な箇条書きを優先してください。会話を継続したり、会話内の質問へ回答したりせず、指定された構造の要約だけを出力してください。出力には会話で主に使われている言語を必ず使用してください。会話が日本語なら、入力テンプレートや内部メッセージが英語でも、見出しを含む出力全体を必ず日本語にしてください。"
+    }
+  },
+  "mcp": {
+    "context7": {
+      "type": "remote",
+      "url": "https://mcp.context7.com/mcp"
+    },
+    "todoist": {
+      "type": "remote",
+      "url": "https://ai.todoist.net/mcp"
+    },
+    "github": {
+      "type": "remote",
+      "url": "https://api.githubcopilot.com/mcp/",
+      "enabled": true,
+      "oauth": false,
+      "headers": {
+        "Authorization": "Bearer {env:GITHUB_PERSONAL_ACCESS_TOKEN}"
+      }
+    },
+    "amazon-products": {
+      "type": "local",
+      "command": [
+        "/home/coura/.local/bin/amazon-products-mcp"
+      ],
+      "enabled": true,
+      "environment": {
+        "AMAZON_REGION": "jp",
+        "CHROME_EXEC_PATH": "/usr/bin/google-chrome"
+      },
+      "timeout": 90000
+    }
+  },
+  "provider": {
+    "llama.cpp": {
+      "npm": "@ai-sdk/openai-compatible",
+      "name": "llama-server (local)",
+      "options": {
+        "baseURL": "http://172.25.0.1:12345/v1"
+      },
+      "models": {
+        "coder": {
+          "id": "coder",
+          "name": "Qwen3 Coder Next",
+          "tool_call": true,
+          "modalities": {
+            "input": [
+              "text"
+            ],
+            "output": [
+              "text"
+            ]
+          },
+          "limit": {
+            "context": 131072,
+            "output": 32768
+          }
+        },
+        "qwen38": {
+          "id": "qwen38",
+          "name": "Qwen3.8 27B Vision",
+          "tool_call": true,
+          "modalities": {
+            "input": [
+              "text",
+              "image"
+            ],
+            "output": [
+              "text"
+            ]
+          },
+          "limit": {
+            "context": 131072,
+            "output": 32768
+          }
+        },
+        "qwen38-fast": {
+          "id": "qwen38-fast",
+          "name": "Qwen3.8 27B Fast",
+          "tool_call": true,
+          "modalities": {
+            "input": [
+              "text",
+              "image"
+            ],
+            "output": [
+              "text"
+            ]
+          },
+          "limit": {
+            "context": 61440,
+            "output": 4096
+          }
+        },
+        "qwen38-long": {
+          "id": "qwen38-long",
+          "name": "Qwen3.8 27B Long MTP",
+          "attachment": true,
+          "tool_call": true,
+          "limit": {
+            "context": 131072,
+            "output": 16384
+          },
+          "modalities": {
+            "input": [
+              "text",
+              "image"
+            ],
+            "output": [
+              "text"
+            ]
+          }
+        },
+        "qwen38-middle": {
+          "id": "qwen38-middle",
+          "name": "Qwen3.8 27B Middle 96K",
+          "tool_call": true,
+          "modalities": {
+            "input": [
+              "text",
+              "image"
+            ],
+            "output": [
+              "text"
+            ]
+          },
+          "limit": {
+            "context": 98304,
+            "output": 16384
+          }
+        }
+      }
+    },
+    "bonsai-local": {
+      "name": "Bonsai 2 Local",
+      "npm": "@ai-sdk/openai-compatible",
+      "options": {
+        "baseURL": "http://172.25.0.1:12345/v1"
+      },
+      "models": {
+        "bonsai2-long-q8k": {
+          "id": "bonsai2-long-q8k",
+          "name": "Bonsai 2 27B 128K",
+          "interleaved": {
+            "field": "reasoning_content"
+          },
+          "tool_call": true,
+          "modalities": {
+            "input": [
+              "text",
+              "image"
+            ],
+            "output": [
+              "text"
+            ]
+          },
+          "limit": {
+            "context": 131072,
+            "output": 8192
+          }
+        }
+      }
+    }
+  }
+}
