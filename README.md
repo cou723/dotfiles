@@ -8,6 +8,19 @@ chezmoi で管理する個人 dotfiles。
 chezmoi init --apply https://github.com/cou723/dotfiles.git
 ```
 
+### macOS の Nix / Home Manager
+
+macOS 用のパッケージ構成は `~/.config/home-manager` に配置される。
+Nix をインストールした後、次のコマンドで固定済みの構成を反映する。
+
+```sh
+PATH=/nix/var/nix/profiles/default/bin:$PATH \
+  nix run home-manager -- switch --flake ~/.config/home-manager
+```
+
+`flake.lock` も管理対象のため、別のMacでも同じnixpkgsとHome Managerの
+リビジョンから環境を再現できる。非macOS環境ではこのディレクトリは適用されない。
+
 ### 1Password CLI のインストール
 
 シークレットは 1Password CLI (`op`) 経由で取得される。インストール後、`chezmoi apply` を再実行すること。
@@ -94,3 +107,4 @@ GitHub MCP を使う場合、`GITHUB_PERSONAL_ACCESS_TOKEN` は `gh auth token` 
 | `dot_p10k.zsh` | `~/.p10k.zsh` |
 | `dot_secrets.tmpl` | `~/.secrets` |
 | `dot_local/bin/executable_op` | `~/.local/bin/executable_op` (WSL 用 op.exe ラッパー) |
+| `dot_config/home-manager/` | `~/.config/home-manager/` (macOS のみ) |

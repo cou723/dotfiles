@@ -12,7 +12,6 @@
 [core]
 	quotepath = false
 	pager = delta
-	sshCommand = ssh.exe
 
 [credential "https://github.com"]
 	helper = !gh auth git-credential
@@ -29,9 +28,31 @@
 [gpg]
   format = ssh
 
-{{ if and (hasKey .chezmoi.kernel "osrelease") (.chezmoi.kernel.osrelease | lower | contains "microsoft") }}
+{{ if eq .chezmoi.os "darwin" }}
+[gpg "ssh"]
+  program = "/Applications/1Password.app/Contents/MacOS/op-ssh-sign"
+
+# macOS のリポジトリごとの Git プロファイル
+[includeIf "hasconfig:remote.*.url:https://github.com/**"]
+  path = ~/.gitconfig-mine
+[includeIf "hasconfig:remote.*.url:git@github.com:*/**"]
+  path = ~/.gitconfig-mine
+
+[includeIf "hasconfig:remote.*.url:https://github-work.com/**"]
+  path = ~/.gitconfig-work
+[includeIf "hasconfig:remote.*.url:ssh://git@github-work.com/**"]
+  path = ~/.gitconfig-work
+[includeIf "hasconfig:remote.*.url:git@github-work.com:*/**"]
+  path = ~/.gitconfig-work
+
+[includeIf "hasconfig:remote.*.url:ssh://git@github-konin.com/**"]
+  path = ~/.gitconfig-konin
+{{ else if and (hasKey .chezmoi.kernel "osrelease") (.chezmoi.kernel.osrelease | lower | contains "microsoft") }}
 [gpg "ssh"]
   program = "op-ssh-sign-wsl.exe"
+
+[core]
+  sshCommand = ssh.exe
 {{ end }}
 
 [commit]
