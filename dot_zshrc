@@ -300,5 +300,4 @@ export LD_LIBRARY_PATH="/home/coura/.local/lib-shims${LD_LIBRARY_PATH:+:$LD_LIBR
 [[ -f ~/.secrets ]] && source ~/.secrets
 
 # opencode
-export PATH=/home/coura/.opencode/bin:$PATH
 export OPENCODE_DISABLE_MOUSE=1
