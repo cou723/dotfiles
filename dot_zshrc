@@ -229,6 +229,7 @@ fi
 
 alias ai="opencode mini"
 alias aic="opencode mini --continue"
+alias aip="opencode mini --prompt"
 
 # docker
 if type docker > /dev/null 2>&1; then
