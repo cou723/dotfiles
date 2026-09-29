@@ -85,3 +85,11 @@ add_path "$HOME/.rb/bin"
 add_path "$HOME/.moon/bin"
 
 add_path "$HOME/.nix-profile/bin"
+
+{{ if eq .chezmoi.os "darwin" }}
+# Nix daemon profile: puts `nix` itself on PATH (not only ~/.nix-profile/bin).
+# ~/.zshrc sources this file, so interactive shells pick it up on macOS.
+if [ -e '/nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh' ]; then
+    . '/nix/var/nix/profiles/default/etc/profile.d/nix-daemon.sh'
+fi
+{{ end }}
