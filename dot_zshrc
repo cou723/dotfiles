@@ -221,7 +221,11 @@ if type gh > /dev/null 2>&1; then
     export GITHUB_PERSONAL_ACCESS_TOKEN="$(gh auth token)"
 fi
 
-export LOCAL_LLM_URL=http://$(ip route | awk '/default/ {print $3}'):12345
+# OpenCode local LLM (WSL or Ubuntu only)
+if grep -qi microsoft /proc/version 2>/dev/null \
+    || { [ -r /etc/os-release ] && . /etc/os-release && [ "$ID" = "ubuntu" ]; }; then
+    export LOCAL_LLM_URL="http://$(ip route | awk '/default/ {print $3}'):12345"
+fi
 
 alias ai="opencode mini"
 alias aic="opencode mini --continue"

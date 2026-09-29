@@ -1,3 +1,4 @@
+{{ $enableLocalLLM := eq (trim (output "sh" "-c" "if grep -qi microsoft /proc/version 2>/dev/null || { [ -r /etc/os-release ] && . /etc/os-release && [ \"$ID\" = ubuntu ]; }; then printf true; else printf false; fi")) "true" }}
 {
   "$schema": "https://opencode.ai/config.json",
   "lsp": true,
@@ -44,11 +45,12 @@
     }
   },
   "provider": {
+{{ if $enableLocalLLM }}
     "llama.cpp": {
       "npm": "@ai-sdk/openai-compatible",
       "name": "llama-server (local)",
       "options": {
-        "baseURL": "http://172.25.0.1:12345/v1"
+        "baseURL": "{env:LOCAL_LLM_URL}/v1"
       },
       "models": {
         "coder": {
@@ -147,7 +149,7 @@
       "name": "Bonsai 2 Local",
       "npm": "@ai-sdk/openai-compatible",
       "options": {
-        "baseURL": "http://172.25.0.1:12345/v1"
+        "baseURL": "{env:LOCAL_LLM_URL}/v1"
       },
       "models": {
         "bonsai2-long-q8k": {
@@ -173,5 +175,6 @@
         }
       }
     }
+{{ end }}
   }
 }
