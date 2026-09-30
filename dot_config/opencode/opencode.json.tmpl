@@ -1,8 +1,13 @@
 {{ $enableLocalLLM := eq (trim (output "sh" "-c" "if grep -qi microsoft /proc/version 2>/dev/null || { [ -r /etc/os-release ] && . /etc/os-release && [ \"$ID\" = ubuntu ]; }; then printf true; else printf false; fi")) "true" }}
+{{ $isWSL := eq (trim (output "sh" "-c" "if grep -qi microsoft /proc/version 2>/dev/null; then printf true; else printf false; fi")) "true" }}
 {
   "$schema": "https://opencode.ai/config.json",
 {{ if $enableLocalLLM }}
   "model": "strata/swift-1.5-iq2_xs",
+{{ end }}
+{{ if $isWSL }}
+  "enabled_providers": ["openai", "strata"],
+  "small_model": "strata/swift-1.5-iq2_xs",
 {{ end }}
   "lsp": true,
   "compaction": {
@@ -49,6 +54,11 @@
   },
   "provider": {
 {{ if $enableLocalLLM }}
+{{ if $isWSL }}
+    "openai": {
+      "whitelist": ["gpt-6.1-sol", "gpt-6-luna"]
+    },
+{{ end }}
     "strata": {
       "npm": "@ai-sdk/openai-compatible",
       "name": "Strata",
