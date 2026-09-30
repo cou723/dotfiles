@@ -7,7 +7,6 @@
     "style": "block",
     "blinking": true
   },
-  "mouse": false,
   "attention": {
     "enabled": true,
     "notifications": true,
