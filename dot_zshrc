@@ -182,7 +182,7 @@ if type pnpm > /dev/null 2>&1; then
         alias pr="pnpm run"
         alias pa="pnpm add"
         alias pad="pnpm add --dev"
-        alias pi="pnpm install"
+        alias pni="pnpm install"
     fi
 fi
 
@@ -217,7 +217,7 @@ if type gh > /dev/null 2>&1; then
     alias ghil="gh issue list"
     alias ghi="gh issue"
     alias ghic="gh issue create"
-    # used by opencode github MCP (remote server, PAT-style Bearer auth)
+    # GitHub MCP bearer authentication
     export GITHUB_PERSONAL_ACCESS_TOKEN="$(gh auth token)"
 fi
 
@@ -227,9 +227,9 @@ if grep -qi microsoft /proc/version 2>/dev/null \
     export LOCAL_LLM_URL="http://$(ip route | awk '/default/ {print $3}'):12345"
 fi
 
-alias ai="opencode mini"
-alias aic="opencode mini --continue"
-alias aip="opencode mini --prompt"
+alias ai="pi"
+alias aic="pi --continue"
+alias aip="pi --print"
 
 # docker
 if type docker > /dev/null 2>&1; then

@@ -74,14 +74,20 @@ git push
 chezmoi update    # git pull + apply を一発で実行
 ```
 
-### OpenCode を起動する
+### Pi を起動する
 
 ```sh
-ai    # opencode mini（最小 UI）
-aic   # opencode mini --continue（直前の会話から継続）
+ai    # pi
+aic   # pi --continue（直前のPiの会話から継続）
+aip   # pi --print（非対話実行）
 ```
 
-GitHub MCP を使う場合、`GITHUB_PERSONAL_ACCESS_TOKEN` は `gh auth token` の結果が `~/.zshrc` から自動エクスポートされるため、別途設定しなくてよい。
+Piの設定は `~/.pi/agent/` に配置する。パッケージは `pi update --extensions` で取得する。
+OpenAIのサブスクリプションはPiの `/login` からOpenAI Codexへサインインする。
+Todoistは `pi mcp login todoist`、GitHub MCPは既存の `gh auth token` を利用する。
+スキルの正本は `dot_config/opencode/skills/` を共有し、Pi固有の実行方法はPiの `AGENTS.md` で定義する。
+OpenCodeの設定・セッションは保持するが、Piへ会話履歴をインポートしない。
+`pnpm install` の短縮エイリアスは、Piとの衝突を避けて `pni` とする。
 
 ## シークレットの扱い
 
