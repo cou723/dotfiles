@@ -85,8 +85,9 @@ aip   # pi --print（非対話実行）
 Piの設定は `~/.pi/agent/` に配置する。パッケージは `pi update --extensions` で取得する。
 OpenAIのサブスクリプションはPiの `/login` からOpenAI Codexへサインインする。
 Todoistは `pi mcp login todoist`、GitHub MCPは既存の `gh auth token` を利用する。
-スキルの正本は `dot_config/opencode/skills/` を共有し、Pi固有の実行方法はPiの `AGENTS.md` で定義する。
-OpenCodeの設定・セッションは保持するが、Piへ会話履歴をインポートしない。
+スキルの正本は `dot_pi/agent/skills/` に置き、`~/.pi/agent/skills/` からPiが自動検出する。
+モデル・MCP・サブエージェント・拡張もPi側で管理し、OpenCodeの設定には依存しない。
+OpenCodeの過去セッション・認証データはPiへインポートしない。
 `pnpm install` の短縮エイリアスは、Piとの衝突を避けて `pni` とする。
 
 ## シークレットの扱い

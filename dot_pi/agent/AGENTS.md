@@ -5,14 +5,14 @@
 - 実際のコミット作成を依頼されたら、必ず`git-commit`サブエージェントへ委譲する。pushは別途依頼がある場合のみ行う。
 - Todoistへのタスク追加は`todoist-add-task`へ委譲し、タスク内容、日付、温度感のある優先度のみを渡す。保存先は指定された場合のみ渡す。
 - それ以外のサブエージェント起動は、ユーザーまたは適用される指示が委譲を許可した場合に限る。
-- `~/.pi/agent/`と`~/.config/opencode/`の管理対象設定は直接編集しない。`~/.local/share/chezmoi/`のソースを変更し、対象パスに限定して`chezmoi apply`する。
+- `~/.pi/agent/`の管理対象設定は直接編集しない。`~/.local/share/chezmoi/`のソースを変更し、対象パスに限定して`chezmoi apply`する。
 - auth.json、mcp-auth.json、セッション、キャッシュはchezmoiに追加しない。認証情報を表示・コミットしない。
 - 自分が作成していない変更を上書き・削除・復元しない。
 - ドキュメントへの不要な変更履歴・作業ログの追加を避ける。
 
-## Piでの共有スキルの利用
+## Piのスキルの利用
 
-スキルの正本は当面chezmoiの`dot_config/opencode/skills/`に置き、Piも読み込む。以下は共有スキル内のOpenCode固有の実行方法より優先する。
+スキルの正本はchezmoiの`dot_pi/agent/skills/`に置き、`~/.pi/agent/skills/`へ適用する。Piが標準の配置先から自動検出する。以下はスキル内に残る他のエージェント固有の実行方法より優先する。
 
 - スキルは`read`でSKILL.mdを読み込む。OpenCodeの`skill`や`execute`ツールがあると仮定しない。
 - MCPツールは`mcp__<server>__<tool>`という名前。`codemode`の`searchTools()`で正確な名前とシグネチャを確認し、ツール説明に従って呼び出す。OpenCodeの名前をそのまま呼ばない。

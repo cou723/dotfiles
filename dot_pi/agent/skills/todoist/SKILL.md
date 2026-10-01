@@ -17,7 +17,7 @@ description: Todoist のタスク管理（タスク・プロジェクト・セ�
 
 ## 認証
 
-初回は OAuth 認証が必要です。ツール呼び出しが認証エラーで失敗したら、`opencode mcp auth todoist` を実行してブラウザで完了してください。
+初回は OAuth 認証が必要です。ツール呼び出しが認証エラーで失敗したら再試行せず、`pi mcp login todoist` または `/mcp` でログインするよう案内してください。
 
 ## 活用方法
 

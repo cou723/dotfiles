@@ -17,8 +17,8 @@ description: GitHub 操作（リポジトリ・Issue・Pull Request・Actions・
 
 ## 認証
 
-`gh` CLI のトークンを `GITHUB_PERSONAL_ACCESS_TOKEN` 環境変数（`~/.zshrc` で自動エクスポート済み）として Bearer 認証に使用します。
-401 エラーで失敗したら、`gh auth status` でログイン状態を確認し、環境変数がセットされた状態で opencode を起動しているか確認してください。
+Piの `mcp.json` が実行時に `gh auth token` を取得し、Bearer認証に使用します。トークンを表示・保存しないでください。
+401 エラーで失敗したら、`gh auth status` でログイン状態を確認してください。
 
 ## MCP と gh CLI の使い分け
 

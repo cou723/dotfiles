@@ -217,11 +217,9 @@ if type gh > /dev/null 2>&1; then
     alias ghil="gh issue list"
     alias ghi="gh issue"
     alias ghic="gh issue create"
-    # GitHub MCP bearer authentication
-    export GITHUB_PERSONAL_ACCESS_TOKEN="$(gh auth token)"
 fi
 
-# OpenCode local LLM (WSL or Ubuntu only)
+# Pi local LLM (WSL or Ubuntu only)
 if grep -qi microsoft /proc/version 2>/dev/null \
     || { [ -r /etc/os-release ] && . /etc/os-release && [ "$ID" = "ubuntu" ]; }; then
     export LOCAL_LLM_URL="http://$(ip route | awk '/default/ {print $3}'):12345"
@@ -299,6 +297,3 @@ export LD_LIBRARY_PATH="/home/coura/.local/lib-shims${LD_LIBRARY_PATH:+:$LD_LIBR
 
 # Local secrets (not managed by chezmoi, generated from 1Password via chezmoi template)
 [[ -f ~/.secrets ]] && source ~/.secrets
-
-# opencode
-export OPENCODE_DISABLE_MOUSE=1

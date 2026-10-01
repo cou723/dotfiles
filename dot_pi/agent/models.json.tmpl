@@ -1,10 +1,10 @@
-{{ $config := includeTemplate "dot_config/opencode/opencode.json.tmpl" . | fromJson -}}
+{{ $enableLocalLLM := eq (trim (output "sh" "-c" "if grep -qi microsoft /proc/version 2>/dev/null || { [ -r /etc/os-release ] && . /etc/os-release && [ \"$ID\" = ubuntu ]; }; then printf true; else printf false; fi")) "true" -}}
 {
   "providers": {
-{{ if hasKey $config.provider "strata" }}
+{{ if $enableLocalLLM }}
     "strata": {
       "name": "Strata",
-      "baseUrl": {{ $config.provider.strata.options.baseURL | toJson }},
+      "baseUrl": "http://172.25.0.1:8080/v1",
       "api": "openai-completions",
       "apiKey": "sk-local",
       "models": [{

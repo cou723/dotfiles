@@ -1,4 +1,1 @@
-# OpenCode のプラグイン依存を、package-lock.json 一致で再現
-run = [
-  { name = "opencode-plugin", cmd = "npm ci --prefix ~/.config/opencode" },
-]
+# Piのパッケージは pi update --extensions で管理する。

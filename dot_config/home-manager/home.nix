@@ -67,7 +67,6 @@ in
     colima
     docker
     docker-compose
-    opencode
 
     # C/C++
     clang-tools
