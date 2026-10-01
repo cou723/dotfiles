@@ -1,0 +1,48 @@
+{{ $config := includeTemplate "dot_config/opencode/opencode.json.tmpl" . | fromJson -}}
+{
+  "providers": {
+{{ if hasKey $config.provider "strata" }}
+    "strata": {
+      "name": "Strata",
+      "baseUrl": {{ $config.provider.strata.options.baseURL | toJson }},
+      "api": "openai-completions",
+      "apiKey": "sk-local",
+      "models": [{
+        "id": "swift-1.5-iq2_xs",
+        "name": "Swift 1.5 IQ2_XS",
+        "reasoning": true,
+        "input": ["text"],
+        "contextWindow": 131072,
+        "maxTokens": 8192
+      }]
+    },
+    "llama.cpp": {
+      "name": "llama-server (local)",
+      "baseUrl": "${LOCAL_LLM_URL}/v1",
+      "api": "openai-completions",
+      "apiKey": "local",
+      "models": [{
+        "id": "flash-next-coder",
+        "name": "Qwen3.8 Flash Next GSQ-RCO Coder (local)",
+        "input": ["text"],
+        "contextWindow": 65536,
+        "maxTokens": 2048
+      }]
+    },
+    "bonsai-local": {
+      "name": "Bonsai 2 Local",
+      "baseUrl": "${LOCAL_LLM_URL}/v1",
+      "api": "openai-completions",
+      "apiKey": "local",
+      "models": [{
+        "id": "bonsai2-long-q8k",
+        "name": "Bonsai 2 27B 128K",
+        "reasoning": true,
+        "input": ["text", "image"],
+        "contextWindow": 131072,
+        "maxTokens": 8192
+      }]
+    }
+{{ end }}
+  }
+}

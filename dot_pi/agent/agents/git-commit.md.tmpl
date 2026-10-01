@@ -1,0 +1,8 @@
+---
+name: git-commit
+description: コミット作成を依頼された場合の変更確認、コミット分割、Why中心のメッセージ、1Password署名付きコミットを担当する。
+tools: read, grep, find, ls, bash
+inheritProjectContext: true
+inheritGlobalContext: true
+---
+{{ include "dot_config/opencode/agents/git-commit.md" | replaceAllRegex "(?s)^---\n.*?\n---\n" "" }}

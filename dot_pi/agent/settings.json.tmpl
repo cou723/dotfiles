@@ -1,0 +1,24 @@
+{{ $enableLocalLLM := eq (trim (output "sh" "-c" "if grep -qi microsoft /proc/version 2>/dev/null || { [ -r /etc/os-release ] && . /etc/os-release && [ \"$ID\" = ubuntu ]; }; then printf true; else printf false; fi")) "true" -}}
+{
+  "packages": [
+    "npm:pi-subagents",
+    "npm:pi-permission-modes",
+    "npm:pi-lsp-extension",
+    "npm:pi-web-access@0.35.0"
+  ],
+  "lastChangelogVersion": "0.99.1",
+{{ if $enableLocalLLM }}
+  "defaultProvider": "strata",
+  "defaultModel": "swift-1.5-iq2_xs",
+{{ end }}
+  "theme": "system",
+  "hideThinkingBlock": false,
+  "defaultProjectTrust": "ask",
+  "defaultTools": ["+grep", "+find", "+ls", "+codemode"],
+  "compaction": {
+    "enabled": true,
+    "reserveTokens": 32768,
+    "keepRecentTokens": 15000
+  },
+  "skills": ["~/.config/opencode/skills"]
+}
