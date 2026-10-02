@@ -1,0 +1,11 @@
+{
+  "poke": {
+    "enabled": true,
+    "thresholdSeconds": 60,
+    "autoAbort": true,
+    "autoPoke": false,
+    "postCompactPoke": false,
+    "postCompactCooldownSeconds": 30,
+    "postCompactMaxPokes": 2
+  }
+}

@@ -1,6 +1,7 @@
 {{ $enableLocalLLM := eq (trim (output "sh" "-c" "if grep -qi microsoft /proc/version 2>/dev/null || { [ -r /etc/os-release ] && . /etc/os-release && [ \"$ID\" = ubuntu ]; }; then printf true; else printf false; fi")) "true" -}}
 {
   "packages": [
+    "npm:pi-poke@1.2.8",
     "npm:pi-subagents",
     "git:github.com/andrewhowdencom/pi.hitl@ffda7e2038f726fec6bc724a10569cde3d509956",
     "npm:pi-lsp-extension",
