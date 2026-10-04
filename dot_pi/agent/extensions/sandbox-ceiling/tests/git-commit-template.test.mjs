@@ -58,7 +58,13 @@ assert.deepEqual(roots(wsl), [
   windowsApps + "/op-ssh-sign-wsl.exe",
 ]);
 assert.deepEqual(roots(wsl, "write"), ["${cwd}", "${home}/.local/share/chezmoi"]);
-assert.ok(wsl.stdout.includes("各 bash 呼び出しの先頭"));
+assert.ok(wsl.stdout.includes("対象リポジトリは起動元のカレントディレクトリ"));
+assert.ok(wsl.stdout.includes("各 bash 呼び出しに `cd` を挟まない"));
+assert.ok(wsl.stdout.includes("git rev-parse --show-toplevel"));
+assert.ok(wsl.stdout.includes("別リポジトリへ移動せず停止"));
+assert.ok(wsl.stdout.includes("説明と大きく異なる"));
+assert.ok(wsl.stdout.includes("無関係な未ステージ変更があるだけでは停止せず"));
+assert.ok(!wsl.stdout.includes("cd <対象リポジトリ> &&"));
 assert.ok(wsl.stdout.includes("実パスが対象リポジトリの書き込み許可範囲"));
 assert.match(wsl.stdout, /"git ls-files\*": allow/);
 assert.match(wsl.stdout, /"git config \*":\n {6}action: deny\n {6}reason: ".+"/);
