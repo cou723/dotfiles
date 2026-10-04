@@ -39,6 +39,11 @@ assert.deepEqual(roots("read"), [
 assert.deepEqual(roots("write"), ["${cwd}", sourceAgentDir.replace(/\/$/, "") + "/dot_pi/agent"]);
 assert.match(result.stdout, /"gh auth \*": deny\n {4}"gh auth status": allow/);
 assert.match(result.stdout, /capabilities: \[pi_config_apply, pi_project_config_write\]/);
+assert.match(result.stdout, /^allowed_agents: \[git-commit, researcher\]$/m);
+assert.match(result.stdout, /git-commit または researcher だけを起動してください。/);
+assert.match(result.stdout, /調査は researcher へ委譲できます。/);
+assert.match(result.stdout, /設定の編集・反映は自分が担当してください。/);
+assert.match(result.stdout, /git-commit と researcher 以外の子 Agent は起動せず/);
 
 if (process.env.POC_MODULES && process.env.POC_JITI_ENTRY) {
   const { createJiti } = await import(process.env.POC_JITI_ENTRY);
@@ -66,5 +71,5 @@ if (process.env.POC_MODULES && process.env.POC_JITI_ENTRY) {
   }
 }
 console.log(
-  "PASS: pi-configurator exposes only two gh configuration files read-only, preserves write roots, permits status and denies auth changes/token output",
+  "PASS: pi-configurator exposes only two gh configuration files read-only, preserves write roots, permits status, denies auth changes/token output and allows research delegation",
 );
