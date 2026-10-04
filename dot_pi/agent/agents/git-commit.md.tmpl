@@ -41,7 +41,9 @@ permission:
     "git rev-parse*": allow
     "git add -- *": allow
     "git commit *": allow
-    "git config *": deny
+    "git config *":
+      action: deny
+      reason: "Git 設定の変更は禁止です。明示的に許可された設定の参照だけを行い、設定不足は親へ報告してください。"
     "git config --show-origin --get commit.gpgsign": allow
     "git config --show-origin --get gpg.format": allow
     "git config --show-origin --get gpg.ssh.program": allow
@@ -67,26 +69,66 @@ permission:
     "true": allow
     "false": allow
     "exit *": allow
-    "git push*": deny
-    "git fetch*": deny
-    "git pull*": deny
-    "git reset*": deny
-    "git restore*": deny
-    "git checkout*": deny
-    "git clean*": deny
-    "git rebase*": deny
-    "git merge*": deny
-    "git cherry-pick*": deny
-    "git revert*": deny
-    "git branch*": deny
-    "git tag*": deny
-    "git commit *--amend*": deny
-    "git commit *--no-verify*": deny
-    "git commit *--no-gpg-sign*": deny
-    "git commit *-a": deny
-    "git commit *-a *": deny
-    "git commit *--all*": deny
-    "git -c *": deny
+    "git push*":
+      action: deny
+      reason: "git-commit の担当はローカルのコミット作成までです。push は親へ別途依頼してください。"
+    "git fetch*":
+      action: deny
+      reason: "リモートからの取得はコミット作成の対象外です。必要なら親へ依頼してください。"
+    "git pull*":
+      action: deny
+      reason: "リモートからの取得・統合はコミット作成の対象外です。必要なら親へ依頼してください。"
+    "git reset*":
+      action: deny
+      reason: "既存のコミット・ステージ・作業内容を変更する reset は禁止です。現在の状態を保持して親へ報告してください。"
+    "git restore*":
+      action: deny
+      reason: "自身が作成していない変更を失わせないため restore は禁止です。現在の状態を保持してください。"
+    "git checkout*":
+      action: deny
+      reason: "ブランチ切替やファイルの復元は対象外です。現在のブランチと作業内容を保持してください。"
+    "git clean*":
+      action: deny
+      reason: "未追跡ファイルを失わせる clean は禁止です。削除が必要なら親へ確認してください。"
+    "git rebase*":
+      action: deny
+      reason: "既存履歴の改変は対象外です。現在の履歴に新しいコミットを作成してください。"
+    "git merge*":
+      action: deny
+      reason: "ブランチの統合は対象外です。必要なら親へ依頼してください。"
+    "git cherry-pick*":
+      action: deny
+      reason: "他のコミットの取り込みは対象外です。必要なら親へ依頼してください。"
+    "git revert*":
+      action: deny
+      reason: "既存コミットの取り消しは対象外です。必要なら親へ依頼してください。"
+    "git branch*":
+      action: deny
+      reason: "ブランチの作成・変更・削除は対象外です。現在のブランチで作業してください。"
+    "git tag*":
+      action: deny
+      reason: "タグの作成・変更・削除は対象外です。必要なら親へ依頼してください。"
+    "git commit *--amend*":
+      action: deny
+      reason: "既存コミットの改変は禁止です。今回の変更は新しいコミットにしてください。"
+    "git commit *--no-verify*":
+      action: deny
+      reason: "Git hooks の無効化は禁止です。hook の失敗は親へ報告してください。"
+    "git commit *--no-gpg-sign*":
+      action: deny
+      reason: "無署名コミットは禁止です。1Password の SSH 署名を使い、署名できなければ停止してください。"
+    "git commit *-a":
+      action: deny
+      reason: "無関係な変更を巻き込まないため自動ステージは禁止です。対象パスを明示して git add してください。"
+    "git commit *-a *":
+      action: deny
+      reason: "無関係な変更を巻き込まないため自動ステージは禁止です。対象パスを明示して git add してください。"
+    "git commit *--all*":
+      action: deny
+      reason: "無関係な変更を巻き込まないため自動ステージは禁止です。対象パスを明示して git add してください。"
+    "git -c *":
+      action: deny
+      reason: "Git 設定の一時上書きは禁止です。既存の署名設定と hooks をそのまま使ってください。"
 sandbox:
   read: ["${cwd}", "${home}/.gitconfig"{{ if $wsl }}, "/init", "/run/WSL", {{ $helper | toJson }}{{ end }}]
   write: ["${cwd}"]

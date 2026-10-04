@@ -21,7 +21,9 @@ permission:
   mcp__todoist__find_projects: allow
   mcp__todoist__add_tasks: ask
   mcp:
-    "*": deny
+    "*":
+      action: deny
+      reason: "Todoist のタスク追加に必要な参照・プロジェクト確認・追加以外の MCP 操作は禁止です。対象外の操作は親へ報告してください。"
     "todoist*fetch*object*": allow
     "todoist*find*projects*": allow
     "todoist*add*tasks*": ask

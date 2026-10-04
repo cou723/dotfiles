@@ -20,11 +20,22 @@ permission:
   "external_directory": allow
   "skill": allow
   mcp:
-    "*": deny
+    "*":
+      action: deny
+      reason: "調査用 MCP は Context7 に限定しています。それ以外の外部サービス操作は親へ依頼してください。"
     "context7*": allow
-  "edit": deny
-  "write": deny
-  "bash": deny
+  "edit":
+    "*":
+      action: deny
+      reason: "Researcher は調査専用です。ファイルの編集が必要なら親へ依頼してください。"
+  "write":
+    "*":
+      action: deny
+      reason: "Researcher は調査専用です。ファイルの作成・上書きが必要なら親へ依頼してください。"
+  "bash":
+    "*":
+      action: deny
+      reason: "Researcher はシェルを実行しません。ローカル参照ツール、Context7、Web ツールで調査してください。"
   "web_search": allow
   "fetch_content": allow
   "get_search_content": allow

@@ -19,7 +19,10 @@ permission:
   "notify_parent": allow
   "external_directory": allow
   "skill": allow
-  "mcp": deny
+  "mcp":
+    "*":
+      action: deny
+      reason: "この Agent では汎用 MCP 操作を禁止しています。明示的に許可されたツールを使い、範囲外の操作は担当 Agent または親へ依頼してください。"
   "edit": allow
   "write": allow
   "subagent": allow
@@ -28,7 +31,9 @@ permission:
   bash:
     "*": allow
     "git push*": ask
-    "rm -rf *": deny
+    "rm -rf *":
+      action: deny
+      reason: "再帰的な強制削除は禁止です。対象を確認し、強制的な再帰削除を使わない方法で作業してください。"
 sandbox:
   read: ["${cwd}"]
   write: ["${cwd}"]

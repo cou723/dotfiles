@@ -19,7 +19,10 @@ permission:
   "notify_parent": allow
   "external_directory": allow
   "skill": allow
-  "mcp": deny
+  "mcp":
+    "*":
+      action: deny
+      reason: "この Agent では汎用 MCP 操作を禁止しています。明示的に許可されたツールを使い、範囲外の操作は担当 Agent または親へ依頼してください。"
   "web_enable": allow
   "web_search": allow
   "fetch_content": allow
@@ -50,9 +53,18 @@ permission:
   "subagent": allow
   "get_subagent_result": allow
   "steer_subagent": allow
-  "edit": deny
-  "write": deny
-  "bash": deny
+  "edit":
+    "*":
+      action: deny
+      reason: "Planner は調査・計画と委譲を担当します。ファイルの編集は worker に委譲してください。"
+  "write":
+    "*":
+      action: deny
+      reason: "Planner はファイルを作成・上書きしません。実装は worker に委譲してください。"
+  "bash":
+    "*":
+      action: deny
+      reason: "Planner はシェルを実行しません。参照ツールを使い、コマンドの実行は worker に委譲してください。"
 sandbox:
   read: ["${cwd}"]
   write: []
