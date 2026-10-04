@@ -4,6 +4,7 @@
   "yoloMode": false,
   "authorizerChain": [],
   "doublePressToConfirm": true,
+  "promptNotifications": ["bell"],
   "permissionDialogKeys": {
     "approve": "1",
     "approveSession": "2",
