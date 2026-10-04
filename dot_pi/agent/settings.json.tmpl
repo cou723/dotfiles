@@ -10,10 +10,11 @@
     "npm:@henryqw/pi-ask-question@2.0.4",
     "git:github.com/mizchi/explainer"
   ],
-  "lastChangelogVersion": "0.99.2",
+  "npmCommand": ["npm"],
+  "lastChangelogVersion": "1.0.0",
 {{ if $enableLocalLLM }}
-  "defaultProvider": "strata",
-  "defaultModel": "swift-1.5-iq2_xs",
+  "defaultProvider": "openai",
+  "defaultModel": "gpt-6.1-sol",
 {{ end }}
   "theme": "system",
   "hideThinkingBlock": false,
@@ -25,5 +26,6 @@
     "keepRecentTokens": 15000
   },
   "extensions": ["-extensions/principle-guard.ts"],
-  "skills": []
+  "skills": []{{ if stat (joinPath .chezmoi.homeDir ".pi/agent/settings.json") }}{{ $settings := include (joinPath .chezmoi.homeDir ".pi/agent/settings.json") | fromJson }}{{ if $settings.deviceId }},
+  "deviceId": {{ $settings.deviceId | toJson }}{{ end }}{{ end }}
 }
