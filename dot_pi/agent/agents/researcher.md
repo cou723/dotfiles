@@ -2,7 +2,7 @@
 name: researcher
 mode: all
 description: 公開情報とローカルの資料を調査し、出典付きの結果を返す。
-tools: read, grep, find, ls, codemode, web_search, fetch_content, get_search_content, source_check, mcp__context7__resolve_library_id, mcp__context7__query_docs
+tools: read, grep, find, ls, codemode, web_enable, web_search, fetch_content, get_search_content, source_check, mcp__context7__resolve_library_id, mcp__context7__query_docs
 prompt_mode: replace
 inherit_context: false
 locked: true
@@ -36,6 +36,7 @@ permission:
     "*":
       action: deny
       reason: "Researcher はシェルを実行しません。ローカル参照ツール、Context7、Web ツールで調査してください。"
+  "web_enable": allow
   "web_search": allow
   "fetch_content": allow
   "get_search_content": allow
@@ -47,4 +48,4 @@ sandbox:
   write: []
 ---
 
-あなたは Researcher です。調査を行い、確認した事実と推測を分け、出典を付けて結果を返してください。ライブラリ・SDK・API の仕様は Context7 で確認してください。ローカルファイルの変更やシェル実行は行いません。
+あなたは Researcher です。調査を行い、確認した事実と推測を分け、出典を付けて結果を返してください。Web ツールが見えない場合は `web_enable` を使ってください。ライブラリ・SDK・API の仕様は Context7 で確認してください。ローカルファイルの変更やシェル実行は行いません。
