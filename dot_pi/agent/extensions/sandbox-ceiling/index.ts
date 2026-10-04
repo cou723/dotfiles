@@ -12,7 +12,7 @@ import { BubblewrapBackend, type BackendConfig } from "./backend.ts";
 import { canonical, compose, expand, inside, parseScope, permitted, type Scope } from "./policy.ts";
 import { Type } from "typebox";
 import { applyProtectedPaths, applyTargets, parseMaintenance, type MaintenanceConfig } from "./maintenance.ts";
-import { resolvePolicy, snapshotDefinitions, type AgentPolicy, type Definitions } from "./definitions.ts";
+import { protectedWritePaths, resolvePolicy, snapshotDefinitions, type AgentPolicy, type Definitions } from "./definitions.ts";
 import { getSubagentsService } from "@gotgenes/pi-subagents";
 import { assertDelegationAllowed, DELEGATION_TOOLS, type AgentRecordLookup } from "./delegation.ts";
 
@@ -65,12 +65,16 @@ export default function sandboxCeiling(pi: ExtensionAPI): void {
     return value;
   }
 
+  function protectedWrite(ctx: ExtensionContext): string[] {
+    return protectedWritePaths(getAgentDir(), extensionDir, ctx.cwd, policy(ctx).projectConfigWrite, !!state(ctx).child);
+  }
+
   function effective(ctx: ExtensionContext): Scope {
     const current = state(ctx);
     const { scope } = policy(ctx);
     const narrowed = current.invocation ? compose(scope, current.invocation) : scope;
     return { read: narrowed.read, write: narrowed.write.filter(root =>
-      !backend!.config.protectedWrite.some(protectedRoot => inside(protectedRoot, root))) };
+      !protectedWrite(ctx).some(protectedRoot => inside(protectedRoot, root))) };
   }
 
   function maintenance(ctx: ExtensionContext): MaintenanceConfig {
@@ -110,11 +114,7 @@ export default function sandboxCeiling(pi: ExtensionAPI): void {
       if (!Array.isArray(config.runtimeRead) || config.runtimeRead.some((value: unknown) => typeof value !== "string")) {
         throw new Error("runtimeRead requires literal path strings");
       }
-      const agentParent = path.dirname(getAgentDir());
-      const protectedWrite = [
-        path.basename(agentParent) === ".pi" ? agentParent : getAgentDir(), extensionDir,
-        path.join(ctx.cwd, ".pi", "agents"), path.join(ctx.cwd, ".pi", "extensions"),
-      ].map(canonical);
+      const protectedWrite = protectedWritePaths(getAgentDir(), extensionDir, ctx.cwd, false, !!inherited?.child);
       const runtimeRead = [...new Set([
         ...config.runtimeRead.map((raw: string) => expand(raw, ctx.cwd)).filter(existsSync),
         extensionDir, path.join(getAgentDir(), "bin"),
@@ -162,7 +162,7 @@ export default function sandboxCeiling(pi: ExtensionAPI): void {
   pi.registerCommand("sandbox-status", {
     description: "Show the current principal and filesystem ceiling",
     handler: async (_args, ctx) => {
-      try { ctx.ui.notify(JSON.stringify({ agent: activeIdentity(ctx), allowedAgents: policy(ctx).allowedAgents, configApply: !state(ctx).child && !!state(ctx).maintenance && policy(ctx).configApply, ...effective(ctx) }, null, 2), "info"); }
+      try { ctx.ui.notify(JSON.stringify({ agent: activeIdentity(ctx), allowedAgents: policy(ctx).allowedAgents, configApply: !state(ctx).child && !!state(ctx).maintenance && policy(ctx).configApply, projectConfigWrite: !state(ctx).child && policy(ctx).projectConfigWrite, ...effective(ctx) }, null, 2), "info"); }
       catch (error) { ctx.ui.notify(String(error), "error"); }
     },
   });
@@ -227,7 +227,7 @@ export default function sandboxCeiling(pi: ExtensionAPI): void {
       if (event.toolName !== "bash") {
         const input = event.input as { path?: string };
         const target = permitted(input.path ?? ".", ctx.cwd, WRITERS.has(event.toolName) ? scope.write : scope.read);
-        if (WRITERS.has(event.toolName) && backend!.config.protectedWrite.some(root => inside(root, target))) {
+        if (WRITERS.has(event.toolName) && protectedWrite(ctx).some(root => inside(root, target))) {
           throw new Error("Sandbox policy/runtime paths are immutable");
         }
       }
@@ -243,7 +243,8 @@ export default function sandboxCeiling(pi: ExtensionAPI): void {
       async execute(id, input, signal, _onUpdate, ctx) {
         const scope = effective(ctx);
         const run = async () => {
-          const output = await backend!.run(scope, ctx.cwd,
+          const toolBackend = new BubblewrapBackend({ ...backend!.config, protectedWrite: protectedWrite(ctx) });
+          const output = await toolBackend.run(scope, ctx.cwd,
             [process.execPath, path.join(extensionDir, "runner.mjs")],
             JSON.stringify({ sdkEntry, cwd: ctx.cwd, tool: name, id, input }), signal);
           const response = JSON.parse(output);

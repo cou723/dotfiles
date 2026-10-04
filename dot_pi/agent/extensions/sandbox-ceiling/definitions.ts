@@ -3,9 +3,17 @@ import path from "node:path";
 import { canonical, compose, parseScope, type Scope } from "./policy.ts";
 import { parseAllowedAgents } from "./delegation.ts";
 
-export type AgentPolicy = { scope: Scope; configApply: boolean; allowedAgents: string[] };
+export type AgentPolicy = { scope: Scope; configApply: boolean; projectConfigWrite: boolean; allowedAgents: string[] };
 type Definition = Record<string, unknown> | Error;
 export type Definitions = Map<string, Definition>;
+
+export function protectedWritePaths(agentDir: string, extensionDir: string, cwd: string, projectConfigWrite: boolean, child: boolean): string[] {
+  const agentParent = path.dirname(agentDir);
+  return [...new Set([
+    path.basename(agentParent) === ".pi" ? agentParent : agentDir, extensionDir,
+    ...(projectConfigWrite && !child ? [] : [path.join(cwd, ".pi", "agents"), path.join(cwd, ".pi", "extensions")]),
+  ].map(canonical))];
+}
 
 export function snapshotDefinitions(directory: string, parse: (text: string) => Record<string, unknown>): Definitions {
   const definitions: Definitions = new Map();
@@ -32,11 +40,15 @@ export function resolvePolicy(name: string, cwd: string, global: Definitions, pr
   const scope = local ? compose(ceiling, parseScope(local.sandbox, cwd)) : ceiling;
   if ([...ceiling.read, ...ceiling.write, ...scope.read, ...scope.write].includes("/")) throw new Error("Whole-machine sandbox roots are not supported");
   if (trusted?.capabilities !== undefined && (!Array.isArray(trusted.capabilities)
-    || trusted.capabilities.some(value => value !== "pi_config_apply"))) throw new Error("Unknown agent capability");
+    || trusted.capabilities.some(value => value !== "pi_config_apply" && value !== "pi_project_config_write"))) throw new Error("Unknown agent capability");
   const globalAllowed = parseAllowedAgents(trusted?.allowed_agents);
   const localAllowed = local?.allowed_agents === undefined ? globalAllowed : parseAllowedAgents(local.allowed_agents);
   // Project definitions may narrow delegation, never acquire it without a global grant.
   const allowedAgents = globalAllowed.filter(name => localAllowed.includes(name));
   // Project trust does not authorize a project to acquire global apply authority.
-  return { scope, allowedAgents, configApply: !local && Array.isArray(trusted?.capabilities) && trusted.capabilities.includes("pi_config_apply") };
+  return {
+    scope, allowedAgents,
+    configApply: !local && Array.isArray(trusted?.capabilities) && trusted.capabilities.includes("pi_config_apply"),
+    projectConfigWrite: !local && Array.isArray(trusted?.capabilities) && trusted.capabilities.includes("pi_project_config_write"),
+  };
 }

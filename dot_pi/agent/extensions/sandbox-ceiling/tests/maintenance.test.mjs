@@ -14,7 +14,7 @@ const sourceDir = path.join(home, ".local/share/chezmoi"), sourceAgentDir = path
 const modules = process.env.POC_MODULES;
 assert.ok(modules, "Set POC_MODULES");
 const sourceAgents = process.env.POC_AGENT_DEFINITIONS ?? path.resolve(extensionDir, "../../agents");
-for (const dir of [cwd, sourceAgentDir, path.join(agentDir, "agents"), path.join(agentDir, "extensions/pi-permission-system")]) mkdirSync(dir, { recursive: true });
+for (const dir of [cwd, path.join(cwd, ".pi/agents"), path.join(cwd, ".pi/extensions"), sourceAgentDir, path.join(agentDir, "agents"), path.join(agentDir, "extensions/pi-permission-system")]) mkdirSync(dir, { recursive: true });
 mkdirSync(path.join(home, ".local/share/pnpm/store/v11/links/@earendil-works"), { recursive: true });
 const executable = path.join(originalHome, ".nix-profile/bin/chezmoi");
 const config = parseMaintenance({ sourceDir, executable }, cwd, agentDir);
@@ -51,7 +51,7 @@ export default function(pi) {
       const task = JSON.stringify([...context.messages].reverse().find(m=>m.role==="user")?.content ?? "");
       const last = context.messages.at(-1);
       if(last?.role==="toolResult" && last.isError) globalThis[Symbol.for("maintenance.probe")].push(JSON.stringify(last));
-      const tool = last?.role!=="toolResult" && task.includes("SOURCE_EDIT") ? {type:"toolCall",id:"admin-write",name:"write",arguments:{path:${JSON.stringify(path.join(sourceAgentDir, "forbidden.txt"))},content:"bad"}} : last?.role!=="toolResult" && task.includes("CONFIG_APPLY") ? {type:"toolCall",id:"child-apply",name:"pi_config_apply",arguments:{targets:["settings.json"],dryRun:true}} : undefined;
+      const tool = last?.role!=="toolResult" && task.includes("PROJECT_EDIT") ? {type:"toolCall",id:"project-write",name:"write",arguments:{path:${JSON.stringify(path.join(cwd, ".pi/agents/child.md"))},content:"bad"}} : last?.role!=="toolResult" && task.includes("SOURCE_EDIT") ? {type:"toolCall",id:"admin-write",name:"write",arguments:{path:${JSON.stringify(path.join(sourceAgentDir, "forbidden.txt"))},content:"bad"}} : last?.role!=="toolResult" && task.includes("CONFIG_APPLY") ? {type:"toolCall",id:"child-apply",name:"pi_config_apply",arguments:{targets:["settings.json"],dryRun:true}} : undefined;
       const message={role:"assistant",api:model.api,provider:model.provider,model:model.id,timestamp:Date.now(),stopReason:tool?"toolUse":"stop",content:tool?[tool]:[{type:"text",text:"DONE"}],usage:{input:0,output:0,cacheRead:0,cacheWrite:0,totalTokens:0,cost:{input:0,output:0,cacheRead:0,cacheWrite:0,total:0}}};
       queueMicrotask(()=>{stream.push({type:"start",partial:message});if(tool){stream.push({type:"toolcall_start",contentIndex:0,partial:message});stream.push({type:"toolcall_end",contentIndex:0,toolCall:tool,partial:message});}stream.push({type:"done",reason:message.stopReason,message});stream.end();});return stream;
     }
@@ -80,6 +80,8 @@ const execute = (name, input) => runner.createToolContext("test", new AbortContr
 try {
   await start(); await select("worker");
   assert.equal((await gate("read", { path: sourceAgentDir })).block, true, "Normal worker scope stays cwd-only");
+  assert.equal((await gate("write", { path: path.join(cwd, ".pi/agents/worker.md"), content: "bad" })).block, true, "Ordinary workers cannot alter project agents");
+  assert.equal((await execute("bash", { command: `printf bad > '${cwd}/.pi/extensions/worker.ts'` })).isError, true, "Ordinary worker bash cannot alter project extensions");
   await select("settings-editor");
   if (process.env.POC_DEBUG) await session.prompt("/sandbox-status");
   const sourceFile = path.join(sourceAgentDir, "note.md");
@@ -93,6 +95,12 @@ try {
   const projectFile = path.join(cwd, ".pi/settings.json");
   assert.equal((await execute("write", { path: projectFile, content: '{"project":true}' })).isError, false);
   assert.equal(JSON.parse(readFileSync(projectFile)).project, true);
+  const projectAgent = path.join(cwd, ".pi/agents/local-advisor.md");
+  assert.equal((await execute("write", { path: projectAgent, content: "project agent" })).isError, false, "Global primary capability allows project agent creation");
+  assert.equal((await execute("edit", { path: projectAgent, edits: [{ oldText: "project agent", newText: "updated agent" }] })).isError, false);
+  assert.equal(readFileSync(projectAgent, "utf8"), "updated agent");
+  assert.equal((await execute("bash", { command: `printf fixture > '${cwd}/.pi/extensions/local.ts'` })).isError, false, "Capability is enforced consistently for sandboxed bash");
+  rmSync(projectAgent); rmSync(path.join(cwd, ".pi/extensions/local.ts"));
   assert.equal((await gate("pi_config_apply", { targets: ["auth.json"] })).block, true);
   runner.setUIContext(undefined, "json");
   assert.equal((await gate("pi_config_apply", { targets: ["settings.json"], overwrite: true })).block, true, "ASK without UI denies");
@@ -105,7 +113,7 @@ try {
   assert.equal(JSON.parse(readFileSync(path.join(agentDir, "settings.json"))).marker, "managed");
   assert.equal(readFileSync(path.join(agentDir, "auth.json"), "utf8"), '{"test":"do-not-mutate"}');
   assert.equal(existsSync(path.join(agentDir, "script-ran")), false);
-  mkdirSync(path.join(cwd, ".pi/agents"));
+  mkdirSync(path.join(cwd, ".pi/agents"), { recursive: true });
   writeFileSync(path.join(cwd, ".pi/agents/pi-configurator.md"), adminTemplate);
   await select("pi-configurator");
   assert.notEqual((await gate("read", { path: sourceFile }))?.block, true, "Definitions created after startup do not alter the policy snapshot");
@@ -113,9 +121,13 @@ try {
   await select("planner");
   await execute("subagent", { subagent_type: "settings-editor", prompt: "CONFIG_APPLY", description: "Child apply must be denied" });
   assert.ok(globalThis[Symbol.for("maintenance.probe")].some(result => result.includes("primary session")), "A capability does not authorize child global apply");
+  await execute("subagent", { subagent_type: "settings-editor", prompt: "PROJECT_EDIT", description: "Child project write must be denied" });
+  assert.ok(globalThis[Symbol.for("maintenance.probe")].some(result => result.includes("immutable")), "Project configuration write capability is primary-only");
+  assert.equal(existsSync(path.join(cwd, ".pi/agents/child.md")), false);
   await select("pi-configurator");
   await session.prompt('/sandbox-narrow {"read":["${cwd}"],"write":[]}');
   assert.equal((await gate("pi_config_apply", { targets: ["settings.json"] })).block, true);
+  assert.equal((await gate("write", { path: path.join(cwd, ".pi/agents/narrowed.md"), content: "bad" })).block, true, "Capability cannot bypass invocation narrowing");
   await stop();
   writeFileSync(path.join(agentDir, "agents/pi-configurator.md"), adminTemplate);
   await start(home); await select("pi-configurator");

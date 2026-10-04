@@ -17,6 +17,12 @@ try {
   assert.equal(resolve().configApply, true, "Capability does not depend on an agent name or startup flag");
   assert.deepEqual(resolve("custom-editor", new Map([["custom-editor", { sandbox: { read: [fixture], write: [fixture] }, capabilities: ["pi_config_apply"] }]])).scope, resolve().scope);
   assert.equal(resolve("custom-editor", new Map([["custom-editor", declared]])).configApply, false);
+  assert.equal(resolve().projectConfigWrite, false);
+  const projectEditor = { ...declared, capabilities: ["pi_project_config_write"] };
+  const editors = new Map([["custom-editor", projectEditor]]);
+  assert.equal(resolvePolicy("custom-editor", cwd, editors, new Map()).projectConfigWrite, true);
+  assert.equal(resolvePolicy("custom-editor", cwd, editors, new Map([["custom-editor", projectEditor]])).projectConfigWrite, false);
+  assert.equal(resolvePolicy("project-only", cwd, new Map(), new Map([["project-only", projectEditor]])).projectConfigWrite, false);
   assert.deepEqual(resolve("project-only", new Map([["project-only", { sandbox: { read: [fixture], write: [fixture] } }]])).scope, { read: [cwd], write: [cwd] });
   assert.throws(() => resolve("missing"), /Unknown/);
   assert.throws(() => resolve("../escape"), /Unsafe/);

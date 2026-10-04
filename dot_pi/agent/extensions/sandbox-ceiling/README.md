@@ -61,7 +61,8 @@ router 自身は子にロードしない。子の identity を親の既定 Agent
 - グローバル Agent 定義はユーザー管理の信頼済み権限源とする。Agent 名による特別扱いはない。
 - `sandbox.read` / `sandbox.write` が範囲の正本。通常の Worker は定義どおり cwd-only。
 - グローバルの宛先は全 Agent 共通で read-only。通常の edit/write/bash で直接変更しない。
-- project の settings は宣言範囲内なら編集できる。Agent definitions と extensions は共通で read-only。
+- project の settings は宣言範囲内なら編集できる。Agent definitions と extensions は通常 read-only。
+- グローバル定義の `capabilities: [pi_project_config_write]` を持つ primary Agent は、起動元の `.pi/` 配下も宣言された write 範囲内で編集できる。pi-configurator はこの権限を持つ。子セッション・project の同名上書きからは取得できず、global の直接書き込み保護と invocation narrowing は維持する。
 - `capabilities: [pi_config_apply]` を持つグローバル Agent は primary session で限定 apply を利用できる。
   permission の `pi_config_apply: ask` と tools への登録も必要。
 - project 定義からは apply capability を取得できない。子セッションの global apply も拒否する。
@@ -174,7 +175,7 @@ bubblewrap 内の Node helper から **Pi 標準ツール**を実行する。
 - private PID namespace と新しい `/proc` により親の `/proc/<pid>/root` を見せない。
 - root は read-only。`/tmp` と `/dev/shm` は破棄される tmpfs であり、host の同名パスを開放しない。
 - global agent directory（通常はその親の `.pi` 全体）と、
-  project の Agent definitions / extensions は cwd 内にあっても read-only。
+  project の Agent definitions / extensions は、グローバル定義の `pi_project_config_write` を持つ primary Agent 以外では cwd 内にあっても read-only。
   保護先内にある write root は除外する。project settings は宣言範囲内なら編集可能。
 - edit/write の親側 mutation queue は別プロセス間でも同一ファイル操作を直列化。
 - 起動不可 / timeout / cancellation / 不正な結果は操作失敗。非 sandbox 実行に戻さない。

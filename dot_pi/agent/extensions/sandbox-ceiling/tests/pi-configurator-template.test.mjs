@@ -18,6 +18,7 @@ assert.deepEqual(roots("read"), [
 ]);
 assert.deepEqual(roots("write"), ["${cwd}", sourceAgentDir.replace(/\/$/, "") + "/dot_pi/agent"]);
 assert.match(result.stdout, /"gh auth \*": deny\n    "gh auth status": allow/);
+assert.match(result.stdout, /capabilities: \[pi_config_apply, pi_project_config_write\]/);
 
 if (process.env.POC_MODULES && process.env.POC_JITI_ENTRY) {
   const { createJiti } = await import(process.env.POC_JITI_ENTRY);
