@@ -1,5 +1,16 @@
 README.md
 bun.lockb
+.gitignore
+.github
+.pi/agent/extensions/sandbox-ceiling/node_modules
+.pi/agent/extensions/sandbox-ceiling/.pnpm-store
+.pi/agent/extensions/sandbox-ceiling/.pnpm-cache
+.pi/agent/extensions/sandbox-ceiling/.pnpm-state
+.pi/agent/extensions/sandbox-ceiling/tsconfig.json
+.pi/agent/extensions/sandbox-ceiling/eslint.config.mjs
+.pi/agent/extensions/sandbox-ceiling/.prettierignore
+.pi/agent/extensions/sandbox-ceiling/.prettierrc.json
+.pi/agent/extensions/sandbox-ceiling/pnpm-lock.yaml
 {{ if ne .chezmoi.os "darwin" }}
 .config/home-manager
 {{ end }}

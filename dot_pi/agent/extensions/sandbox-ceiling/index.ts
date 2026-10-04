@@ -1,8 +1,18 @@
 import {
-  createReadToolDefinition, createGrepToolDefinition, createFindToolDefinition,
-  createLsToolDefinition, createEditToolDefinition, createWriteToolDefinition,
-  createBashToolDefinition, getAgentDir, getPackageDir, parseFrontmatter, withFileMutationQueue,
-  type ExtensionAPI, type ExtensionContext, type ToolDefinition,
+  createReadToolDefinition,
+  createGrepToolDefinition,
+  createFindToolDefinition,
+  createLsToolDefinition,
+  createEditToolDefinition,
+  createWriteToolDefinition,
+  createBashToolDefinition,
+  getAgentDir,
+  getPackageDir,
+  parseFrontmatter,
+  withFileMutationQueue,
+  type ExtensionAPI,
+  type ExtensionContext,
+  type ToolDefinition,
 } from "@earendil-works/pi-coding-agent";
 import { existsSync, readFileSync } from "node:fs";
 import { homedir } from "node:os";
@@ -11,26 +21,55 @@ import { fileURLToPath } from "node:url";
 import { BubblewrapBackend, type BackendConfig } from "./backend.ts";
 import { canonical, compose, expand, inside, parseScope, permitted, type Scope } from "./policy.ts";
 import { Type } from "typebox";
-import { applyProtectedPaths, applyTargets, parseMaintenance, type MaintenanceConfig } from "./maintenance.ts";
-import { protectedWritePaths, resolvePolicy, snapshotDefinitions, type AgentPolicy, type Definitions } from "./definitions.ts";
+import {
+  applyProtectedPaths,
+  applyTargets,
+  parseMaintenance,
+  type MaintenanceConfig,
+} from "./maintenance.ts";
+import {
+  protectedWritePaths,
+  resolvePolicy,
+  snapshotDefinitions,
+  type AgentPolicy,
+  type Definitions,
+} from "./definitions.ts";
 import { getSubagentsService } from "@gotgenes/pi-subagents";
 import { assertDelegationAllowed, DELEGATION_TOOLS, type AgentRecordLookup } from "./delegation.ts";
 
-const FACTORIES = { read: createReadToolDefinition, grep: createGrepToolDefinition,
-  find: createFindToolDefinition, ls: createLsToolDefinition, edit: createEditToolDefinition,
-  write: createWriteToolDefinition, bash: createBashToolDefinition };
+const FACTORIES = {
+  read: createReadToolDefinition,
+  grep: createGrepToolDefinition,
+  find: createFindToolDefinition,
+  ls: createLsToolDefinition,
+  edit: createEditToolDefinition,
+  write: createWriteToolDefinition,
+  bash: createBashToolDefinition,
+};
 type ToolName = keyof typeof FACTORIES;
+type SandboxSchema = ReturnType<(typeof FACTORIES)[ToolName]>["parameters"];
 const TOOLS = Object.keys(FACTORIES) as ToolName[];
 const WRITERS = new Set(["edit", "write"]);
 const KEY = Symbol.for("local-pi-sandbox-ceiling.sessions.v2");
-type SessionState = { policies: Map<string, AgentPolicy | Error>; invocation?: Scope; ready: boolean; child?: boolean; maintenance?: MaintenanceConfig };
-const sessions: Map<string, SessionState> = ((globalThis as any)[KEY] ??= new Map());
+type SessionState = {
+  policies: Map<string, AgentPolicy | Error>;
+  invocation?: Scope;
+  ready: boolean;
+  child?: boolean;
+  maintenance?: MaintenanceConfig;
+};
+const sessionGlobals = globalThis as typeof globalThis & { [KEY]?: Map<string, SessionState> };
+const sessions = (sessionGlobals[KEY] ??= new Map<string, SessionState>());
 
-export function activeIdentity(ctx: Pick<ExtensionContext, "sessionManager" | "getSystemPrompt">): string | null {
+export function activeIdentity(
+  ctx: Pick<ExtensionContext, "sessionManager" | "getSystemPrompt">,
+): string | null {
   // A child prompt tag is authoritative over any copied parent history.
   const tag = /<active_agent\s+name=["']([^"']+)["'][^>]*>/i.exec(ctx.getSystemPrompt());
   const branch = ctx.sessionManager.getBranch();
-  const entry = [...branch].reverse().find(item => item.type === "custom" && item.customType === "active_agent");
+  const entry = [...branch]
+    .reverse()
+    .find((item) => item.type === "custom" && item.customType === "active_agent");
   // The router's persisted selection is authoritative for a primary session.
   if (entry && entry.type === "custom") {
     const name = (entry.data as { name?: unknown })?.name;
@@ -46,13 +85,18 @@ export default function sandboxCeiling(pi: ExtensionAPI): void {
   let currentSessionId: string | undefined;
   let configError: string | undefined;
   let subagentRecords: AgentRecordLookup | undefined;
-  const parseDefinition = (text: string) => parseFrontmatter<Record<string, unknown>>(text).frontmatter;
-  const globalDefinitions = snapshotDefinitions(path.join(getAgentDir(), "agents"), parseDefinition);
+  const parseDefinition = (text: string) =>
+    parseFrontmatter<Record<string, unknown>>(text).frontmatter;
+  const globalDefinitions = snapshotDefinitions(
+    path.join(getAgentDir(), "agents"),
+    parseDefinition,
+  );
   const projectDefinitions = new Map<string, Definitions>();
 
   function state(ctx: ExtensionContext): SessionState {
     const value = sessions.get(ctx.sessionManager.getSessionId());
-    if (!value?.ready || !backend) throw new Error(configError ?? "Filesystem sandbox is not initialized");
+    if (!value?.ready || !backend)
+      throw new Error(configError ?? "Filesystem sandbox is not initialized");
     return value;
   }
 
@@ -66,21 +110,33 @@ export default function sandboxCeiling(pi: ExtensionAPI): void {
   }
 
   function protectedWrite(ctx: ExtensionContext): string[] {
-    return protectedWritePaths(getAgentDir(), extensionDir, ctx.cwd, policy(ctx).projectConfigWrite, !!state(ctx).child);
+    return protectedWritePaths(
+      getAgentDir(),
+      extensionDir,
+      ctx.cwd,
+      policy(ctx).projectConfigWrite,
+      !!state(ctx).child,
+    );
   }
 
   function effective(ctx: ExtensionContext): Scope {
     const current = state(ctx);
     const { scope } = policy(ctx);
     const narrowed = current.invocation ? compose(scope, current.invocation) : scope;
-    return { read: narrowed.read, write: narrowed.write.filter(root =>
-      !protectedWrite(ctx).some(protectedRoot => inside(protectedRoot, root))) };
+    return {
+      read: narrowed.read,
+      write: narrowed.write.filter(
+        (root) => !protectedWrite(ctx).some((protectedRoot) => inside(protectedRoot, root)),
+      ),
+    };
   }
 
   function maintenance(ctx: ExtensionContext): MaintenanceConfig {
     const current = state(ctx);
     if (current.child || !current.maintenance || !policy(ctx).configApply) {
-      throw new Error("Global apply requires a primary session and a global pi_config_apply capability");
+      throw new Error(
+        "Global apply requires a primary session and a global pi_config_apply capability",
+      );
     }
     return current.maintenance;
   }
@@ -88,52 +144,94 @@ export default function sandboxCeiling(pi: ExtensionAPI): void {
   function applyScope(ctx: ExtensionContext): { config: MaintenanceConfig; scope: Scope } {
     const config = maintenance(ctx);
     const ordinary = effective(ctx);
-    if (!ordinary.read.some(root => inside(root, config.sourceDir))
-      || !ordinary.read.some(root => inside(root, config.agentDir))
-      || !ordinary.write.some(root => inside(root, config.sourceAgentDir))) {
+    if (
+      !ordinary.read.some((root) => inside(root, config.sourceDir)) ||
+      !ordinary.read.some((root) => inside(root, config.agentDir)) ||
+      !ordinary.write.some((root) => inside(root, config.sourceAgentDir))
+    ) {
       throw new Error("Agent scope or invocation narrowing forbids global apply");
     }
-    const scope: Scope = { read: [canonical(ctx.cwd), config.sourceDir, config.agentDir], write: [config.agentDir] };
+    const scope: Scope = {
+      read: [canonical(ctx.cwd), config.sourceDir, config.agentDir],
+      write: [config.agentDir],
+    };
     return { config, scope };
   }
 
   pi.on("session_start", (_event, ctx) => {
     currentSessionId = ctx.sessionManager.getSessionId();
     try {
-      const config = JSON.parse(readFileSync(path.join(getAgentDir(), "sandbox-ceiling.json"), "utf8"));
-      if (config.version !== 1 || config.backend !== "bubblewrap") throw new Error("Unsupported sandbox config");
+      const config = JSON.parse(
+        readFileSync(path.join(getAgentDir(), "sandbox-ceiling.json"), "utf8"),
+      );
+      if (config.version !== 1 || config.backend !== "bubblewrap")
+        throw new Error("Unsupported sandbox config");
       const inherited = sessions.get(currentSessionId);
       // Child factories publish their own service globally; retain this runtime's original parent lookup.
       subagentRecords ??= getSubagentsService();
       const maintenanceConfig = config.maintenance
-        ? parseMaintenance(config.maintenance, ctx.cwd, getAgentDir()) : undefined;
+        ? parseMaintenance(config.maintenance, ctx.cwd, getAgentDir())
+        : undefined;
       if (!projectDefinitions.has(ctx.cwd)) {
-        projectDefinitions.set(ctx.cwd, ctx.isProjectTrusted()
-          ? snapshotDefinitions(path.join(ctx.cwd, ".pi", "agents"), parseDefinition) : new Map());
+        projectDefinitions.set(
+          ctx.cwd,
+          ctx.isProjectTrusted()
+            ? snapshotDefinitions(path.join(ctx.cwd, ".pi", "agents"), parseDefinition)
+            : new Map(),
+        );
       }
-      if (!Array.isArray(config.runtimeRead) || config.runtimeRead.some((value: unknown) => typeof value !== "string")) {
+      if (
+        !Array.isArray(config.runtimeRead) ||
+        config.runtimeRead.some((value: unknown) => typeof value !== "string")
+      ) {
         throw new Error("runtimeRead requires literal path strings");
       }
-      const protectedWrite = protectedWritePaths(getAgentDir(), extensionDir, ctx.cwd, false, !!inherited?.child);
-      const runtimeRead = [...new Set([
-        ...config.runtimeRead.map((raw: string) => expand(raw, ctx.cwd)).filter(existsSync),
-        extensionDir, path.join(getAgentDir(), "bin"),
-      ].filter(existsSync))];
+      const protectedWrite = protectedWritePaths(
+        getAgentDir(),
+        extensionDir,
+        ctx.cwd,
+        false,
+        !!inherited?.child,
+      );
+      const runtimeRead = [
+        ...new Set(
+          [
+            ...config.runtimeRead.map((raw: string) => expand(raw, ctx.cwd)).filter(existsSync),
+            extensionDir,
+            path.join(getAgentDir(), "bin"),
+          ].filter(existsSync),
+        ),
+      ];
       const backendConfig: BackendConfig = {
-        executable: expand(config.executable, ctx.cwd), runtimeRead, protectedWrite,
+        executable: expand(config.executable, ctx.cwd),
+        runtimeRead,
+        protectedWrite,
         timeoutMs: config.timeoutMs ?? 600000,
       };
-      if (!Number.isSafeInteger(backendConfig.timeoutMs) || backendConfig.timeoutMs < 1000) throw new Error("Invalid timeoutMs");
+      if (!Number.isSafeInteger(backendConfig.timeoutMs) || backendConfig.timeoutMs < 1000)
+        throw new Error("Invalid timeoutMs");
       backend = new BubblewrapBackend(backendConfig);
-      const saved = [...ctx.sessionManager.getBranch()].reverse().find(entry => entry.type === "custom" && entry.customType === "sandbox_narrow");
-      const invocation = saved?.type === "custom" ? parseScope(saved.data, ctx.cwd) : inherited?.invocation;
+      const saved = [...ctx.sessionManager.getBranch()]
+        .reverse()
+        .find((entry) => entry.type === "custom" && entry.customType === "sandbox_narrow");
+      const invocation =
+        saved?.type === "custom" ? parseScope(saved.data, ctx.cwd) : inherited?.invocation;
       const local = projectDefinitions.get(ctx.cwd)!;
       const policies = new Map<string, AgentPolicy | Error>();
       for (const name of new Set([...globalDefinitions.keys(), ...local.keys()])) {
-        try { policies.set(name, resolvePolicy(name, ctx.cwd, globalDefinitions, local)); }
-        catch (error) { policies.set(name, new Error(String(error))); }
+        try {
+          policies.set(name, resolvePolicy(name, ctx.cwd, globalDefinitions, local));
+        } catch (error) {
+          policies.set(name, new Error(String(error)));
+        }
       }
-      sessions.set(currentSessionId, { policies, invocation, ready: true, child: inherited?.child, maintenance: maintenanceConfig });
+      sessions.set(currentSessionId, {
+        policies,
+        invocation,
+        ready: true,
+        child: inherited?.child,
+        maintenance: maintenanceConfig,
+      });
       configError = undefined;
     } catch (error) {
       backend = undefined;
@@ -162,8 +260,24 @@ export default function sandboxCeiling(pi: ExtensionAPI): void {
   pi.registerCommand("sandbox-status", {
     description: "Show the current principal and filesystem ceiling",
     handler: async (_args, ctx) => {
-      try { ctx.ui.notify(JSON.stringify({ agent: activeIdentity(ctx), allowedAgents: policy(ctx).allowedAgents, configApply: !state(ctx).child && !!state(ctx).maintenance && policy(ctx).configApply, projectConfigWrite: !state(ctx).child && policy(ctx).projectConfigWrite, ...effective(ctx) }, null, 2), "info"); }
-      catch (error) { ctx.ui.notify(String(error), "error"); }
+      try {
+        ctx.ui.notify(
+          JSON.stringify(
+            {
+              agent: activeIdentity(ctx),
+              allowedAgents: policy(ctx).allowedAgents,
+              configApply: !state(ctx).child && !!state(ctx).maintenance && policy(ctx).configApply,
+              projectConfigWrite: !state(ctx).child && policy(ctx).projectConfigWrite,
+              ...effective(ctx),
+            },
+            null,
+            2,
+          ),
+          "info",
+        );
+      } catch (error) {
+        ctx.ui.notify(String(error), "error");
+      }
     },
   });
   pi.registerCommand("sandbox-narrow", {
@@ -175,30 +289,61 @@ export default function sandboxCeiling(pi: ExtensionAPI): void {
       const invocation = current.invocation ? compose(current.invocation, requested) : requested;
       current.invocation = invocation;
       pi.appendEntry("sandbox_narrow", invocation);
-      ctx.ui.notify("Filesystem scope narrowed for this session; children keep their own scope.", "info");
+      ctx.ui.notify(
+        "Filesystem scope narrowed for this session; children keep their own scope.",
+        "info",
+      );
     },
   });
 
   pi.registerTool({
-    name: "pi_config_apply", label: "Apply managed Pi configuration",
-    description: "Apply selected chezmoi targets to the global Pi agent directory. Requires a primary session and a trusted global Agent declaring capabilities: [pi_config_apply]. Targets are relative paths, e.g. settings.json or agents/worker.md. Preview with dryRun:true. overwrite:true explicitly allows replacing differing targets; check existing changes first. No scripts/hooks or unrestricted apply.",
-    parameters: Type.Object({ targets: Type.Array(Type.String(), { minItems: 1, maxItems: 32 }),
-      dryRun: Type.Optional(Type.Boolean()), overwrite: Type.Optional(Type.Boolean()) }),
+    name: "pi_config_apply",
+    label: "Apply managed Pi configuration",
+    description:
+      "Apply selected chezmoi targets to the global Pi agent directory. Requires a primary session and a trusted global Agent declaring capabilities: [pi_config_apply]. Targets are relative paths, e.g. settings.json or agents/worker.md. Preview with dryRun:true. overwrite:true explicitly allows replacing differing targets; check existing changes first. No scripts/hooks or unrestricted apply.",
+    parameters: Type.Object({
+      targets: Type.Array(Type.String(), { minItems: 1, maxItems: 32 }),
+      dryRun: Type.Optional(Type.Boolean()),
+      overwrite: Type.Optional(Type.Boolean()),
+    }),
     async execute(_id, input, signal, _onUpdate, ctx) {
       const { config, scope } = applyScope(ctx);
       const targets = applyTargets(input.targets, config);
-      const applyBackend = new BubblewrapBackend({ ...backend!.config,
-        runtimeRead: backend!.config.runtimeRead.filter(root => canonical(root) !== canonical(extensionDir)),
-        protectedWrite: applyProtectedPaths(config) });
+      const applyBackend = new BubblewrapBackend({
+        ...backend!.config,
+        runtimeRead: backend!.config.runtimeRead.filter(
+          (root) => canonical(root) !== canonical(extensionDir),
+        ),
+        protectedWrite: applyProtectedPaths(config),
+      });
       return withFileMutationQueue(config.agentDir, async () => {
-        const output = await applyBackend.run(scope, ctx.cwd,
+        const output = await applyBackend.run(
+          scope,
+          ctx.cwd,
           [process.execPath, path.join(extensionDir, "apply-runner.mjs")],
-          JSON.stringify({ executable: config.executable, sourceDir: config.sourceDir,
-            homeDir: homedir(), targets, dryRun: input.dryRun === true, overwrite: input.overwrite === true }), signal);
+          JSON.stringify({
+            executable: config.executable,
+            sourceDir: config.sourceDir,
+            homeDir: homedir(),
+            targets,
+            dryRun: input.dryRun === true,
+            overwrite: input.overwrite === true,
+          }),
+          signal,
+        );
         const response = JSON.parse(output);
         if (response.error) throw new Error(response.error);
-        return { content: [{ type: "text" as const, text: response.output ||
-          `chezmoi ${input.dryRun ? "preview" : "apply"} completed: ${input.targets.join(", ")}. ${!input.overwrite ? "Existing differences may be skipped; verify targets. " : ""}Restart Pi to activate configuration changes.` }], details: undefined };
+        return {
+          content: [
+            {
+              type: "text" as const,
+              text:
+                response.output ||
+                `chezmoi ${input.dryRun ? "preview" : "apply"} completed: ${input.targets.join(", ")}. ${!input.overwrite ? "Existing differences may be skipped; verify targets. " : ""}Restart Pi to activate configuration changes.`,
+            },
+          ],
+          details: undefined,
+        };
       });
     },
   });
@@ -210,15 +355,26 @@ export default function sandboxCeiling(pi: ExtensionAPI): void {
         if (current.child) throw new Error("Child agents may not delegate or control other agents");
         const caller = activeIdentity(ctx);
         if (!caller) throw new Error("Select an Agent with /agent before delegating");
-        assertDelegationAllowed(caller, policy(ctx).allowedAgents, event.toolName, event.input, current.policies, subagentRecords);
+        assertDelegationAllowed(
+          caller,
+          policy(ctx).allowedAgents,
+          event.toolName,
+          event.input,
+          current.policies,
+          subagentRecords,
+        );
       } catch (error) {
         return { block: true, reason: "[sandbox-ceiling] " + String(error) };
       }
       return;
     }
     if (event.toolName === "pi_config_apply") {
-      try { const { config } = applyScope(ctx); applyTargets((event.input as { targets: string[] }).targets, config); }
-      catch (error) { return { block: true, reason: "[sandbox-ceiling] " + String(error) }; }
+      try {
+        const { config } = applyScope(ctx);
+        applyTargets((event.input as { targets: string[] }).targets, config);
+      } catch (error) {
+        return { block: true, reason: "[sandbox-ceiling] " + String(error) };
+      }
       return;
     }
     if (!TOOLS.includes(event.toolName as ToolName)) return;
@@ -226,8 +382,15 @@ export default function sandboxCeiling(pi: ExtensionAPI): void {
       const scope = effective(ctx);
       if (event.toolName !== "bash") {
         const input = event.input as { path?: string };
-        const target = permitted(input.path ?? ".", ctx.cwd, WRITERS.has(event.toolName) ? scope.write : scope.read);
-        if (WRITERS.has(event.toolName) && protectedWrite(ctx).some(root => inside(root, target))) {
+        const target = permitted(
+          input.path ?? ".",
+          ctx.cwd,
+          WRITERS.has(event.toolName) ? scope.write : scope.read,
+        );
+        if (
+          WRITERS.has(event.toolName) &&
+          protectedWrite(ctx).some((root) => inside(root, target))
+        ) {
           throw new Error("Sandbox policy/runtime paths are immutable");
         }
       }
@@ -237,19 +400,29 @@ export default function sandboxCeiling(pi: ExtensionAPI): void {
   });
 
   for (const name of TOOLS) {
-    const original: ToolDefinition<any, any> = FACTORIES[name](process.cwd());
+    // Each original schema still validates its own input before the wrapper forwards it.
+    // The union prevents heterogeneous renderer signatures from forcing an any cast.
+    const original = FACTORIES[name](process.cwd()) as ToolDefinition<SandboxSchema>;
     pi.registerTool({
       ...original,
       async execute(id, input, signal, _onUpdate, ctx) {
         const scope = effective(ctx);
         const run = async () => {
-          const toolBackend = new BubblewrapBackend({ ...backend!.config, protectedWrite: protectedWrite(ctx) });
-          const output = await toolBackend.run(scope, ctx.cwd,
+          const toolBackend = new BubblewrapBackend({
+            ...backend!.config,
+            protectedWrite: protectedWrite(ctx),
+          });
+          const output = await toolBackend.run(
+            scope,
+            ctx.cwd,
             [process.execPath, path.join(extensionDir, "runner.mjs")],
-            JSON.stringify({ sdkEntry, cwd: ctx.cwd, tool: name, id, input }), signal);
+            JSON.stringify({ sdkEntry, cwd: ctx.cwd, tool: name, id, input }),
+            signal,
+          );
           const response = JSON.parse(output);
           if (response.error) throw new Error(response.error);
-          if (!response.result || !Array.isArray(response.result.content)) throw new Error("Invalid sandbox tool result");
+          if (!response.result || !Array.isArray(response.result.content))
+            throw new Error("Invalid sandbox tool result");
           return response.result;
         };
         if (WRITERS.has(name)) {

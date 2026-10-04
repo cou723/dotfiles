@@ -1,0 +1,36 @@
+name: sandbox-ceiling checks
+
+on:
+  push:
+    paths:
+      - "dot_pi/agent/extensions/sandbox-ceiling/**"
+      - ".github/workflows/sandbox-ceiling-check.yml"
+  pull_request:
+    paths:
+      - "dot_pi/agent/extensions/sandbox-ceiling/**"
+      - ".github/workflows/sandbox-ceiling-check.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: dot_pi/agent/extensions/sandbox-ceiling
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.5.3
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+          cache-dependency-path: dot_pi/agent/extensions/sandbox-ceiling/pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile --ignore-scripts
+      - run: pnpm check
+      - run: pnpm test:unit

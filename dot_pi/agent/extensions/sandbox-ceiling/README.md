@@ -2,12 +2,12 @@
 
 Pi core を変更せず、既存拡張 3 個とこの拡張 1 個で構成する。
 
-| 責務 | 実装 |
-| --- | --- |
-| Primary identity / 本文 prompt / モデル選択 | `pi-agent-router@0.9.0` |
-| 子セッションの実行 | `@gotgenes/pi-subagents@21.9.1` |
+| 責務                                             | 実装                                    |
+| ------------------------------------------------ | --------------------------------------- |
+| Primary identity / 本文 prompt / モデル選択      | `pi-agent-router@0.9.0`                 |
+| 子セッションの実行                               | `@gotgenes/pi-subagents@21.9.1`         |
 | 決定論的 ALLOW / ASK / DENY / 親 UI への承認転送 | `@gotgenes/pi-permission-system@36.2.1` |
-| filesystem の hard boundary | `sandbox-ceiling` + bubblewrap |
+| filesystem の hard boundary                      | `sandbox-ceiling` + bubblewrap          |
 
 Pi 0.99.2 / Node 24 / Linux / bubblewrap 0.11.2 で検証する構成。
 permission-system の 37.x は Pi 1.0 以降を要求するため固定する。
@@ -42,8 +42,8 @@ trusted launcher は `sandbox-ceiling:invocation-narrow` イベントで
 subagent({
   subagent_type: "worker",
   prompt: "対象と完了条件を含む実装依頼",
-  description: "短い説明"
-})
+  description: "短い説明",
+});
 ```
 
 結果取得は `get_subagent_result({agent_id, wait: true})`、
@@ -74,8 +74,8 @@ router 自身は子にロードしない。子の identity を親の既定 Agent
 承認 route がなければ DENY。必ず対象を指定し、先に preview を確認する。
 
 ```javascript
-pi_config_apply({targets: ["settings.json", "agents/worker.md"], dryRun: true})
-pi_config_apply({targets: ["settings.json", "agents/worker.md"], overwrite: true})
+pi_config_apply({ targets: ["settings.json", "agents/worker.md"], dryRun: true });
+pi_config_apply({ targets: ["settings.json", "agents/worker.md"], overwrite: true });
 ```
 
 対象は global agent directory 相対で、`AGENTS.md` / `settings.json` / `sandbox-ceiling.json` / `subagents.json` と、
@@ -218,6 +218,36 @@ Agent の通常ファイルツールが workspace 外の任意ファイルを読
 - project extensions は trusted code を読み込む操作なので、trust の付与は人が判断する。
 
 ## 検証
+
+### 静的検査
+
+chezmoi ソース側のこのディレクトリで、Node 24 と pnpm 11.5.3 を使う。
+
+```sh
+pnpm install --frozen-lockfile --ignore-scripts
+pnpm check
+pnpm test:unit
+```
+
+`pnpm check` は TypeScript の strict 型検査、ESLint、Prettier の整形検査を順に実行する。
+型検査は拡張本体・両 `.mjs` helper・テスト・ESLint 設定を含む。
+`.mjs` は `allowJs` / `checkJs` と JSDoc で検査し、生成・ビルド工程は追加しない。
+`--experimental-strip-types` による実行は型検査の代わりにはならない。
+`skipLibCheck` は依存パッケージの型宣言だけを対象とし、この拡張の検査は省略しない。
+
+個別には `pnpm typecheck` / `pnpm lint` / `pnpm format:check`、整形には `pnpm format` を使う。
+開発用依存のバージョンと `pnpm-lock.yaml` を固定し、Pi が提供する peer dependency は維持する。
+開発用依存・キャッシュ・検査設定・lockfile は global agent directory に反映しない。
+
+GitHub Actions の `sandbox-ceiling checks` は同じ静的検査と `test:unit` を実行する。
+マージを必ず止めるには、リポジトリの branch protection / ruleset でこの workflow の
+`check` job を required status check に指定する。
+
+JSDoc の JSON 型注釈は入力の実行時検証ではない。JSON 通信契約の強化は別の変更として扱う。
+また、統合テストが文字列で生成する fixture extension の内部は、この型検査の対象外。
+`test:unit` は scope / capability の検証であり、以下の OS 境界・Pi 統合テストの代替ではない。
+
+### 実行時の検証
 
 認証情報を使わず、決定論的な fixture provider が実際の親 / 子 Pi セッションを動かす。
 RPC の選択 UI だけを自動応答する。TUI の目視操作は別途行う。
