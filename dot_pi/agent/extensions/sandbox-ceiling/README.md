@@ -202,7 +202,10 @@ Agent の通常ファイルツールが workspace 外の任意ファイルを読
   WindowsApps 自体、Windows home、Windows drive 全体は公開しない。
   `WSL_INTEROP` は起動時の環境を使い、socket の番号を固定しない。
   `/run/WSL` の公開は Windows process 起動の IPC を可能にするため、Windows 側プロセスには
-  Linux の filesystem boundary が及ばない。署名用途だけに使い、コミットは ASK のまま。
+  Linux の filesystem boundary が及ばない。署名用途だけに使う。
+  `git-commit` は明示パスの stage、通常の commit、署名用一時領域の作成・限定清掃を ALLOW とし、
+  push・履歴改変・Git 設定変更を DENY とする。未知のコマンドや shell wrapper は ASK のまま。
+  1Password のアンロック・署名承認や hook の待機は、この ALLOW では省略されない。
   Git の署名用一時ファイルは、cwd 内の Git 管理ディレクトリに作る専用の `0700` ディレクトリへ
   `TMPDIR` を Git プロセス単位で指定する。private `/tmp` は Windows 側から同じファイルとして見えないため使わない。
   成否を問わず自身の一時領域を清掃する。Git 管理ディレクトリが write 範囲外なら停止する。
@@ -222,6 +225,10 @@ RPC の選択 UI だけを自動応答する。TUI の目視操作は別途行�
 ```sh
 node --experimental-strip-types tests/definitions.test.mjs
 node tests/git-commit-template.test.mjs
+
+POC_MODULES=/absolute/path/to/node_modules \
+POC_JITI_ENTRY=file:///absolute/path/to/pi/dist/core/extensions/jiti-loader.js \
+  node tests/git-commit-template.test.mjs
 
 POC_SDK_ENTRY=/absolute/path/to/pi/dist/index.js \
   node --experimental-strip-types tests/backend.test.mjs

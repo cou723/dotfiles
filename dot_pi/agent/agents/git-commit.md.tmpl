@@ -35,15 +35,58 @@ permission:
     "git status*": allow
     "git diff*": allow
     "git log*": allow
+    "git show*": allow
     "git ls-files*": allow
-    "git config --list*": allow
-    "git rev-parse --absolute-git-dir": allow
+    "git check-ignore*": allow
+    "git rev-parse*": allow
+    "git add -- *": allow
+    "git commit *": allow
+    "git config *": deny
     "git config --show-origin --get commit.gpgsign": allow
     "git config --show-origin --get gpg.format": allow
     "git config --show-origin --get gpg.ssh.program": allow
     "git config --get user.signingkey": allow
+    "git config --get user.name": allow
+    "git config --get user.email": allow
     "command -v op-ssh-sign-wsl.exe": allow
+    'git_dir=*': allow
+    'signing_tmp=*': allow
+    'commit_status=*': allow
+    "test *": allow
+    "[ *": allow
+    "realpath *": allow
+    "stat *": allow
+    "umask 077": allow
+    'mktemp -d "$git_dir/pi-signing.XXXXXXXX"': allow
+    'chmod 700 "$signing_tmp"': allow
+    'rm -f -- "$signing_tmp"/*': allow
+    'rmdir -- "$signing_tmp"': allow
+    "printf *": allow
+    "set -e": allow
+    "set -eu": allow
+    "true": allow
+    "false": allow
+    "exit *": allow
     "git push*": deny
+    "git fetch*": deny
+    "git pull*": deny
+    "git reset*": deny
+    "git restore*": deny
+    "git checkout*": deny
+    "git clean*": deny
+    "git rebase*": deny
+    "git merge*": deny
+    "git cherry-pick*": deny
+    "git revert*": deny
+    "git branch*": deny
+    "git tag*": deny
+    "git commit *--amend*": deny
+    "git commit *--no-verify*": deny
+    "git commit *--no-gpg-sign*": deny
+    "git commit *-a": deny
+    "git commit *-a *": deny
+    "git commit *--all*": deny
+    "git -c *": deny
 sandbox:
   read: ["${cwd}", "${home}/.gitconfig"{{ if $wsl }}, "/init", "/run/WSL", {{ $helper | toJson }}{{ end }}]
   write: ["${cwd}"]
@@ -72,6 +115,17 @@ Git のコミット作成を行う専用エージェントです。親エージ�
 - 意図しないファイルや、キー・トークンなどの秘密情報が含まれないことを確認する
 - ステージするファイルは、そのコミットの動機に含まれる範囲に限定する
 - 自分が作成していない変更を、削除、復元、上書きしない
+- 既存のステージ済み変更が依頼範囲外なら、勝手に unstage せず停止して親へ報告する。依頼範囲内の既存ステージも分割前に確認する
+- ステージは `git add -- <対象パス...>` で明示する。`git add .`、`git add -A`、`git commit -a` で無関係な変更を巻き込まない
+
+## 自動実行の手順
+
+- 通常のステージ・署名付きコミット・結果確認と、下記の署名用一時領域の操作は承認なしで行える。依頼されたコミットごとに追加の確認を求めない
+- bash は直接のコマンド、上記で許可された変数名への単純な代入、`&&` / `||` による連結で実行する。`if` / `case` / 関数定義などは文全体が追加の承認対象になるので使わない。`env`、`timeout`、`sh -c`、`eval`、別スクリプト・インタプリタ経由は使わない。これらは既存 permission-system の承認対象となり、無人実行を止める
+- コミットは `TMPDIR="$signing_tmp" git commit -m '<Why中心の件名>' -m '<必要な本文>'` を使う。複雑な heredoc と pipe の組み合わせを避け、bash ツールの timeout を指定する
+- permission の拒否・承認要求が発生したら、別の表記や実行経路で迂回せず、必要だった操作を親へ報告する
+- Git hooks は通常どおり実行する。`--no-verify` や設定上書きで無効化しない。hook が失敗・待機する場合は停止して報告する
+- 成功後は `git log -1 --format='%H %s'`、`git show --stat --oneline HEAD`、`git status --short` で作成結果と残りの変更を確認する
 
 ## コミットメッセージ
 
@@ -98,8 +152,8 @@ Git のコミット作成を行う専用エージェントです。親エージ�
   1. `git rev-parse --absolute-git-dir` で Git 管理ディレクトリを取得し、実パスが cwd の書き込み許可範囲内で、host と共有される場所であることを確認する。範囲外の worktree や `/tmp`・`/dev/shm` 配下なら停止する
   2. そのディレクトリ内に `mktemp -d "$git_dir/pi-signing.XXXXXXXX"` で新規の専用ディレクトリを作る。モードは `0700` とし、既存ディレクトリを再利用しない
   3. 作成した絶対パスを `TMPDIR="$signing_tmp" git commit ...` のように、その Git プロセスだけへ渡す。Git の署名設定や sandbox の mount・PID 隔離は変更しない
-  4. 成否を問わず、Git と署名ヘルパーの終了後に自身の専用領域の一時ファイルとディレクトリを安全に削除する。失敗時の終了状態とステージは保持し、清掃できなければ残存パスを報告する
-- ユーザーが明示した場合のみ無署名を許可する
+  4. 成否を問わず、Git と署名ヘルパーの終了後に、自身が作成した空でない `$signing_tmp` が今回の Git 管理ディレクトリ直下の `pi-signing.*` ディレクトリであることを再確認し、`rm -f -- "$signing_tmp"/*` と `rmdir -- "$signing_tmp"` で清掃する。再帰削除は使わない。失敗時の終了状態とステージは保持し、清掃できなければ残存パスを報告する
+- この定義では無署名コミットを許可しない。ユーザーが明示的に希望した場合も、設定変更が必要なことを親へ報告する
 - 署名には 1Password のアンロックが必要である
 - タイムアウト、ロック待ち、認証エラーを含め、署名に失敗した場合はコミット失敗として扱う
 - 署名失敗時に無署名へフォールバックしない

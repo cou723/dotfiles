@@ -28,8 +28,12 @@ const wsl = render("6.18-microsoft-standard-WSL2", `/usr/bin:${windowsApps}/:/an
 assert.deepEqual(roots(wsl), ["${cwd}", "${home}/.gitconfig", "/init", "/run/WSL", windowsApps + "/op-ssh-sign-wsl.exe"]);
 assert.deepEqual(roots(wsl, "write"), ["${cwd}"]);
 assert.match(wsl.stdout, /"git ls-files\*": allow/);
-assert.match(wsl.stdout, /"git config --list\*": allow/);
-assert.match(wsl.stdout, /"git rev-parse --absolute-git-dir": allow/);
+assert.match(wsl.stdout, /"git config \*": deny/);
+assert.ok(!wsl.stdout.includes('"git config --list*": allow'));
+assert.match(wsl.stdout, /"git rev-parse\*": allow/);
+assert.match(wsl.stdout, /"git add -- \*": allow/);
+assert.match(wsl.stdout, /"git commit \*": allow/);
+assert.match(wsl.stdout, /"git commit \*--amend\*": deny/);
 assert.ok(wsl.stdout.includes('mktemp -d "$git_dir/pi-signing.XXXXXXXX"'));
 assert.ok(wsl.stdout.includes('TMPDIR="$signing_tmp" git commit'));
 assert.ok(wsl.stdout.includes("0700"));
@@ -45,4 +49,49 @@ for (const PATH of ["/usr/bin", "relative/AppData/Local/Microsoft/WindowsApps", 
   assert.notEqual(missing.status, 0);
   assert.match(missing.stderr, /WSL signing requires a WindowsApps directory in PATH/);
 }
-console.log("PASS: WSL-only minimal read grants, dynamic Windows username/drive, quoted paths, first PATH match, runtime home, cwd-only writes, preserved permissions and missing-path rejection");
+console.log("PASS: WSL-only minimal read grants, dynamic Windows username/drive, quoted paths, first PATH match, runtime home, cwd-only writes, unattended commit grants and missing-path rejection");
+
+// Exercise the installed parser and rule matcher rather than a replacement shell policy.
+if (process.env.POC_MODULES && process.env.POC_JITI_ENTRY) {
+  const { createJiti } = await import(process.env.POC_JITI_ENTRY);
+  const jiti = createJiti(import.meta.url, { tryNative: false });
+  const base = process.env.POC_MODULES + "/@gotgenes/pi-permission-system/src/";
+  const { extractFrontmatter, parseSimpleYamlMap } = await jiti.import(base + "config/yaml-frontmatter.ts");
+  const { compileWildcardPatternEntries, findCompiledWildcardMatch } = await jiti.import(base + "policy/wildcard-matcher.ts");
+  const { getParser } = await jiti.import(base + "access-intent/bash/parser.ts");
+  const { collectCommands } = await jiti.import(base + "access-intent/bash/command-enumeration.ts");
+  const { WordReader } = await jiti.import(base + "access-intent/bash/node-text.ts");
+  const { ShellVariables } = await jiti.import(base + "access-intent/bash/shell-variable-expansion.ts");
+  const { resolveBashCommandCheck } = await jiti.import(base + "handlers/gates/bash-command.ts");
+  const policy = parseSimpleYamlMap(extractFrontmatter(wsl.stdout)).permission;
+  const globalPolicy = JSON.parse(readFileSync(new URL("../../pi-permission-system/config.json", import.meta.url), "utf8")).permission;
+  const patterns = compileWildcardPatternEntries(Object.entries({ ...globalPolicy.bash, ...policy.bash }));
+  const resolver = { resolve({ input }) {
+    const match = findCompiledWildcardMatch(patterns, input.command);
+    return { state: typeof match?.state === "object" ? match.state.action : match?.state ?? "ask", toolName: "bash", source: "bash", origin: "agent", matchedPattern: match?.matchedPattern, command: input.command };
+  } };
+  const parser = await getParser();
+  function check(command, expected) {
+    const tree = parser.parse(command);
+    assert.ok(tree, "Installed bash parser must parse the command");
+    try {
+      const units = collectCommands(tree.rootNode, new WordReader(ShellVariables.scan([tree.rootNode])));
+      const result = resolveBashCommandCheck(command, units, "git-commit", resolver);
+      assert.equal(result.state, expected, JSON.stringify({ command, units, result }));
+    } finally { tree.delete(); }
+  }
+  for (const command of [
+    "git add -- src/example.ts", "git show --stat --oneline HEAD",
+    'test -S "$WSL_INTEROP"',
+    'git_dir=$(git rev-parse --absolute-git-dir)',
+    'git_dir=$(realpath "$git_dir")',
+    'umask 077; signing_tmp=$(mktemp -d "$git_dir/pi-signing.XXXXXXXX")',
+    'chmod 700 "$signing_tmp"',
+    'TMPDIR="$signing_tmp" git commit -m "Explain why"; commit_status=$?',
+    'test -n "$signing_tmp" && rm -f -- "$signing_tmp"/* && rmdir -- "$signing_tmp"',
+    'test "$commit_status" -eq 0 || exit "$commit_status"',
+  ]) check(command, "allow");
+  for (const command of ["git push", "git commit --amend -m x", "git commit --no-verify -m x", "git commit --no-gpg-sign -m x", "git commit -a -m x", "git reset --hard", "git restore file.txt", "git clean -fd", "git config user.name changed", "git -c commit.gpgsign=false commit -m x", "git status && git push"]) check(command, "deny");
+  for (const command of ["git add .", "rm -rf .git", "env TMPDIR=/tmp git commit -m x", "sh -c 'git commit -m x'"]) check(command, "ask");
+  console.log("PASS: installed permission-system parser/matcher allows direct signing workflow, denies destructive Git operations, retains asks for wrappers and broad staging/deletion");
+}
