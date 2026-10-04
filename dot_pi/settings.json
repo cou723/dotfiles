@@ -1,7 +1,7 @@
 {
   "poke": {
     "enabled": true,
-    "thresholdSeconds": 60,
+    "thresholdSeconds": 300,
     "autoAbort": true,
     "autoPoke": false,
     "postCompactPoke": false,
