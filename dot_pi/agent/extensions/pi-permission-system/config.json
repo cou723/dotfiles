@@ -1,0 +1,51 @@
+{
+  "debugLog": false,
+  "permissionReviewLog": true,
+  "yoloMode": false,
+  "authorizerChain": [],
+  "doublePressToConfirm": true,
+  "permissionDialogKeys": {
+    "approve": "1",
+    "approveSession": "2",
+    "approveSessionBoth": "3",
+    "deny": "4",
+    "denyWithReason": "5"
+  },
+  "permission": {
+    "*": "ask",
+    "read": "allow",
+    "grep": "allow",
+    "find": "allow",
+    "ls": "allow",
+    "codemode": "allow",
+    "ask_question": "allow",
+    "subagent": "ask",
+    "get_subagent_result": "allow",
+    "steer_subagent": "allow",
+    "ask_parent": "allow",
+    "notify_parent": "allow",
+    "task": "deny",
+    "powershell": "deny",
+    "code_rewrite": "deny",
+    "external_directory": "allow",
+    "bash": {
+      "*": "ask",
+      "npm *": {
+        "action": "deny",
+        "reason": "pnpmを使ってください。"
+      },
+      "python *": {
+        "action": "deny",
+        "reason": "python3を使ってください。"
+      },
+      "find *": {
+        "action": "deny",
+        "reason": "bash経由のfindではなく、findツールを使ってください。"
+      },
+      "ls *": {
+        "action": "deny",
+        "reason": "bash経由のlsではなく、lsツールを使ってください。"
+      }
+    }
+  }
+}

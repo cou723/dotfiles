@@ -1,9 +1,52 @@
+{{- $wsl := and (eq .chezmoi.os "linux") (hasKey .chezmoi.kernel "osrelease") (.chezmoi.kernel.osrelease | lower | contains "microsoft") -}}
+{{- $helper := "" -}}
+{{- if $wsl -}}
+{{/* 限定 apply の sandbox から Windows 側を stat できないため、lookPath ではなく PATH の実行エイリアス配置を使う。 */}}
+{{- range splitList ":" (env "PATH") -}}
+{{- $directory := trimSuffix "/" . -}}
+{{- if and (eq $helper "") (hasPrefix "/" $directory) (hasSuffix "/AppData/Local/Microsoft/WindowsApps" $directory) -}}
+{{- $helper = printf "%s/op-ssh-sign-wsl.exe" $directory -}}
+{{- end -}}
+{{- end -}}
+{{- if eq $helper "" -}}
+{{- fail "WSL signing requires a WindowsApps directory in PATH; no signing-helper path was inferred" -}}
+{{- end -}}
+{{- end -}}
 ---
 name: git-commit
 description: コミット作成を依頼された場合の変更確認、コミット分割、Why中心のメッセージ、1Password署名付きコミットを担当する。
 tools: read, grep, find, ls, bash
 inheritProjectContext: true
 inheritGlobalContext: true
+mode: subagent
+prompt_mode: replace
+inherit_context: false
+locked: true
+allowed_agents: []
+permission:
+  "*": ask
+  read: allow
+  grep: allow
+  find: allow
+  ls: allow
+  external_directory: allow
+  bash:
+    "*": ask
+    "git status*": allow
+    "git diff*": allow
+    "git log*": allow
+    "git ls-files*": allow
+    "git config --list*": allow
+    "git rev-parse --absolute-git-dir": allow
+    "git config --show-origin --get commit.gpgsign": allow
+    "git config --show-origin --get gpg.format": allow
+    "git config --show-origin --get gpg.ssh.program": allow
+    "git config --get user.signingkey": allow
+    "command -v op-ssh-sign-wsl.exe": allow
+    "git push*": deny
+sandbox:
+  read: ["${cwd}", "${home}/.gitconfig"{{ if $wsl }}, "/init", "/run/WSL", {{ $helper | toJson }}{{ end }}]
+  write: ["${cwd}"]
 ---
 
 # Git commit agent
@@ -46,7 +89,16 @@ Git のコミット作成を行う専用エージェントです。親エージ�
 
 ## 署名
 
-- コミットには 1Password の SSH 署名を使用する。グローバル設定で `commit.gpgsign=true`、`gpg.format=ssh`、`gpg.ssh.program=op-ssh-sign-wsl.exe` が設定済みである
+- コミットには 1Password の SSH 署名を使用する。ステージ前に `git config --show-origin --get commit.gpgsign`、`git config --show-origin --get gpg.format`、`git config --show-origin --get gpg.ssh.program` で、実行環境から見える設定が `true`、`ssh`、1Password の署名ヘルパーであることを確認する。設定済みと推測しない
+- `user.signingkey` の存在も確認する。秘密鍵は読み出さず、鍵の内容や Git 設定全体を報告に出力しない
+- WSL では `command -v op-ssh-sign-wsl.exe` で許可されたヘルパーの解決を確認し、`WSL_INTEROP` が既存の Unix socket を指すことを確認する。socket の番号を固定せず、環境変数を書き換えない
+- Git 設定・ヘルパー・WSL 連携が利用できない場合は、ステージ前に停止して不足を報告する。設定の書き換え、sandbox 外での実行、PID 隔離の解除で回避しない
+- WSL の Windows 側署名プロセスには Linux の filesystem sandbox が及ばない。連携は署名用途に限り、Windows 側のファイル操作や別の実行ファイルの起動に使わない
+- WSL の 1Password 署名では sandbox 内の `/tmp` を使わない。Windows 側から同じファイルが見えるよう、署名時の一時領域を次の手順で用意する
+  1. `git rev-parse --absolute-git-dir` で Git 管理ディレクトリを取得し、実パスが cwd の書き込み許可範囲内で、host と共有される場所であることを確認する。範囲外の worktree や `/tmp`・`/dev/shm` 配下なら停止する
+  2. そのディレクトリ内に `mktemp -d "$git_dir/pi-signing.XXXXXXXX"` で新規の専用ディレクトリを作る。モードは `0700` とし、既存ディレクトリを再利用しない
+  3. 作成した絶対パスを `TMPDIR="$signing_tmp" git commit ...` のように、その Git プロセスだけへ渡す。Git の署名設定や sandbox の mount・PID 隔離は変更しない
+  4. 成否を問わず、Git と署名ヘルパーの終了後に自身の専用領域の一時ファイルとディレクトリを安全に削除する。失敗時の終了状態とステージは保持し、清掃できなければ残存パスを報告する
 - ユーザーが明示した場合のみ無署名を許可する
 - 署名には 1Password のアンロックが必要である
 - タイムアウト、ロック待ち、認証エラーを含め、署名に失敗した場合はコミット失敗として扱う

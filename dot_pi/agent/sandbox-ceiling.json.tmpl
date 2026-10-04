@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "backend": "bubblewrap",
+  "executable": "${home}/.nix-profile/bin/bwrap",
+  "runtimeRead": [
+    "/usr", "/bin", "/lib", "/lib64", "/nix/store",
+    "${home}/.nix-profile",
+    "${home}/.local/share/pnpm/store",
+    "/etc/ld.so.cache", "/etc/resolv.conf", "/etc/hosts", "/etc/nsswitch.conf",
+    "/etc/ssl/certs", "/etc/alternatives"
+  ],
+  "maintenance": {
+    "sourceDir": "{{ .chezmoi.sourceDir }}",
+    "executable": "${home}/.nix-profile/bin/chezmoi"
+  },
+  "timeoutMs": 600000
+}

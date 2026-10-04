@@ -1,10 +1,33 @@
 ---
 name: todoist-add-task
 description: Todoistへのタスク追加を担当。親はタスク内容、日付、温度感のある優先度のみ渡す。運用ルールを確認して登録・照合する。
-tools: read, codemode, mcp:todoist
+tools: read, codemode, mcp__todoist__fetch_object, mcp__todoist__find_projects, mcp__todoist__add_tasks
 inheritProjectContext: true
 inheritGlobalContext: true
 skills: todoist
+mode: subagent
+prompt_mode: replace
+inherit_context: false
+locked: true
+allowed_agents: []
+permission:
+  "*": deny
+  read: allow
+  codemode: allow
+  ask_parent: allow
+  notify_parent: allow
+  external_directory: allow
+  mcp__todoist__fetch_object: allow
+  mcp__todoist__find_projects: allow
+  mcp__todoist__add_tasks: ask
+  mcp:
+    "*": deny
+    "todoist*fetch*object*": allow
+    "todoist*find*projects*": allow
+    "todoist*add*tasks*": ask
+sandbox:
+  read: ["${cwd}"]
+  write: []
 ---
 
 # Todoist タスク追加エージェント

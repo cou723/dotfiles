@@ -1,0 +1,8 @@
+{
+  "maxConcurrent": 4,
+  "defaultMaxTurns": 40,
+  "excludedExtensionPackages": [
+    "npm:pi-agent-router@0.9.0"
+  ],
+  "abortAllOnInterrupt": true
+}
