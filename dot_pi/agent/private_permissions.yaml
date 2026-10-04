@@ -5,3 +5,7 @@ rules:
     condition: 'tool == "bash" && command.matches("^\\s*python(?:\\s|$)")'
     action: block
     message: 明示的にpython3を使ってください。
+  - name: use-pnpm
+    condition: 'tool == "bash" && command.matches("^\\s*npm(?:\\s|$)")'
+    action: block
+    message: 明示的にpnpmを使ってください。
