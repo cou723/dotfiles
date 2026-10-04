@@ -29,6 +29,31 @@ const runtimeRead = ["/usr", "/bin", "/lib", "/lib64", "/nix/store", path.join(h
 writeFileSync(path.join(agentDir, "sandbox-ceiling.json"), JSON.stringify({ version: 1, backend: "bubblewrap", executable: path.join(homedir(), ".nix-profile/bin/bwrap"), runtimeRead, timeoutMs: 20000 }));
 writeFileSync(path.join(cwd, "file.txt"), "before");
 
+const researchAllowed = [
+  "web_enable", "web_search", "fetch_content", "get_search_content", "source_check",
+  "mcp__context7__resolve_library_id", "mcp__context7__query_docs",
+  ...[
+    "get_file_contents", "get_commit", "list_commits", "search_commits", "list_branches",
+    "list_tags", "get_tag", "get_latest_release", "get_release_by_tag", "list_releases",
+    "search_code", "search_repositories", "list_issues", "search_issues", "issue_read",
+    "get_label", "list_issue_types", "list_pull_requests", "search_pull_requests", "pull_request_read",
+  ].map(name => "mcp__github__" + name),
+];
+const researchDenied = [
+  "mcp", "list_mcp_resources", "read_mcp_resource", "list_mcp_resource_templates",
+  "mcp__context7__future_tool", "mcp__todoist__find_tasks",
+  ...[
+    "create_branch", "create_repository", "fork_repository", "delete_file", "push_files",
+    "create_or_update_file", "create_pull_request", "update_pull_request", "merge_pull_request",
+    "update_pull_request_branch", "issue_write", "sub_issue_write", "add_issue_comment",
+    "update_issue_comment", "pull_request_review_write", "add_comment_to_pending_review",
+    "add_reply_to_pull_request_comment", "request_copilot_review", "assign_copilot_to_issue",
+    "create_pull_request_with_copilot", "run_secret_scanning", "get_copilot_job_status",
+    "get_me", "get_teams", "get_team_members", "search_users", "list_repository_collaborators",
+    "ui_get", "list_issue_fields", "get_future_mutation", "search_future_mutation",
+  ].map(name => "mcp__github__" + name),
+];
+
 // A deterministic fixture provider drives real Pi tool calls without an LLM,
 // network request, or credential. It is loaded into real child sessions too.
 writeFileSync(path.join(agentDir, "extensions", "poc-probe.ts"), `
@@ -45,7 +70,11 @@ export default function (pi) {
       const task = JSON.stringify(latestUser?.content ?? "");
       const last = context.messages.at(-1);
       if (last?.role === "toolResult" && last.isError) shared.failures.push(JSON.stringify(last));
-      const tool = last?.role !== "toolResult" && task.includes("POC_EDIT") ? { type: "toolCall", id: "edit-poc", name: "edit", arguments: { path: "file.txt", edits: [{ oldText: task.includes("POC_EDIT2") ? "primary edited" : "before", newText: "child edited" }] } }
+      const researchCode = task.includes("POC_RESEARCH_READ") ? 'return await tools.mcp__github__get_file_contents({});'
+        : task.includes("POC_RESEARCH_WRITE") ? 'return await tools.mcp__github__issue_write({});'
+        : task.includes("POC_READ_OUTSIDE") ? 'return await tools.read({path:"../outside"});' : undefined;
+      const tool = last?.role !== "toolResult" && researchCode ? { type: "toolCall", id: "research-poc", name: "codemode", arguments: { code: researchCode } }
+        : last?.role !== "toolResult" && task.includes("POC_EDIT") ? { type: "toolCall", id: "edit-poc", name: "edit", arguments: { path: "file.txt", edits: [{ oldText: task.includes("POC_EDIT2") ? "primary edited" : "before", newText: "child edited" }] } }
         : last?.role !== "toolResult" && task.includes("POC_ASK") ? { type: "toolCall", id: "ask-poc", name: "poc_ask", arguments: {} } : undefined;
       const message = { role: "assistant", api: model.api, provider: model.provider, model: model.id, timestamp: Date.now(), stopReason: tool ? "toolUse" : "stop", content: tool ? [tool] : [{ type: "text", text: "POC_DONE" }], usage: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, totalTokens: 0, cost: { input: 0, output: 0, cacheRead: 0, cacheWrite: 0, total: 0 } } };
       shared.models.push({ prompt: getCurrentSystemPrompt(context.messages), tools: context.messages.filter(m => m.role === "system").flatMap(m => m.tools ?? []).map(t => t.name) });
@@ -57,6 +86,11 @@ export default function (pi) {
       return stream;
     }
   });
+  // Native MCP names are separate tool surfaces in the pinned permission package;
+  // allowing a whole server or a get_* prefix would also admit future tools.
+  for (const name of ${JSON.stringify([...researchAllowed, ...researchDenied])}) {
+    pi.registerTool({ name, label: name, description: "Offline research permission fixture", exposure: name.startsWith("mcp__") ? "codemode" : "direct", parameters: Type.Object({}), execute: async () => ({ content: [{ type: "text", text: "RESEARCH_FIXTURE_OK" }], details: undefined }) });
+  }
   pi.registerTool({ name: "poc_ask", label: "poc_ask", description: "Fixture requiring approval", parameters: Type.Object({}), execute: async () => { shared.asksExecuted++; return { content: [{ type: "text", text: "approved" }], details: undefined }; } });
   pi.on("session_start", (_event, ctx) => shared.contexts.set(ctx.sessionManager.getSessionId(), ctx));
   pi.events.on("permissions:ui_prompt", event => shared.prompts.push(event));
@@ -89,6 +123,31 @@ try {
   assert.equal((await gate("edit", { path: "file.txt", edits: [{ oldText: "before", newText: "forbidden" }] })).block, true);
   assert.equal((await gate("bash", { command: "pwd" })).block, true);
   assert.match(JSON.stringify(await execute("read", { path: "file.txt" })), /before/);
+  for (const role of ["planner", "orchestrator"]) {
+    runner.setUIContext(undefined, "json");
+    await session.prompt("/agent " + role);
+    runner.setUIContext(ui, "rpc");
+    await preflight();
+    for (const name of researchAllowed) {
+      assert.notEqual((await gate(name, {}))?.block, true, role + " must allow " + name);
+      assert.ok(session.getCallableToolNames().includes(name), role + " must make callable " + name);
+      if (!name.startsWith("mcp__")) assert.ok(session.getActiveToolNames().includes(name), role + " must expose " + name);
+    }
+    for (const name of researchDenied) {
+      assert.equal((await gate(name, {})).block, true, role + " must deny " + name);
+    }
+    for (const name of ["edit", "write", "bash"]) {
+      assert.equal((await gate(name, {})).block, true, role + " remains read-only");
+    }
+    assert.equal((await gate("read", { path: path.join(fixture, "outside") })).block, true);
+    await session.prompt("POC_RESEARCH_READ");
+    assert.match(JSON.stringify(session.agent.state.messages.at(-2)), /RESEARCH_FIXTURE_OK/);
+    await session.prompt("POC_RESEARCH_WRITE");
+    const deniedMutation = session.agent.state.messages.at(-2);
+    assert.equal(deniedMutation.role, "toolResult");
+    assert.equal(deniedMutation.isError, true, "Nested MCP mutation must be denied");
+    assert.match(JSON.stringify(deniedMutation), /not permitted|blocked|denied/i);
+  }
   assert.notEqual((await gate("subagent", { subagent_type: "worker", prompt: "POC_EDIT", description: "Child edit" }))?.block, true);
   const delegated = await execute("subagent", { subagent_type: "worker", prompt: "POC_EDIT", description: "Child edit" });
   assert.equal(readFileSync(path.join(cwd, "file.txt"), "utf8"), "child edited", JSON.stringify({ delegated, failures: shared.failures }));
@@ -109,7 +168,8 @@ try {
   assert.equal((await gate("read", { path: path.join(fixture, "outside") })).block, true);
   assert.equal((await gate("write", { path: path.join(fixture, "outside"), content: "no" })).block, true);
   // Codemode nested calls must pass through the same permission and ceiling gates.
-  const nestedDenied = await execute("codemode", { code: 'return await tools.read({path:"../outside"});' });
+  await session.prompt("POC_READ_OUTSIDE");
+  const nestedDenied = session.agent.state.messages.at(-2);
   assert.equal(nestedDenied.isError, true, JSON.stringify(nestedDenied));
   assert.match(JSON.stringify(nestedDenied), /outside|blocked|Path/);
   runner.setUIContext(undefined, "json");
@@ -122,7 +182,7 @@ try {
   const independentlyScoped = await execute("subagent", { subagent_type: "worker", prompt: "POC_EDIT2", description: "Independent child scope" });
   assert.equal(readFileSync(path.join(cwd, "file.txt"), "utf8"), "child edited", JSON.stringify(independentlyScoped));
   assert.deepEqual(errors, [], JSON.stringify(errors));
-  console.log("PASS: actual primary identity/permission switch, Planner read/deny/delegate, actual stronger child edit, child ASK forwarded to RPC UI, no-UI ASK denied, outside paths denied, codemode gate, invocation narrowing");
+  console.log("PASS: Planner/orchestrator research allowlist, denied GitHub mutations/unknown tools/proxies, nested MCP gate, actual primary identity/permission switch, Planner read/deny/delegate, actual stronger child edit, child ASK forwarded to RPC UI, no-UI ASK denied, outside paths denied, codemode gate, invocation narrowing");
 } finally {
   if (session) { await session.extensionRunner.emit({ type: "session_shutdown", reason: "quit" }); session.dispose(); }
   process.chdir(originalCwd);
