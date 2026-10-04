@@ -36,6 +36,17 @@ try {
   assert.match(JSON.stringify(await run("read", { path: "allowed.txt" }, planner)), /allowed/);
   assert.match((await run("read", { path: path.join(outside, "secret.txt") })).error, /ENOENT|not found/);
   assert.match((await run("read", { path: "escape" })).error, /ENOENT|not found/);
+  const selectedFile = path.join(outside, "selected.yml");
+  const siblingFile = path.join(outside, "sibling.yml");
+  writeFileSync(selectedFile, "synthetic configuration\n");
+  writeFileSync(siblingFile, "unselected sentinel\n");
+  const fileReader = { read: [repo, selectedFile], write: [repo] };
+  assert.match(JSON.stringify(await run("read", { path: selectedFile }, fileReader)), /synthetic configuration/);
+  assert.match((await run("read", { path: siblingFile }, fileReader)).error, /ENOENT|not found/);
+  assert.match((await run("write", { path: selectedFile, content: "no" }, fileReader)).error, /EROFS|read-only/);
+  assert.equal((await run("bash", { command: `test -r '${selectedFile}'` }, fileReader)).result.isError, undefined);
+  assert.equal((await run("bash", { command: `printf no > '${selectedFile}'` }, fileReader)).result.isError, true);
+  assert.equal(readFileSync(selectedFile, "utf8"), "synthetic configuration\n");
   assert.match((await run("write", { path: "no.txt", content: "no" }, planner)).error, /EROFS|read-only/);
   assert.ok((await run("write", { path: "new.txt", content: "worker" })).result);
   assert.equal(readFileSync(path.join(repo, "new.txt"), "utf8"), "worker");

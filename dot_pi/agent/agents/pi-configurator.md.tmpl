@@ -23,11 +23,22 @@ permission:
   subagent: allow
   get_subagent_result: allow
   steer_subagent: allow
-  task: deny
-  powershell: deny
-  code_rewrite: deny
+  task:
+    "*":
+      action: deny
+      reason: "委譲は task ではなく subagent を使い、git-commit だけを起動してください。"
+  powershell:
+    "*":
+      action: deny
+      reason: "Pi 設定の操作は許可されたツールと bash を使ってください。PowerShell 経由で制限を迂回しないでください。"
+  code_rewrite:
+    "*":
+      action: deny
+      reason: "設定の変更は正本に対して edit または write を使い、差分を確認してください。"
   mcp:
-    "*": deny
+    "*":
+      action: deny
+      reason: "Pi 設定の仕様調査用 MCP は Context7 に限定しています。それ以外の外部サービスは操作しないでください。"
     "context7*": allow
   mcp__context7__resolve_library_id: allow
   mcp__context7__query_docs: allow
@@ -37,14 +48,26 @@ permission:
     "git status*": allow
     "git diff*": allow
     "git log*": allow
+    "gh auth *": deny
+    "gh auth status": allow
     "chezmoi status*": allow
-    "chezmoi apply*": deny
-    "chezmoi update*": deny
-    "chezmoi re-add*": deny
-    "git push*": deny
-    "rm -rf *": deny
+    "chezmoi apply*":
+      action: deny
+      reason: "グローバル設定の反映は対象を限定した pi_config_apply を使い、dryRun と承認を経て実行してください。"
+    "chezmoi update*":
+      action: deny
+      reason: "chezmoi update は依頼範囲外の取得・反映を伴うため禁止です。正本を編集し、対象を限定して反映してください。"
+    "chezmoi re-add*":
+      action: deny
+      reason: "適用先から正本を取り込み直すと既存の変更を失うおそれがあります。正本を編集し、適用先と比較してください。"
+    "git push*":
+      action: deny
+      reason: "Pi 設定変更の作業では push しません。コミットまで完了し、push は別途依頼してください。"
+    "rm -rf *":
+      action: deny
+      reason: "再帰的な強制削除は禁止です。対象を確認し、強制的な再帰削除を使わない方法で作業してください。"
 sandbox:
-  read: ["${cwd}", "{{ .chezmoi.sourceDir }}", "${home}/.pi/agent", "${home}/.local/share/pnpm/store/v11/links/@earendil-works"]
+  read: ["${cwd}", "{{ .chezmoi.sourceDir }}", "${home}/.pi/agent", "${home}/.local/share/pnpm/store/v11/links/@earendil-works", "${home}/.config/gh/config.yml", "${home}/.config/gh/hosts.yml"]
   write: ["${cwd}", "{{ .chezmoi.sourceDir }}/dot_pi/agent"]
 ---
 
@@ -65,4 +88,5 @@ sandbox:
 - プロジェクトの Agent/extension/settings の変更は、現在のプロセスへ /reload で取り込まず再起動後に有効化する。グローバル側も再起動後に確認する。Agent 定義の変更は実行中の権限を広げない。
 - packages を変更しても sandbox 内からグローバル npm 実体の更新へ逃げない。必要なインストールは再起動時の Pi のパッケージ管理、または人の明示操作に任せる。
 - 型チェック・テスト・chezmoi の限定プレビューで確認する。WHAT は命名、WHY はコミットメッセージ、WHY NOT はコメントで表す。検証済みの変更は通常の完了手順として git-commit エージェントへ委譲し、コミットまで進める。コミットすること自体を危険視して先送りしたり、毎回ユーザーにコミット要否を聞いたりしない。親からは変更の意図・対象範囲・検証結果を渡し、自分の今回の変更だけを対象にする。ユーザーがコミット不要・保留と指定した場合、対象リポジトリが不明な場合、無関係な変更を安全に区別できない場合、署名や権限が不足する場合は停止して理由を報告する。subagent({subagent_type: "git-commit", prompt: "依頼の意図と対象範囲", description: "変更のコミット"}) を使い、自分ではコミットしない。push はこのモードでは行わない。
+- GitHub CLI の認証確認は `gh auth status` を使う。sandbox に公開された `~/.config/gh/config.yml` と `hosts.yml` は gh の動作に限って利用し、内容をファイルツールやシェルで表示・検索・コピーしない。`gh auth token` や `gh auth status --show-token` でトークンを出力しない。認証設定の変更・再ログインは人に任せる。
 - sandbox failure を別ツールで迂回しない。作業完了時は変更箇所、検証、反映状況、作成したコミットの SHA と件名、再起動が必要なことを簡潔に報告する。コミットを作成できなかった場合は未完了の工程と理由を明記する。
