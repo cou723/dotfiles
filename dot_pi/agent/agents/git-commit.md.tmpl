@@ -130,8 +130,8 @@ permission:
       action: deny
       reason: "Git 設定の一時上書きは禁止です。既存の署名設定と hooks をそのまま使ってください。"
 sandbox:
-  read: ["${cwd}", "${home}/.gitconfig"{{ if $wsl }}, "/init", "/run/WSL", {{ $helper | toJson }}{{ end }}]
-  write: ["${cwd}"]
+  read: ["${cwd}", "${home}/.local/share/chezmoi", "${home}/.gitconfig"{{ if $wsl }}, "/init", "/run/WSL", {{ $helper | toJson }}{{ end }}]
+  write: ["${cwd}", "${home}/.local/share/chezmoi"]
 ---
 
 # Git commit agent
@@ -152,6 +152,9 @@ Git のコミット作成を行う専用エージェントです。親エージ�
 
 ## 事前確認
 
+- 対象リポジトリは親が指定したものを使う。許可範囲は起動元の cwd と `${home}/.local/share/chezmoi` に限る。別リポジトリへの権限は推測しない
+- chezmoi のコミットでは、各 bash 呼び出しの先頭で指定リポジトリへ `cd <対象リポジトリ> && ...` して実行する。bash 呼び出し間で作業ディレクトリは保持されない
+- パスが見えない場合は read / ls で必要最小限の確認を行い、sandbox の範囲不足を親へ報告する。bash 経由の ls / find や別の実行経路で回避しない
 - コミット前に `git status`、`git diff`、`git diff --cached`、`git log --oneline -10` を確認する
 - 親エージェントから渡された意図と実際の差分が一致することを確認する
 - 意図しないファイルや、キー・トークンなどの秘密情報が含まれないことを確認する
@@ -191,7 +194,7 @@ Git のコミット作成を行う専用エージェントです。親エージ�
 - Git 設定・ヘルパー・WSL 連携が利用できない場合は、ステージ前に停止して不足を報告する。設定の書き換え、sandbox 外での実行、PID 隔離の解除で回避しない
 - WSL の Windows 側署名プロセスには Linux の filesystem sandbox が及ばない。連携は署名用途に限り、Windows 側のファイル操作や別の実行ファイルの起動に使わない
 - WSL の 1Password 署名では sandbox 内の `/tmp` を使わない。Windows 側から同じファイルが見えるよう、署名時の一時領域を次の手順で用意する
-  1. `git rev-parse --absolute-git-dir` で Git 管理ディレクトリを取得し、実パスが cwd の書き込み許可範囲内で、host と共有される場所であることを確認する。範囲外の worktree や `/tmp`・`/dev/shm` 配下なら停止する
+  1. `git rev-parse --absolute-git-dir` で Git 管理ディレクトリを取得し、実パスが対象リポジトリの書き込み許可範囲（起動元の cwd または `${home}/.local/share/chezmoi`）内で、host と共有される場所であることを確認する。範囲外の worktree や `/tmp`・`/dev/shm` 配下なら停止する
   2. そのディレクトリ内に `mktemp -d "$git_dir/pi-signing.XXXXXXXX"` で新規の専用ディレクトリを作る。モードは `0700` とし、既存ディレクトリを再利用しない
   3. 作成した絶対パスを `TMPDIR="$signing_tmp" git commit ...` のように、その Git プロセスだけへ渡す。Git の署名設定や sandbox の mount・PID 隔離は変更しない
   4. 成否を問わず、Git と署名ヘルパーの終了後に、自身が作成した空でない `$signing_tmp` が今回の Git 管理ディレクトリ直下の `pi-signing.*` ディレクトリであることを再確認し、`rm -f -- "$signing_tmp"/*` と `rmdir -- "$signing_tmp"` で清掃する。再帰削除は使わない。失敗時の終了状態とステージは保持し、清掃できなければ残存パスを報告する

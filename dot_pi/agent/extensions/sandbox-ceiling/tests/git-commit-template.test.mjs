@@ -25,8 +25,10 @@ function roots(result, mode = "read") {
   return JSON.parse(match[1]);
 }
 const wsl = render("6.18-microsoft-standard-WSL2", `/usr/bin:${windowsApps}/:/another/AppData/Local/Microsoft/WindowsApps`);
-assert.deepEqual(roots(wsl), ["${cwd}", "${home}/.gitconfig", "/init", "/run/WSL", windowsApps + "/op-ssh-sign-wsl.exe"]);
-assert.deepEqual(roots(wsl, "write"), ["${cwd}"]);
+assert.deepEqual(roots(wsl), ["${cwd}", "${home}/.local/share/chezmoi", "${home}/.gitconfig", "/init", "/run/WSL", windowsApps + "/op-ssh-sign-wsl.exe"]);
+assert.deepEqual(roots(wsl, "write"), ["${cwd}", "${home}/.local/share/chezmoi"]);
+assert.ok(wsl.stdout.includes("各 bash 呼び出しの先頭"));
+assert.ok(wsl.stdout.includes("実パスが対象リポジトリの書き込み許可範囲"));
 assert.match(wsl.stdout, /"git ls-files\*": allow/);
 assert.match(wsl.stdout, /"git config \*":\n      action: deny\n      reason: ".+"/);
 assert.ok(!wsl.stdout.includes('"git config --list*": allow'));
@@ -41,15 +43,17 @@ assert.ok(wsl.stdout.includes("成否を問わず"));
 assert.match(wsl.stdout, /"git push\*":\n      action: deny\n      reason: ".+"/);
 assert.match(wsl.stdout, /"\*": ask/);
 assert.ok(!wsl.stdout.includes("805_interop"));
-assert.deepEqual(roots(render("6.18-generic", "/usr/bin")), ["${cwd}", "${home}/.gitconfig"]);
-assert.deepEqual(roots(render("microsoft", "/usr/bin", "darwin")), ["${cwd}", "${home}/.gitconfig"]);
+for (const result of [render("6.18-generic", "/usr/bin"), render("microsoft", "/usr/bin", "darwin")]) {
+  assert.deepEqual(roots(result), ["${cwd}", "${home}/.local/share/chezmoi", "${home}/.gitconfig"]);
+  assert.deepEqual(roots(result, "write"), ["${cwd}", "${home}/.local/share/chezmoi"]);
+}
 for (const PATH of ["/usr/bin", "relative/AppData/Local/Microsoft/WindowsApps", "/tmp/WindowsApps"]) {
   const missing = render("microsoft-standard-WSL2", PATH);
   assert.equal(missing.error, undefined);
   assert.notEqual(missing.status, 0);
   assert.match(missing.stderr, /WSL signing requires a WindowsApps directory in PATH/);
 }
-console.log("PASS: WSL-only minimal read grants, dynamic Windows username/drive, quoted paths, first PATH match, runtime home, cwd-only writes, unattended commit grants and missing-path rejection");
+console.log("PASS: WSL-only minimal read grants, dynamic Windows username/drive, quoted paths, first PATH match, runtime home, cwd and chezmoi-only writes, unattended commit grants and missing-path rejection");
 
 // Exercise the installed parser and rule matcher rather than a replacement shell policy.
 if (process.env.POC_MODULES && process.env.POC_JITI_ENTRY) {
