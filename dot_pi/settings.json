@@ -2,7 +2,7 @@
   "poke": {
     "enabled": true,
     "thresholdSeconds": 300,
-    "autoAbort": true,
+    "autoAbort": false,
     "autoPoke": false,
     "postCompactPoke": false,
     "postCompactCooldownSeconds": 30,
