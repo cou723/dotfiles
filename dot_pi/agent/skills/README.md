@@ -26,6 +26,7 @@ MCP、質問、Web取得などの実行方法は `~/.pi/agent/AGENTS.md` に従�
 | `principle` | プロジェクト原則の策定・監査 |
 | `skill-creator` | スキルの作成・改善・評価 |
 | `todoist` | Todoistタスク管理 |
+| `yomiyasu` | AI生成の日本語を意味を保ったまま自然な文章へ推敲 |
 
 ## 注意
 
