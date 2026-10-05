@@ -8,7 +8,8 @@
     "npm:pi-lsp-extension",
     "npm:pi-web-access@0.35.0",
     "npm:@henryqw/pi-ask-question@2.0.4",
-    "git:github.com/mizchi/explainer"
+    "git:github.com/mizchi/explainer",
+    "{{ .chezmoi.homeDir }}/ghq/github.com/cou723/sandbox-ceiling"
   ],
   "npmCommand": ["npm"],
   "lastChangelogVersion": "1.0.0",
@@ -25,7 +26,10 @@
     "reserveTokens": 32768,
     "keepRecentTokens": 15000
   },
-  "extensions": ["-extensions/principle-guard.ts"],
+  "extensions": [
+    "-extensions/principle-guard.ts",
+    "-extensions/sandbox-ceiling/index.ts"
+  ],
   "skills": []{{ if stat (joinPath .chezmoi.homeDir ".pi/agent/settings.json") }}{{ $settings := include (joinPath .chezmoi.homeDir ".pi/agent/settings.json") | fromJson }}{{ if $settings.deviceId }},
   "deviceId": {{ $settings.deviceId | toJson }}{{ end }}{{ end }}
 }

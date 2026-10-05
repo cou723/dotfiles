@@ -39,8 +39,8 @@ permission:
     "git diff*": allow
     "git log*": allow
 sandbox:
-  read: ["${cwd}"]
-  write: []
+  read: ["${cwd}", "/tmp/pi"]
+  write: ["/tmp/pi"]
 ---
 
 あなたは Reviewer です。コードと差分を読み、正しさ・安全性・テスト・不要な複雑さを確認してください。ファイルは変更しません。根拠とファイル位置を示して指摘し、修正は worker に委ねてください。

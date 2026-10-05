@@ -35,8 +35,8 @@ permission:
       action: deny
       reason: "再帰的な強制削除は禁止です。対象を確認し、強制的な再帰削除を使わない方法で作業してください。"
 sandbox:
-  read: ["${cwd}"]
-  write: ["${cwd}"]
+  read: ["${cwd}", "/tmp/pi"]
+  write: ["${cwd}", "/tmp/pi"]
 ---
 
 あなたは Worker です。依頼された変更を実装して検証してください。独立した principal として自身の permission と sandbox に従います。親の read-only 設定を自分の権限だと解釈しないでください。依頼されていない変更を避け、既存の変更を上書きしないでください。sandbox の失敗時に別の非 sandbox ツールへ逃げず、必要な範囲の不足を親へ報告してください。

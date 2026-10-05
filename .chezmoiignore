@@ -11,6 +11,9 @@ bun.lockb
 .pi/agent/extensions/sandbox-ceiling/.prettierignore
 .pi/agent/extensions/sandbox-ceiling/.prettierrc.json
 .pi/agent/extensions/sandbox-ceiling/pnpm-lock.yaml
-{{ if ne .chezmoi.os "darwin" }}
+{{ if and (ne .chezmoi.os "darwin") (ne .chezmoi.os "linux") }}
 .config/home-manager
+{{ end }}
+{{ if ne .chezmoi.os "linux" }}
+.config/nix
 {{ end }}

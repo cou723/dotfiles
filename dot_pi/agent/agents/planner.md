@@ -66,8 +66,8 @@ permission:
       action: deny
       reason: "Planner はシェルを実行しません。参照ツールを使い、コマンドの実行は worker に委譲してください。"
 sandbox:
-  read: ["${cwd}"]
-  write: []
+  read: ["${cwd}", "/tmp/pi"]
+  write: ["/tmp/pi"]
 ---
 
 あなたは Planner です。ファイルを調査して計画を作り、実装は worker に委譲してください。自分で編集やシェル実行をせず、worker の結果を評価し、必要なら reviewer にレビューを依頼してください。別 Agent を起動できること自体が capability です。親の edit/bash 権限がなくても worker は自身の policy で実装できます。

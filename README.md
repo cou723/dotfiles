@@ -8,18 +8,29 @@ chezmoi で管理する個人 dotfiles。
 chezmoi init --apply https://github.com/cou723/dotfiles.git
 ```
 
-### macOS の Nix / Home Manager
+### macOS / Linux の Nix / Home Manager
 
-macOS 用のパッケージ構成は `~/.config/home-manager` に配置される。
+macOS / Linux 用のパッケージ構成は `~/.config/home-manager` に配置される。
+chezmoiはファイルの配置を担当し、環境の選択はNixの `flake.nix` で行う。
+`home-common.nix` に共通設定、`home-linux.nix` / `home-darwin.nix` に
+OS別パッケージ・ユーザー名・ホームディレクトリを定義する。
+Linuxは `coura`（x86_64）、macOSは `yuki.ueyama`（Apple Silicon）の構成を用意し、
+macOSでは `colima` など、Linuxでは `strace`・`pnpm`・`ripgrep` などをインストールする。
+LinuxのNixユーザー設定 `~/.config/nix/nix.conf` もchezmoiで管理する。
 Nix をインストールした後、次のコマンドで固定済みの構成を反映する。
 
 ```sh
 PATH=/nix/var/nix/profiles/default/bin:$PATH \
-  nix run home-manager -- switch --flake ~/.config/home-manager
+  nix run ~/.config/home-manager -- switch --flake ~/.config/home-manager
 ```
 
-`flake.lock` も管理対象のため、別のMacでも同じnixpkgsとHome Managerの
-リビジョンから環境を再現できる。非macOS環境ではこのディレクトリは適用されない。
+`flake.lock` は両OSの依存関係を固定する。macOSは `nixpkgs` / `home-manager`、
+Linuxは `nixpkgs-linux` / `home-manager-linux` の入力を使い、既存のバージョンを
+それぞれ維持する。依存関係の更新時は適用先の `flake.lock` をchezmoiへ取り込む。
+macOS / Linux 以外ではこのディレクトリは適用されない。
+
+Linux構成の管理元はこのリポジトリの `dot_config/home-manager/` とし、
+`cou723/cou723` リポジトリの構成ではなく `~/.config/home-manager` を指定して切り替える。
 
 ### 1Password CLI のインストール
 
@@ -114,4 +125,5 @@ OpenCodeの過去セッション・認証データはPiへインポートしな�
 | `dot_p10k.zsh` | `~/.p10k.zsh` |
 | `dot_secrets.tmpl` | `~/.secrets` |
 | `dot_local/bin/executable_op` | `~/.local/bin/executable_op` (WSL 用 op.exe ラッパー) |
-| `dot_config/home-manager/` | `~/.config/home-manager/` (macOS のみ) |
+| `dot_config/home-manager/` | `~/.config/home-manager/` (macOS / Linux) |
+| `dot_config/nix/nix.conf` | `~/.config/nix/nix.conf` (Linuxのみ) |

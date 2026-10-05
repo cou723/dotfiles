@@ -34,67 +34,24 @@ in
 {
   home.username = "yuki.ueyama";
   home.homeDirectory = "/Users/yuki.ueyama";
-  home.stateVersion = "24.11";
-
-  nixpkgs.config.allowUnfree = true;
 
   home.packages = with pkgs; [
-    # macos
+    # エディタ・フォント
     vscode
     nerd-fonts.jetbrains-mono
     noto-fonts
     noto-fonts-cjk-sans
     noto-fonts-cjk-serif
 
-    # ユーティリティ
+    # 開発ツール
     awscli2
     aws-vault
-
-    curl
-    delta
-    wget
-    zip
-    unzip
-    fzf
-    eza
-    zsh
-
-    # 開発ツール
-    gh
-    ghq
-    chezmoi
     claude-code
     colima
     docker
     docker-compose
 
-    # C/C++
-    clang-tools
-    gdb
-    cmake
-
-    # Rust
-    rustup
-
-    # Python
-    uv
-
-    # JavaScript
     # hariko-frontend の safe-chain-check が npm 最新版を要求するため、同梱 npm より新しい npm を明示的に提供する
     nodejsWithNpm
-    bun
-
-    # ビルドツール
-    gcc
-    gnumake
   ];
-
-  programs.direnv = {
-    enable = true;
-    nix-direnv.enable = true;
-  };
-
-  home.enableNixpkgsReleaseCheck = false;
-
-  programs.home-manager.enable = true;
 }
