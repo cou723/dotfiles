@@ -3,9 +3,9 @@ import { spawnSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
-const sourceAgentDir = fileURLToPath(new URL("../../../", import.meta.url));
+const sourceAgentDir = fileURLToPath(new URL("../../", import.meta.url));
 const template = readFileSync(
-  new URL("../../../agents/pi-configurator.md.tmpl", import.meta.url),
+  new URL("../../agents/pi-configurator.md.tmpl", import.meta.url),
   "utf8",
 );
 const result = spawnSync(
@@ -35,8 +35,13 @@ assert.deepEqual(roots("read"), [
   "${home}/.local/share/pnpm/store/v11/links/@earendil-works",
   "${home}/.config/gh/config.yml",
   "${home}/.config/gh/hosts.yml",
+  "/tmp/pi",
 ]);
-assert.deepEqual(roots("write"), ["${cwd}", sourceAgentDir.replace(/\/$/, "") + "/dot_pi/agent"]);
+assert.deepEqual(roots("write"), [
+  "${cwd}",
+  sourceAgentDir.replace(/\/$/, "") + "/dot_pi/agent",
+  "/tmp/pi",
+]);
 assert.match(result.stdout, /"gh auth \*": deny\n {4}"gh auth status": allow/);
 assert.match(result.stdout, /capabilities: \[pi_config_apply, pi_project_config_write\]/);
 assert.match(result.stdout, /^allowed_agents: \[git-commit, researcher\]$/m);

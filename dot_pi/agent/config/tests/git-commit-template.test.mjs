@@ -3,9 +3,9 @@ import { spawnSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
-const sourceAgentDir = fileURLToPath(new URL("../../../", import.meta.url));
+const sourceAgentDir = fileURLToPath(new URL("../../", import.meta.url));
 const template = readFileSync(
-  new URL("../../../agents/git-commit.md.tmpl", import.meta.url),
+  new URL("../../agents/git-commit.md.tmpl", import.meta.url),
   "utf8",
 );
 const args = ["--config", "/dev/null", "--config-format", "toml", "--source", sourceAgentDir];
@@ -121,7 +121,7 @@ if (process.env.POC_MODULES && process.env.POC_JITI_ENTRY) {
   const { resolveBashCommandCheck } = await jiti.import(base + "handlers/gates/bash-command.ts");
   const policy = parseSimpleYamlMap(extractFrontmatter(wsl.stdout)).permission;
   const globalPolicy = JSON.parse(
-    readFileSync(new URL("../../pi-permission-system/config.json", import.meta.url), "utf8"),
+    readFileSync(new URL("../../extensions/pi-permission-system/config.json", import.meta.url), "utf8"),
   ).permission;
   const patterns = compileWildcardPatternEntries(
     Object.entries({ ...globalPolicy.bash, ...policy.bash }),
