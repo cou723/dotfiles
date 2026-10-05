@@ -24,17 +24,25 @@ permission:
     "*":
       action: deny
       reason: "Todoist のタスク追加に必要な参照・プロジェクト確認・追加以外の MCP 操作は禁止です。対象外の操作は親へ報告してください。"
-    "todoist*fetch*object*": allow
-    "todoist*find*projects*": allow
-    "todoist*add*tasks*": ask
-sandbox:
-  read: ["${cwd}"]
-  write: []
+capabilities:
+  filesystem:
+    read: ["${workspace}"]
+    write: []
+  network: deny
+  process:
+    signals:
+      target: own-tree
+  environment:
+    inherit: [PATH, LANG, TERM]
+    set:
+      HOME: "${agentHome}"
+      TMPDIR: "${agentTmp}"
+credentials: {}
 ---
 
 # Todoist タスク追加エージェント
 
-Todoist アカウントへの**タスク追加**を専用のエージェントとして実行する。Todoist MCP サーバー（公式リモート MCP）で操作する。
+Todoist アカウントへの**タスク追加**を専用のエージェントとして実行する。Todoist MCP サーバー（公式リモート MCP）で操作する。MCPはhost側で動く別経路であり、このnetwork denyやcredential境界の対象外です。利用範囲と承認はpermission-systemで制御します。
 
 ## 対象タスク
 

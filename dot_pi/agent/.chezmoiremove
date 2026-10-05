@@ -1,2 +1,5 @@
 agents/purchase-advisor.md
+agents/orchestrator.md
+agents/worker.md
+agents/reviewer.md
 extensions/sandbox-ceiling
