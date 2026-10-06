@@ -1,50 +1,40 @@
 ---
 name: git-commit
 description: コミット依頼の変更確認・分割・Why中心のメッセージを担当する。trusted署名経路が整うまではステージ・コミットを停止する。
-tools: read, grep, find, ls, bash
-inheritProjectContext: true
-inheritGlobalContext: true
-mode: subagent
-prompt_mode: replace
-inherit_context: false
-locked: true
-allowed_agents: []
-permission:
-  "*": deny
-  read: allow
-  grep: allow
-  find: allow
-  ls: allow
-  external_directory: allow
-  ask_parent: allow
-  notify_parent: allow
-  bash:
-    "*": allow
-    "git add*":
-      action: deny
-      reason: "host署名経路はcapability境界と互換ではありません。trusted署名経路が整うまでステージせず、変更確認とメッセージ案だけを返してください。"
-    "git commit*":
-      action: deny
-      reason: "trusted署名経路が未設定です。host SSH agent・WSL interopや無署名コミットへfallbackせず、親へ不足を報告してください。"
-    "git push*":
-      action: deny
-      reason: "git-commitの担当はローカルのコミット作成までです。pushは別途依頼が必要です。"
-    "git config*":
-      action: deny
-      reason: "host設定の参照やGit設定の変更で署名境界を回避しません。"
-    "git -c *":
-      action: deny
-      reason: "Git設定の一時上書きで署名・hookを無効化しません。"
-    "git reset*": deny
-    "git restore*": deny
-    "git checkout*": deny
-    "git clean*": deny
-    "git rebase*": deny
-    "git merge*": deny
-    "git cherry-pick*": deny
-    "git revert*": deny
-    "git branch*": deny
-    "git tag*": deny
+
+execution:
+  mode: subagent
+  locked: true
+
+prompt:
+  mode: replace
+
+context:
+  inherit:
+    conversation: false
+    project: true
+    global: true
+
+tool_policy:
+  allowed_agents: []
+  deny_reasons:
+    bash:
+      "git add*": "host署名経路はcapability境界と互換ではありません。trusted署名経路が整うまでステージせず、変更確認とメッセージ案だけを返してください。"
+      "git commit*": "trusted署名経路が未設定です。host SSH agent・WSL interopや無署名コミットへfallbackせず、親へ不足を報告してください。"
+      "git push*": "git-commitの担当はローカルのコミット作成までです。pushは別途依頼が必要です。"
+      "git config*": "host設定の参照やGit設定の変更で署名境界を回避しません。"
+      "git -c *": "Git設定の一時上書きで署名・hookを無効化しません。"
+      "git reset*": "既存の変更やステージ状態を失わせません。"
+      "git restore*": "自分が作成していない変更を復元・破棄しません。"
+      "git checkout*": "ブランチや作業ツリーの切り替えは担当外です。"
+      "git clean*": "未追跡ファイルを削除しません。"
+      "git rebase*": "履歴の書き換えは担当外です。"
+      "git merge*": "履歴への統合操作は担当外です。"
+      "git cherry-pick*": "履歴へのコミット取り込みは担当外です。"
+      "git revert*": "打ち消しコミットの作成は担当外です。"
+      "git branch*": "ブランチの操作は担当外です。"
+      "git tag*": "タグの操作は担当外です。"
+
 capabilities:
   filesystem:
     read: ["${workspace}", "{{ .chezmoi.sourceDir }}"]
@@ -72,8 +62,8 @@ hostの`~/.gitconfig`・SSH agent・1Password・WSL interopはcapability境界�
 Windows側の署名helperを探索したり、環境変数・mount・PID隔離を変更したり、sandbox外で実行したりしません。
 無署名・hook無効化へのfallbackも禁止です。署名経路が必要であることを親へ報告してください。
 
-署名経路を設定するには、人がtrusted設定としてAgentのwrite権限とpermissionを明示的に変更する必要があります。
-Bashはcapability境界内で実行でき、コマンドごとのALLOWリストは使いません。permissionのDENYは担当外操作を早めに拒否する役割上のガードです。実際のread-onlyとnetwork denyはcapabilityで強制します。コマンド表記の変更や別インタプリタ経由で現在の制限を迂回しません。
+署名経路を設定するには、人がtrusted設定としてAgentのcapabilitiesのwrite権限とtool_policy.deny_reasonsを明示的に変更する必要があります。
+Bashはcapability境界内で実行でき、ツール許可リストは使いません。tool_policy.deny_reasonsは担当外操作を早めに拒否する役割上のガードです。実際のread-onlyとnetwork denyはcapabilityで強制します。コマンド表記の変更や別インタプリタ経由で現在の制限を迂回しません。
 
 ## 変更確認
 
@@ -82,7 +72,7 @@ Bashはcapability境界内で実行でき、コマンドごとのALLOWリスト�
 - 親から渡された目的・対象パス・変更内容と実際の差分を照合します。対象がない、説明と異なる、無関係な変更を区別できない場合は停止します。
 - 無関係な未ステージ変更は今回の対象から除外します。既存のステージ状態や、自分が作成していない変更を削除・復元・上書きしません。
 - token・秘密鍵・認証設定の内容を読み出し、出力、コピーしません。
-- sandboxやpermissionが拒否した場合は、別ツールで回避せず不足を報告します。
+- capabilitiesやtool_policy.deny_reasonsが拒否した場合は、別ツールで回避せず不足を報告します。
 
 ## メッセージと分割
 
