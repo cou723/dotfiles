@@ -1,4 +1,4 @@
-{ pkgs, ... }:
+{ pkgs, pi, ... }:
 
 {
   home.stateVersion = "24.11";
@@ -19,6 +19,7 @@
     gh
     ghq
     chezmoi
+    pi.packages.${pkgs.stdenv.hostPlatform.system}.default
 
     # C/C++
     clang-tools

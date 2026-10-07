@@ -87,6 +87,10 @@ chezmoi update    # git pull + apply を一発で実行
 
 ### Pi を起動する
 
+Pi は `github:earendil-works/pi/stable` の default パッケージを Home Manager で
+macOS / Linux 共通にインストールする。`nix profile add` は不要で、上記の
+Home Manager の切り替えコマンドで反映する。バージョンは `flake.lock` で固定する。
+
 ```sh
 ai    # pi
 aic   # pi --continue（直前のPiの会話から継続）
