@@ -1,6 +1,10 @@
+autoInstallPeers: false
 allowBuilds:
   better-sqlite3: true
   tree-sitter-bash: false
 minimumReleaseAgeExclude:
   - '@gotgenes/pi-permission-system@40.0.0'
   - '@gotgenes/pi-subagents@23.2.0'
+patchedDependencies:
+  '@gotgenes/pi-permission-system@40.0.0': patches/@gotgenes__pi-permission-system@40.0.0.patch
+  pi-lsp@0.1.7: patches/pi-lsp@0.1.7.patch

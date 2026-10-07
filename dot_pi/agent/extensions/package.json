@@ -1,13 +1,13 @@
 {
   "name": "pi-resource-capabilities",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": true,
   "type": "module",
-  "files": ["resource-capability-gate", "bash-classifier", "lsp-readonly", "tests", "README.md", "package.json", "pnpm-lock.yaml", "pnpm-workspace.yaml"],
+  "files": ["patches", "resource-capability-gate", "bash-classifier", "lsp-readonly", "tests", "README.md", "package.json", "pnpm-lock.yaml", "pnpm-workspace.yaml"],
   "pi": {"extensions": ["resource-capability-gate/index.ts", "bash-classifier/index.ts", "lsp-readonly/index.ts"]},
   "scripts": {
     "test": "node --test resource-capability-gate/*.test.mjs",
-    "test:integration": "node tests/sdk-smoke.mjs && node tests/lsp-smoke.mjs && node tests/relocation-smoke.mjs",
+    "test:integration": "node tests/sdk-smoke.mjs && node tests/lsp-smoke.mjs && node tests/relocation-smoke.mjs && node tests/diagnostics-smoke.mjs && node tests/patch-contract-smoke.mjs",
     "typecheck": "node tests/typecheck.mjs",
     "check": "pnpm test && pnpm typecheck && pnpm test:integration"
   },

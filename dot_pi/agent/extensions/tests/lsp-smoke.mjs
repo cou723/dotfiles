@@ -24,6 +24,9 @@ try {
  session.agent.state.messages.push({role:'assistant',content:[{type:'toolCall',id:'probe',name:'lsp_test_probe',arguments:{}}],api:'openai-responses',provider:'openai',model:'test-fixture',stopReason:'toolUse',timestamp:Date.now(),usage:{input:0,output:0,cacheRead:0,cacheWrite:0,totalTokens:0,cost:{input:0,output:0,cacheRead:0,cacheWrite:0,total:0}}});
  const probeMessage=session.agent.state.messages.at(-1);
  const invoke=async(name,args)=>{session.agent.state.messages.push(probeMessage);const r=await ctx.executeTool(name,args);assert(!r.isError,JSON.stringify(r));const text=r.result.content.filter(c=>c.type==='text').map(c=>c.text).join('\n');console.log(name,JSON.stringify(text));return text;};
+ const clean=path.join(cwd,'clean.ts');fs.writeFileSync(clean,'export const answer: number = 42;\n');
+ assert.match(await invoke('lsp_diagnostics',{path:clean}),/no diagnostics/);
+ assert.match(await invoke('lsp_diagnostics',{path:clean}),/no diagnostics/);
  const file=path.join(cwd,'sample.ts');
  fs.writeFileSync(file,'export const count: number = "wrong";\nexport const next = count + 1;\n');
  assert.match(await invoke('lsp_diagnostics',{path:file}),/not assignable/);
@@ -31,6 +34,9 @@ try {
  assert.match(await invoke('lsp_definition',{path:file,line:1,character:21}),/sample\.ts/);
  assert.match(await invoke('lsp_references',{path:file,line:0,character:14,includeDeclaration:true}),/sample\.ts/);
  assert.match(await invoke('lsp_symbols',{path:file}),/count/);
+ fs.writeFileSync(file,'export const count: number = 42;\nexport const next = count + 1;\n');
+ const fixed=await invoke('lsp_diagnostics',{path:file});assert.match(fixed,/no diagnostics/);assert(!fixed.includes('not assignable'));
+ assert.match(await invoke('lsp_diagnostics',{path:file}),/no diagnostics/);
  const written=await invoke('write',{path:path.join(cwd,'written.ts'),content:'export const bad: number = "wrong";\n'});
  assert.match(written,/not assignable/);
  for(const [name,ext,source,pattern] of [

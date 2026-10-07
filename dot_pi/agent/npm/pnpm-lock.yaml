@@ -4,13 +4,17 @@ settings:
   autoInstallPeers: false
   excludeLinksFromLockfile: false
 
+patchedDependencies:
+  '@gotgenes/pi-permission-system@40.0.0': 749816f1cec0689415269c97c9a15931d53d41d36432595fd7ee3235b252eab0
+  pi-lsp@0.1.7: 8bca4585eb62d501191cd14510f8a3330835ceaa3ccc3b76d41720f8d6e6eccd
+
 importers:
 
   .:
     dependencies:
       '@gotgenes/pi-permission-system':
         specifier: 40.0.0
-        version: 40.0.0
+        version: 40.0.0(patch_hash=749816f1cec0689415269c97c9a15931d53d41d36432595fd7ee3235b252eab0)
       '@gotgenes/pi-subagents':
         specifier: 23.2.0
         version: 23.2.0
@@ -19,10 +23,10 @@ importers:
         version: 0.9.10
       pi-lsp:
         specifier: 0.1.7
-        version: 0.1.7
+        version: 0.1.7(patch_hash=8bca4585eb62d501191cd14510f8a3330835ceaa3ccc3b76d41720f8d6e6eccd)
       pi-permission-classifier:
         specifier: 0.5.2
-        version: 0.5.2(@gotgenes/pi-permission-system@40.0.0)
+        version: 0.5.2(@gotgenes/pi-permission-system@40.0.0(patch_hash=749816f1cec0689415269c97c9a15931d53d41d36432595fd7ee3235b252eab0))
 
 packages:
 
@@ -114,7 +118,7 @@ packages:
 
 snapshots:
 
-  '@gotgenes/pi-permission-system@40.0.0':
+  '@gotgenes/pi-permission-system@40.0.0(patch_hash=749816f1cec0689415269c97c9a15931d53d41d36432595fd7ee3235b252eab0)':
     dependencies:
       tree-sitter-bash: 0.25.1
       web-tree-sitter: 0.26.13
@@ -139,14 +143,14 @@ snapshots:
       better-sqlite3: 13.0.3
       strip-ansi: 7.2.0
 
-  pi-lsp@0.1.7:
+  pi-lsp@0.1.7(patch_hash=8bca4585eb62d501191cd14510f8a3330835ceaa3ccc3b76d41720f8d6e6eccd):
     dependencies:
       vscode-jsonrpc: 8.2.1
       vscode-languageserver-protocol: 3.18.4
 
-  pi-permission-classifier@0.5.2(@gotgenes/pi-permission-system@40.0.0):
+  pi-permission-classifier@0.5.2(@gotgenes/pi-permission-system@40.0.0(patch_hash=749816f1cec0689415269c97c9a15931d53d41d36432595fd7ee3235b252eab0)):
     dependencies:
-      '@gotgenes/pi-permission-system': 40.0.0
+      '@gotgenes/pi-permission-system': 40.0.0(patch_hash=749816f1cec0689415269c97c9a15931d53d41d36432595fd7ee3235b252eab0)
       zod: 4.4.3
 
   strip-ansi@7.2.0:

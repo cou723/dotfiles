@@ -16,7 +16,7 @@ After deploying onto another machine, `pi update --extensions` reconciles the pi
 
 ## Code / personal config separation
 
-The reusable package boundary is `extensions/package.json`; it includes only `resource-capability-gate`, `bash-classifier`, `lsp-readonly`, tests and package documentation. Personal settings are excluded by its files allowlist. It is private and has not yet been moved/published.
+The reusable package boundary is `extensions/package.json`; it includes only `resource-capability-gate`, `bash-classifier`, `lsp-readonly`, managed upstream patches, tests and package documentation. Personal settings are excluded by its files allowlist. It is private and has not yet been moved/published.
 
 - `resource-capability-gate.json`: global GitHub/Slack grants and server/domain mapping (moved OUT of the code directory).
 - `resource-capability-runtime.json`: global protected source/toolchain roots and reviewed LSP command argv, rendered from chezmoi with the actual sourceDir/homeDir.
@@ -62,7 +62,9 @@ See `extensions/README.md` for package extraction/install-alias protection, depe
 - On another machine: `chezmoi apply ~/.local/share/pi-language-servers ~/.pi/agent`, then `pnpm --dir ~/.local/share/pi-language-servers install --frozen-lockfile --config.auto-install-peers=false`, and reconcile pi packages as above. Install clangd separately if needed.
 - Rust: added rust-analyzer/rust-src to the existing active rustup toolchain (analyzer 1.95.0). Server initialization ran, but the readonly-sandbox trial did not receive Rust diagnostics within 15 seconds; **Rust is disabled initially** until further validation. Its config template disables build scripts/proc macros/check-on-save. Nix/Go/etc. servers are not installed by this change.
 - Upstream project `.pi/lsp.json` requires hash-based human trust; noninteractive mode rejects unknown hashes. Trust can select arbitrary host commands and BYPASS the configured launcher, so inspect the entire config/args, not just binary names, before approving. The trust store is local, excluded from chezmoi and protected from agent file writes. Global lsp config/launcher/server packages are likewise protected.
-- The wrapper depends on pi-lsp 0.1.7 internals; upgrade only after rerunning LSP smoke tests.
+- Managed pnpm patches under `extensions/patches/` fix pi-lsp empty/fresh diagnostics and active-profile config/trust lookup, and allow permission-system extractors to declare trusted read intent. `npm/pnpm-workspace.yaml` applies them via the `npm/patches` symlink. Reinstall the host npm workspace with its managed lockfile after deployment; missing patch contracts disable the LSP adapter rather than weakening policy.
+- Protected source can be inspected by the five LSP readers, while native/custom writes, model-provided read-only claims, and secret-path reads stay denied. A protected source cwd is accepted only for the LSP read-only workspace, never writable bash.
+- The wrapper depends on patched pi-lsp 0.1.7 and permission-system 40.0.0 internals; upgrade only after regenerating/reviewing patches and rerunning the full smoke tests.
 
 ## AI reviewer
 
@@ -140,9 +142,10 @@ Example (NOT enabled by default):
 
 Reproducible code/tests: `extensions/tests/` and `extensions/resource-capability-gate/*.test.mjs`. Setup logs remain under `/tmp/pi/environment-build/`, but the tests no longer depend on temporary scripts.
 
-- In `dot_pi/agent/extensions/`, run `pnpm install --frozen-lockfile` and `pnpm check` (35 unit/sandbox tests, host TypeScript checks, deployed SDK/LSP smoke and relocated/symlinked-package integration). SDK path is discovered from pnpm's actual global package metadata or explicit PI_TEST_SDK_ROOT, not hard-coded.
+- In `dot_pi/agent/extensions/`, run `pnpm install --frozen-lockfile` and `pnpm check` (36 unit/sandbox tests, host TypeScript checks, deployed SDK/LSP smoke and relocated/symlinked-package integration). SDK path is discovered from pnpm's actual global package metadata or explicit PI_TEST_SDK_ROOT, not hard-coded.
 - SDK fixture loads all installed extensions, exercises nested write/read/denied operations and mock MCP reads/writes, with no LLM requests or real service mutations.
 - LSP SDK smoke tested real TypeScript diagnostics/hover/definition/references/symbols, automatic write diagnostics, JSON/YAML/Python/C++ diagnostics, blocked config/secret access, and noninteractive project trust rejection. Logs: `lsp-smoke.log`; Rust's unsuccessful diagnostic trial is preserved in `lsp-rust-smoke.log`.
 - Relocation smoke uses a different package location/agent profile/LSP asset layout and a permissive ordinary policy; verifies independent code/config write rejection, OS readonly protection, credential masking, required Backlog confirmation and missing runtime fail-closed behavior.
+- Additional deterministic LSP/permission regressions cover clean/unchanged/error-cleared documents, old versions, delayed publications, genuine no-publication warnings, protected/external read direction, writer/secret rejection, and missing patch contracts. Real relocated LSP assertions include its unique server id so silently using another profile cannot pass.
 - TypeScript checking uses the installed pi declarations.
 - Actual OAuth, production tool schemas, real classifier latency/accuracy, background learning/fallback runs, and live subagent model turns still need user-visible integration trials. Current checks do not claim these were exercised.

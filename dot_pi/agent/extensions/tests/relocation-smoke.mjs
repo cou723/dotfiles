@@ -8,6 +8,7 @@ const realAgent=agentDir();
 const originalEnv=process.env.PI_CODING_AGENT_DIR;
 const root=fixture('relocation-'), cwd=path.join(root,'workspace'), profile=path.join(root,'profile');
 const moved=path.join(cwd,'vendor','independent-package'), alias=path.join(profile,'extensions','installed-package');
+const protectedProbe=path.join(moved,'source-probe.ts');
 fs.mkdirSync(moved,{recursive:true});fs.mkdirSync(path.dirname(alias),{recursive:true});
 for(const name of ['resource-capability-gate','bash-classifier','lsp-readonly']) fs.cpSync(path.join(source,name),path.join(moved,name),{recursive:true});
 // Explicit entries exercise symlinked loading; a minimal manifest avoids auto
@@ -18,7 +19,7 @@ fs.symlinkSync(path.join(realAgent,'npm'),path.join(profile,'npm'),'dir');
 const permissionDir=path.join(profile,'extensions','pi-permission-system');fs.mkdirSync(permissionDir);
 // Deliberately permissive ordinary policy: the independent immutable-root Gate
 // and OS sandbox, not old chezmoi path rules, must protect the relocated code.
-fs.writeFileSync(path.join(permissionDir,'config.json'),JSON.stringify({permission:{'*':'allow',path:'allow',path_write:'allow',external_directory_read:'allow',external_directory_write:'allow',bash:'allow',mcp:'allow'},authorizerChain:['resource-tool-gate','bash-classifier']}));
+fs.writeFileSync(path.join(permissionDir,'config.json'),JSON.stringify({permission:{'*':'allow',path:'allow',path_write:{'*':'allow',[protectedProbe]:'deny'},external_directory_read:'allow',external_directory_write:'allow',bash:'allow',mcp:'allow'},authorizerChain:['resource-tool-gate','bash-classifier']}));
 const classifierDir=path.join(profile,'extensions','pi-permission-classifier');fs.mkdirSync(classifierDir);
 fs.copyFileSync(path.join(realAgent,'extensions/pi-permission-classifier/config.json'),path.join(classifierDir,'config.json'));
 fs.writeFileSync(path.join(profile,'settings.json'),JSON.stringify({packages:['npm:@gotgenes/pi-permission-system@40.0.0'],extensions:['resource-capability-gate','bash-classifier','lsp-readonly'].map(n=>path.join(alias,n,'index.ts'))}));
@@ -30,7 +31,7 @@ const assetRoot=originalTs.slice(0,originalTs.indexOf('/node_modules/'));
 fs.symlinkSync(assetRoot,assets,'dir');
 fs.writeFileSync(path.join(profile,'resource-capability-runtime.json'),JSON.stringify({version:1,protectedRoots:[assets],lspServers:{typescript:{command:['{node}',path.join(assets,'node_modules/typescript-language-server/lib/cli.mjs'),'--stdio']}}}));
 fs.writeFileSync(path.join(profile,'resource-capability-gate.json'),JSON.stringify({version:1,servers:{backlog:'backlog'},githubGrants:[],slackGrants:[]}));
-fs.writeFileSync(path.join(profile,'lsp.json'),JSON.stringify({version:1,servers:[{id:'typescript',bin:process.execPath,args:[path.join(alias,'resource-capability-gate/lsp-server.mjs'),profile,'typescript'],include:['**/*.ts'],rootMarkers:['package.json'],cwd:'{root}',languageIdByExtension:{'.ts':'typescript'},initializationOptions:{disableAutomaticTypingAcquisition:true,tsserver:{path:path.join(assets,'node_modules/typescript/lib/tsserver.js')}}}]}));
+fs.writeFileSync(path.join(profile,'lsp.json'),JSON.stringify({version:1,servers:[{id:'relocated-ts',bin:process.execPath,args:[path.join(alias,'resource-capability-gate/lsp-server.mjs'),profile,'typescript'],include:['**/*.ts'],rootMarkers:['package.json'],cwd:'{root}',languageIdByExtension:{'.ts':'typescript'},initializationOptions:{disableAutomaticTypingAcquisition:true,tsserver:{path:path.join(assets,'node_modules/typescript/lib/tsserver.js')}}}]}));
 fs.writeFileSync(path.join(cwd,'package.json'),'{"private":true}');
 fs.mkdirSync(path.join(cwd,'.pi'));fs.writeFileSync(path.join(cwd,'.pi/resource-capability-runtime.json'),'{"version":999}');
 const outsideAuth=path.join(root,'external-auth.json');fs.writeFileSync(outsideAuth,JSON.stringify({'fixture-provider':{type:'api_key',key:'fixture-secret'}}));fs.symlinkSync(outsideAuth,path.join(profile,'auth.json'));
@@ -58,6 +59,10 @@ try {
  assert.equal(fs.readFileSync(target,'utf8'),before);
  const creds=await invoke('bash',{command:`test ! -s '${outsideAuth}'`});assert(!creds.isError,JSON.stringify(creds));
  assert((await invoke('mcp__backlog__add_issue_comment',{})).isError);assert.equal(backend,0);
+ fs.writeFileSync(protectedProbe,'export const protectedValue: number = 42;\n');
+ const sourceHover=await invoke('lsp_hover',{path:protectedProbe,line:0,character:14});assert(!sourceHover.isError,JSON.stringify(sourceHover));assert.match(JSON.stringify(sourceHover.result),/number/);
+ const sourceDiag=await invoke('lsp_diagnostics',{path:protectedProbe});assert(!sourceDiag.isError,JSON.stringify(sourceDiag));assert.match(JSON.stringify(sourceDiag.result),/relocated-ts: no diagnostics/);
+ assert((await invoke('write',{path:protectedProbe,content:'bad'})).isError);
  const ts=path.join(cwd,'sample.ts');fs.writeFileSync(ts,'export const bad: number = "wrong";\n');
  const diagnostics=await invoke('lsp_diagnostics',{path:ts});assert(!diagnostics.isError,JSON.stringify(diagnostics));assert.match(JSON.stringify(diagnostics.result),/not assignable/);
  console.log('relocated + symlinked package: direct/custom tool writes denied, bash writes denied, credentials masked, Backlog blocked, configured relocated LSP assets return real diagnostics');

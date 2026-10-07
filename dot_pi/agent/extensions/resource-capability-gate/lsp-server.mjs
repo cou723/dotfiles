@@ -1,5 +1,4 @@
 import fs from 'node:fs';
-import path from 'node:path';
 import {spawn} from 'node:child_process';
 import {fileURLToPath} from 'node:url';
 import {sandboxArgs} from './sandbox.mjs';
@@ -11,10 +10,9 @@ export function launchPlan(name, cwd, scratch, agentDir = defaultAgentDir()) {
   const boundary = loadRuntime(agentDir);
   if (!Object.hasOwn(boundary.lspServers, name)) throw new Error('Unknown LSP server');
   cwd = canonical(cwd);
-  const args = sandboxArgs(cwd, scratch, boundary, 'unused');
-  const workspaceBind = args.findIndex((v, i) => v === '--bind' && args[i + 1] === cwd && args[i + 2] === cwd);
-  if (workspaceBind < 0) throw new Error('Missing sandbox workspace bind');
-  args[workspaceBind] = '--ro-bind'; // LSP servers/plugins cannot rewrite sources.
+  // A read-only LSP workspace may itself be a protected source checkout.
+  // Bash's writable-workspace restriction must not prevent source inspection.
+  const args = sandboxArgs(cwd, scratch, boundary, 'unused', {readOnlyWorkspace: true});
   // Replace the shell command with direct argv; preserve --chdir and separator.
   args.splice(args.length - 5, 5, ...boundary.lspServers[name]);
   const env = {};
@@ -41,5 +39,5 @@ async function main() {
     fs.rmSync(scratch, {recursive: true, force: true});
   }
 }
-if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url))
+if (process.argv[1] && canonical(process.argv[1]) === canonical(fileURLToPath(import.meta.url)))
   main().catch(error => {console.error(error.message); process.exitCode = 1;});

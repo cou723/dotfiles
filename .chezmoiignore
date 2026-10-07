@@ -1,6 +1,7 @@
 README.md
 bun.lockb
 .gitignore
+.gitattributes
 .github
 # Pi credentials, generated packages, session history, and learned personal data.
 .pi/agent/auth.json

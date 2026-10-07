@@ -1,0 +1,2 @@
+# Unified diff blank context lines must retain their single prefix space.
+dot_pi/agent/extensions/patches/*.patch whitespace=-blank-at-eol

@@ -4,13 +4,13 @@ import os from 'node:os';
 import { spawn } from 'node:child_process';
 import { inside, canonical, immutablePaths } from './policy.mjs';
 
-export function sandboxArgs(cwd, scratch, {agentDir, protectedRoots = []}, command) {
+export function sandboxArgs(cwd, scratch, {agentDir, protectedRoots = []}, command, {readOnlyWorkspace = false} = {}) {
   cwd = canonical(cwd);
   const home = os.homedir();
   const immutable = immutablePaths(agentDir, protectedRoots);
-  if ([path.parse(cwd).root, home, '/tmp', '/tmp/pi'].includes(cwd) || inside(canonical(agentDir), cwd) || immutable.some(p => inside(p, cwd)))
+  if ([path.parse(cwd).root, home, '/tmp', '/tmp/pi'].includes(cwd) || inside(canonical(agentDir), cwd) || (!readOnlyWorkspace && immutable.some(p => inside(p, cwd))))
     throw new Error('このcwdではsandboxのwritable workspaceを安全に設定できません。project directoryで起動してください。');
-  const args = ['--die-with-parent', '--new-session', '--unshare-pid', '--unshare-net', '--ro-bind', '/', '/', '--proc', '/proc', '--dev', '/dev', '--tmpfs', '/run', '--tmpfs', '/tmp', '--ro-bind', '/tmp/pi', '/tmp/pi', '--bind', cwd, cwd, '--bind', scratch, scratch];
+  const args = ['--die-with-parent', '--new-session', '--unshare-pid', '--unshare-net', '--ro-bind', '/', '/', '--proc', '/proc', '--dev', '/dev', '--tmpfs', '/run', '--tmpfs', '/tmp', '--ro-bind', '/tmp/pi', '/tmp/pi', readOnlyWorkspace ? '--ro-bind' : '--bind', cwd, cwd, '--bind', scratch, scratch];
   // Reapply immutable roots after binding a writable workspace containing a checkout.
   for (const p of [...immutable, path.join(cwd, '.pi', 'lsp.json'), path.join(cwd, '.pi', 'extensions'), path.join(cwd, '.pi', 'settings.json'), path.join(cwd, '.pi', 'mcp.json'), path.join(cwd, '.git', 'config'), path.join(cwd, '.git', 'hooks')])
     if (fs.existsSync(p)) args.push('--ro-bind', canonical(p), canonical(p));

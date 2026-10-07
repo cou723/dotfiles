@@ -1,4 +1,4 @@
-# pi-resource-capabilities (private package, 0.1.0)
+# pi-resource-capabilities (private package, 0.1.1)
 
 Portable code for a Resource capability Gate, Linux bash/LSP subprocess sandboxes, a bash-only classifier wrapper, and read-only LSP tools. The package manifest lists the three extension entrypoints; its `files` allowlist excludes personal policies and grants. Code is still stored in chezmoi, not yet moved to another repository or published.
 
@@ -34,6 +34,16 @@ In `lsp.json`, launch with a direct argv array:
 
 No chezmoi or language-server installation directory is hard-coded in implementation code. The pi npm dependency directory is still the standard `<agentDir>/npm` used by pi's package manager. The default shared artifact/scratch boundary remains `/tmp/pi`; changing it is a separate authorization design change, not an installation-path setting.
 
+## Managed upstream patches
+
+`patches/` contains reviewed pnpm patches for the pinned peers; the host `<agentDir>/npm/pnpm-workspace.yaml` applies them through its `patchedDependencies`. The current chezmoi deployment links `<agentDir>/npm/patches` to `../extensions/patches`. When extracting/installing elsewhere, copy or link these patches into the host npm workspace and install its dependencies with the managed lockfile before loading the adapter. Merely installing this package does not patch an unrelated host workspace automatically.
+
+- permission-system: registered access extractors may return `{path, direction: read|write}` in addition to the legacy string. Only trusted extension callbacks produce direction; model arguments and readOnlyHint are not proof. Both path and external-directory gates use these facts while retaining read denies. No infrastructure auto-allow list or policy rule is widened.
+- pi-lsp: preserve empty publications, invalidate cache on actual text changes, avoid needless didChange for unchanged text, reject mismatched publication versions, and warn when automatic diagnostics have not been published. Use PI_CODING_AGENT_DIR for config/trust (with legacy PI_AGENT_DIR fallback).
+- The adapter requires the two patch contracts and fails to register LSP tools if either is missing. It registers read facts only for the five audited LSP readers and unregisters them on shutdown.
+- LSP may run from a protected source checkout only with a read-only workspace. Bash still rejects writable protected cwd. The direct launcher recognizes symlinked entrypoints by realpath.
+- Publications without a version cannot prove freshness as strongly as versioned notifications; diagnostics remain advisory. Timeouts/no publication never mean a clean result.
+
 ## Protection / limits
 
 - Loaded package paths, including their realpaths, are automatically immutable even when absent from protectedRoots. Fixed agent configuration/code/trust paths and all configured roots are protected in file-tool checks and reapplied read-only after the sandbox's writable workspace bind.
@@ -57,13 +67,13 @@ The workspace policy disables auto-installing peers and does not permit lifecycl
 
 - `pnpm test`: policy, runtime/global-only/malformed config, symlink protection, real bash/LSP sandbox tests; no LLM or service posting.
 - `pnpm typecheck`: local TypeScript entrypoints checked against the installed host declarations, not a hard-coded SDK location.
-- `pnpm test:integration`: deployed SDK tool Gate + real LSP smoke; then independent relocated/symlinked package with a custom agent profile, intentionally permissive ordinary policy, different language-assets layout, direct/custom/bash write denial, credential masking, mandatory Backlog confirmation, and missing runtime fail-closed tests.
+- `pnpm test:integration`: deployed SDK tool Gate + real LSP clean/error/error-cleared/unchanged smoke; then independent relocated/symlinked package with a custom agent profile and a uniquely named LSP server, intentionally permissive ordinary policy, different language-assets layout, protected source reading while writes remain denied, credential masking, mandatory Backlog confirmation, and missing runtime fail-closed tests. Deterministic JSON-RPC fixtures also cover delayed current/old-version publications, silent servers, external read vs write policy, model read-only claims, secret denies, and absent-patch startup rejection.
 
 Tests own and delete only their mkdtemp fixtures, stop SDK/LSP processes on shutdown, and do not require or call a model. They use local mock external-service backends.
 
 ## Extraction checklist
 
-1. Copy only package.json, lock/workspace policy, this README, the three code directories and tests into a private repository; do not copy personal config directories.
+1. Copy only package.json, lock/workspace policy, this README, patches, the three code directories and tests into a private repository; do not copy personal config directories.
 2. Keep grants/runtime/policies/LSP config in the agent profile, managed by chezmoi. Add the new checkout/install aliases and language assets to protectedRoots where required.
 3. Install the package from a pinned reviewed revision; remove duplicate old discovered entrypoints, then update LSP launcher paths and Hermes fallback `childExtensionPaths` to the new install.
 4. Run full checks against the deployment and start ordinary pi with protections enabled. Do not confuse a `--no-extensions` maintenance session with production behavior.

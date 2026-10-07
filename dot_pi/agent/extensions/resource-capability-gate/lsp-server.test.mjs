@@ -5,6 +5,8 @@ import path from 'node:path';
 import os from 'node:os';
 import {spawnSync} from 'node:child_process';
 import {launchPlan} from './lsp-server.mjs';
+import {loadRuntime,packageRoot} from './runtime.mjs';
+import {sandboxArgs} from './sandbox.mjs';
 import {fixture} from '../tests/helpers.mjs';
 const root=fixture('lsp-sandbox-test-');
 const cwd=path.join(root,'project'), scratch=path.join(root,'scratch');
@@ -15,6 +17,11 @@ after(()=>fs.rmSync(root,{recursive:true,force:true}));
 
 test('LSP command allowlist rejects arbitrary commands',()=>assert.throws(()=>launchPlan('sh',cwd,scratch,agentDir)));
 test('LSP sandbox denies broad workspace roots',()=>assert.throws(()=>launchPlan('typescript',os.homedir(),scratch,agentDir)));
+test('LSP allows an immutable source cwd read-only; bash still rejects writable source cwd',()=>{
+ const {args}=launchPlan('typescript',packageRoot,scratch,agentDir);
+ assert(args.some((v,i)=>v==='--ro-bind'&&args[i+1]===packageRoot&&args[i+2]===packageRoot));
+ assert.throws(()=>sandboxArgs(packageRoot,scratch,loadRuntime(agentDir),'pwd'));
+});
 test('LSP subprocess: sources readonly, scratch writable, credentials masked, network isolated',()=>{
  const {args,env}=launchPlan('typescript',cwd,scratch,agentDir);
  assert(!('NODE_OPTIONS' in env));assert(!('GITHUB_MCP_TOKEN' in env));
