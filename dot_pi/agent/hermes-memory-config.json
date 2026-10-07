@@ -7,8 +7,8 @@
   "reviewTransport": "direct",
   "childExtensionPaths": [
     "~/.pi/agent/npm/node_modules/@gotgenes/pi-permission-system/src/index.ts",
-    "~/.pi/agent/extensions/bash-classifier/index.ts",
-    "~/.pi/agent/extensions/resource-capability-gate/index.ts"
+    "~/ghq/github.com/cou723/pi-resource-capabilities/bash-classifier/index.ts",
+    "~/ghq/github.com/cou723/pi-resource-capabilities/resource-capability-gate/index.ts"
   ],
   "nudgeInterval": 20,
   "nudgeToolCalls": 30,

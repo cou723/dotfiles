@@ -7,8 +7,8 @@
 - pi-permission-classifier **0.5.2** (upstream extension entrypoint disabled; reviewer reused by local `bash-classifier`).
 - pi-hermes-memory **0.9.10**.
 - @gotgenes/pi-subagents **23.2.0**.
-- pi-lsp **0.1.7** (upstream entrypoint disabled; loaded through `extensions/lsp-readonly`).
-- Local extensions: `extensions/resource-capability-gate`, `extensions/bash-classifier`, `extensions/lsp-readonly`.
+- pi-lsp **0.1.7** (upstream entrypoint disabled; loaded through the independent package's `lsp-readonly`).
+- Local private package: `~/ghq/github.com/cou723/pi-resource-capabilities`; its manifest loads `resource-capability-gate`, `bash-classifier`, and `lsp-readonly` exactly once. Individual code directories are no longer copied into agent/extensions.
 - Package installation uses pnpm (`settings.json: npmCommand`). Native SQLite build approval and dependency lockfile are managed under `npm/`; installed node_modules are NOT tracked.
 
 Extension implementations and personal configuration currently live in chezmoi's `dot_pi/agent/`; portability is validated with relocated-code integration tests. Apply with `chezmoi apply ~/.pi/agent`, then `/reload` in pi (or start a new pi process). This configuration does not retroactively constrain a session that has not reloaded it.
@@ -16,7 +16,7 @@ After deploying onto another machine, `pi update --extensions` reconciles the pi
 
 ## Code / personal config separation
 
-The reusable package boundary is `extensions/package.json`; it includes only `resource-capability-gate`, `bash-classifier`, `lsp-readonly`, managed upstream patches, tests and package documentation. Personal settings are excluded by its files allowlist. It is private and has not yet been moved/published.
+The reusable package lives in `~/ghq/github.com/cou723/pi-resource-capabilities`; it includes only the three extensions, managed upstream patches, tests and documentation. Personal settings are excluded by its files allowlist and stay in chezmoi. The repository is local/private, with no remote or publication. Obtain the reviewed checkout before configuring a new machine; chezmoi is not a backup code copy.
 
 - `resource-capability-gate.json`: global GitHub/Slack grants and server/domain mapping (moved OUT of the code directory).
 - `resource-capability-runtime.json`: global protected source/toolchain roots and reviewed LSP command argv, rendered from chezmoi with the actual sourceDir/homeDir.
@@ -24,7 +24,7 @@ The reusable package boundary is `extensions/package.json`; it includes only `re
 - Loaded code's lexical/real paths are automatically protected; configured source copies and dependency roots are protected too. Settings/grant and credential symlink targets outside the agent directory retain protection/masking.
 - The global runtime/grant layer has no project override. Trusted project ordinary permission policy can still override global rules, but cannot remove the independent immutable-root checks or subprocess sandbox.
 
-See `extensions/README.md` for package extraction/install-alias protection, dependency assumptions, maintenance and reproducible verification.
+See the independent checkout's README for install protection, dependency assumptions and reproducible checks; `extensions/README.md` describes the personal configuration left here.
 
 ## Commands / daily use
 
@@ -57,12 +57,12 @@ See `extensions/README.md` for package extraction/install-alias protection, depe
 - Tools: `lsp_diagnostics`, `lsp_hover`, `lsp_definition`, `lsp_references`, `lsp_symbols`. Positions are **zero-based**, character offsets are UTF-16.
 - Successful write/edit calls automatically receive diagnostics. Servers start lazily and are stopped at session shutdown. No rename/code-action tool that directly changes files is enabled.
 - The upstream diagnostics tool is cache-only. The local wrapper opens/updates the document through the upstream symbols tool before checking diagnostics; it waits up to 15 seconds for the first publication and warns, rather than claiming success, if none arrives. Diagnostics remain asynchronous/advisory; always run project checks before completion.
-- Configured server commands use `extensions/resource-capability-gate/lsp-server.mjs <agent-dir> <server-name>`; actual argv comes from `resource-capability-runtime.json`:  Linux/bwrap, no shell, no network, read-only sources/host, private writable `/tmp/pi/lsp-*` scratch/cache, stripped credential environment, key credential paths masked. Failure never falls back to host execution. Whole-process/extension isolation is still NOT claimed.
+- Configured server commands use `<checkout>/resource-capability-gate/lsp-server.mjs <agent-dir> <server-name>`; actual argv comes from `resource-capability-runtime.json`:  Linux/bwrap, no shell, no network, read-only sources/host, private writable `/tmp/pi/lsp-*` scratch/cache, stripped credential environment, key credential paths masked. Failure never falls back to host execution. Whole-process/extension isolation is still NOT claimed.
 - Node-based servers are installed separately under `~/.local/share/pi-language-servers/`, avoiding the masked agent directory. Manifest, lockfile and build policy are managed in `dot_local/share/pi-language-servers/`; node_modules are ignored. TypeScript 5.9.3, typescript-language-server 6.0.1, Pyright 1.1.414, vscode-langservers-extracted 4.10.0, yaml-language-server 1.24.0 are pinned. core-js's nonessential install script is disabled.
 - On another machine: `chezmoi apply ~/.local/share/pi-language-servers ~/.pi/agent`, then `pnpm --dir ~/.local/share/pi-language-servers install --frozen-lockfile --config.auto-install-peers=false`, and reconcile pi packages as above. Install clangd separately if needed.
 - Rust: added rust-analyzer/rust-src to the existing active rustup toolchain (analyzer 1.95.0). Server initialization ran, but the readonly-sandbox trial did not receive Rust diagnostics within 15 seconds; **Rust is disabled initially** until further validation. Its config template disables build scripts/proc macros/check-on-save. Nix/Go/etc. servers are not installed by this change.
 - Upstream project `.pi/lsp.json` requires hash-based human trust; noninteractive mode rejects unknown hashes. Trust can select arbitrary host commands and BYPASS the configured launcher, so inspect the entire config/args, not just binary names, before approving. The trust store is local, excluded from chezmoi and protected from agent file writes. Global lsp config/launcher/server packages are likewise protected.
-- Managed pnpm patches under `extensions/patches/` fix pi-lsp empty/fresh diagnostics and active-profile config/trust lookup, and allow permission-system extractors to declare trusted read intent. `npm/pnpm-workspace.yaml` applies them via the `npm/patches` symlink. Reinstall the host npm workspace with its managed lockfile after deployment; missing patch contracts disable the LSP adapter rather than weakening policy.
+- Managed pnpm patches under the independent checkout's `patches/` fix pi-lsp empty/fresh diagnostics and active-profile config/trust lookup, and allow permission-system extractors to declare trusted read intent. `npm/pnpm-workspace.yaml` applies them via the `npm/patches` symlink. Reinstall the host npm workspace with its managed lockfile after deployment; missing patch contracts disable the LSP adapter rather than weakening policy.
 - Protected source can be inspected by the five LSP readers, while native/custom writes, model-provided read-only claims, and secret-path reads stay denied. A protected source cwd is accepted only for the LSP read-only workspace, never writable bash.
 - The wrapper depends on patched pi-lsp 0.1.7 and permission-system 40.0.0 internals; upgrade only after regenerating/reviewing patches and rerunning the full smoke tests.
 
@@ -140,9 +140,9 @@ Example (NOT enabled by default):
 
 ## Verification
 
-Reproducible code/tests: `extensions/tests/` and `extensions/resource-capability-gate/*.test.mjs`. Setup logs remain under `/tmp/pi/environment-build/`, but the tests no longer depend on temporary scripts.
+Reproducible code/tests: `<checkout>/tests/` and `<checkout>/resource-capability-gate/*.test.mjs`. Setup logs remain under `/tmp/pi/environment-build/`, but the tests no longer depend on temporary scripts.
 
-- In `dot_pi/agent/extensions/`, run `pnpm install --frozen-lockfile` and `pnpm check` (36 unit/sandbox tests, host TypeScript checks, deployed SDK/LSP smoke and relocated/symlinked-package integration). SDK path is discovered from pnpm's actual global package metadata or explicit PI_TEST_SDK_ROOT, not hard-coded.
+- In `~/ghq/github.com/cou723/pi-resource-capabilities`, run `pnpm install --frozen-lockfile` and `pnpm check` (36 unit/sandbox tests, host TypeScript checks, deployed SDK/LSP smoke and relocated/symlinked-package integration). SDK path is discovered from pnpm's actual global package metadata or explicit PI_TEST_SDK_ROOT, not hard-coded.
 - SDK fixture loads all installed extensions, exercises nested write/read/denied operations and mock MCP reads/writes, with no LLM requests or real service mutations.
 - LSP SDK smoke tested real TypeScript diagnostics/hover/definition/references/symbols, automatic write diagnostics, JSON/YAML/Python/C++ diagnostics, blocked config/secret access, and noninteractive project trust rejection. Logs: `lsp-smoke.log`; Rust's unsuccessful diagnostic trial is preserved in `lsp-rust-smoke.log`.
 - Relocation smoke uses a different package location/agent profile/LSP asset layout and a permissive ordinary policy; verifies independent code/config write rejection, OS readonly protection, credential masking, required Backlog confirmation and missing runtime fail-closed behavior.

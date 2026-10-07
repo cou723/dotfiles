@@ -33,6 +33,8 @@
     },
     "path_write": {
       "~/.pi/agent/extensions/*": "deny",
+      "~/ghq/github.com/cou723/pi-resource-capabilities": "deny",
+      "~/ghq/github.com/cou723/pi-resource-capabilities/*": "deny",
       "~/.pi/agent/npm/*": "deny",
       "~/.pi/agent/trust/*": "deny",
       "~/.pi/agent/lsp.json": "deny",
@@ -50,6 +52,8 @@
     "external_directory_read": {
       "*": "ask",
       "/tmp/pi": "allow",
+      "~/ghq/github.com/cou723/pi-resource-capabilities": "allow",
+      "~/ghq/github.com/cou723/pi-resource-capabilities/*": "allow",
       "/tmp/pi/*": "allow",
       "~/.pi/agent/pi-hermes-memory/*": "allow",
       "~/.pi/agent/projects-memory/*": "allow"
