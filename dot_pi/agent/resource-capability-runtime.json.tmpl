@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "protectedRoots": [
+    "{{ .chezmoi.sourceDir }}/dot_pi",
+    "{{ .chezmoi.sourceDir }}/dot_local/share/pi-language-servers",
+    "{{ .chezmoi.homeDir }}/.local/share/pi-language-servers"
+  ],
+  "lspServers": {
+    "typescript": {"command": ["{node}", "{{ .chezmoi.homeDir }}/.local/share/pi-language-servers/node_modules/typescript-language-server/lib/cli.mjs", "--stdio"]},
+    "python": {"command": ["{node}", "{{ .chezmoi.homeDir }}/.local/share/pi-language-servers/node_modules/pyright/langserver.index.js", "--stdio"]},
+    "json": {"command": ["{node}", "{{ .chezmoi.homeDir }}/.local/share/pi-language-servers/node_modules/vscode-langservers-extracted/bin/vscode-json-language-server", "--stdio"]},
+    "yaml": {"command": ["{node}", "{{ .chezmoi.homeDir }}/.local/share/pi-language-servers/node_modules/yaml-language-server/bin/yaml-language-server", "--stdio"]},
+    "rust": {"command": ["rust-analyzer"]},
+    "cpp": {"command": ["clangd", "--background-index=false", "--enable-config=false"]}
+  }
+}

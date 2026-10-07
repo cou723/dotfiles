@@ -1,0 +1,22 @@
+{
+  "name": "pi-resource-capabilities",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "files": ["resource-capability-gate", "bash-classifier", "lsp-readonly", "tests", "README.md", "package.json", "pnpm-lock.yaml", "pnpm-workspace.yaml"],
+  "pi": {"extensions": ["resource-capability-gate/index.ts", "bash-classifier/index.ts", "lsp-readonly/index.ts"]},
+  "scripts": {
+    "test": "node --test resource-capability-gate/*.test.mjs",
+    "test:integration": "node tests/sdk-smoke.mjs && node tests/lsp-smoke.mjs && node tests/relocation-smoke.mjs",
+    "typecheck": "node tests/typecheck.mjs",
+    "check": "pnpm test && pnpm typecheck && pnpm test:integration"
+  },
+  "peerDependencies": {
+    "@earendil-works/pi-coding-agent": ">=1.0.0",
+    "@earendil-works/pi-ai": ">=1.0.0",
+    "@gotgenes/pi-permission-system": "40.0.0",
+    "pi-permission-classifier": "0.5.2",
+    "pi-lsp": "0.1.7"
+  },
+  "devDependencies": {"typescript": "6.0.3", "@types/node": "24.13.3"}
+}

@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "servers": {
+    "github": "github",
+    "slack": "slack",
+    "backlog": "backlog"
+  },
+  "githubGrants": [],
+  "slackGrants": []
+}

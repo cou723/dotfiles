@@ -1,0 +1,174 @@
+lockfileVersion: '9.0'
+
+settings:
+  autoInstallPeers: false
+  excludeLinksFromLockfile: false
+
+importers:
+
+  .:
+    dependencies:
+      '@gotgenes/pi-permission-system':
+        specifier: 40.0.0
+        version: 40.0.0
+      '@gotgenes/pi-subagents':
+        specifier: 23.2.0
+        version: 23.2.0
+      pi-hermes-memory:
+        specifier: 0.9.10
+        version: 0.9.10
+      pi-lsp:
+        specifier: 0.1.7
+        version: 0.1.7
+      pi-permission-classifier:
+        specifier: 0.5.2
+        version: 0.5.2(@gotgenes/pi-permission-system@40.0.0)
+
+packages:
+
+  '@gotgenes/pi-permission-system@40.0.0':
+    resolution: {integrity: sha512-9oPZCWUoZuwiWVZtytyqFwZ4+qix0u5rma8og2CLtiHOgR6W/eDWEjqWv+8YXh4dx1uKorq+kUtWIMgsWlaTUQ==}
+    engines: {node: '>=22'}
+    peerDependencies:
+      '@earendil-works/pi-coding-agent': '>=1.0.0'
+      '@earendil-works/pi-tui': '>=1.0.0'
+
+  '@gotgenes/pi-subagents@23.2.0':
+    resolution: {integrity: sha512-bOK9iS1i0Lj+7vsTAWYT/Dyktpky8ZTUfWTXZtoBOxjJq29qmt5nVzJmR+0CZUYsByCUNpp7Ci3H/HyByD7KKw==}
+    engines: {node: '>=22'}
+    peerDependencies:
+      '@earendil-works/pi-ai': '>=1.0.0'
+      '@earendil-works/pi-coding-agent': '>=1.0.0'
+      '@earendil-works/pi-tui': '>=1.0.0'
+      typebox: '*'
+
+  ansi-regex@6.4.0:
+    resolution: {integrity: sha512-KzTVk2tCWAHtYrvvvaP8bJKJq2pVinhLcGEQdtLIYPbmNGNyYe8QwNaTUYQp2J7/vIsUKt5QCqAfUkYyG9DkOw==}
+    engines: {node: '>=12'}
+
+  better-sqlite3@13.0.3:
+    resolution: {integrity: sha512-RbOBxmLBG8uvFUc15X9+9SFemKcQ0WBuISBVkpuiaUB2qblC8UWlHEjdWVoZ8AdhSwmoEgsiXKfopX0CQxaACQ==}
+    engines: {node: '>=22'}
+
+  node-addon-api@8.9.2:
+    resolution: {integrity: sha512-VijLXbi3UACN69I0JVXJsX4tjACjNoQDgv2gTF6sx2wWEi8tkSg2eX8p5gSIFi8z2+DL3oHmY6OyKce38SDolg==}
+    engines: {node: ^18 || ^20 || >= 21}
+
+  node-gyp-build@4.8.4:
+    resolution: {integrity: sha512-LA4ZjwlnUblHVgq0oBF3Jl/6h/Nvs5fzBLwdEF4nuxnFdsfajde4WfxtJr3CaiH+F6ewcIB/q4jQ4UzPyid+CQ==}
+    hasBin: true
+
+  pi-hermes-memory@0.9.10:
+    resolution: {integrity: sha512-1cZzVieL1H3o5ZNtgunwu7nD1+Cn/7GQv5SvPpWDoN+7iLHEy4dkY5D30g/gKdVhW2Pm+63wFwQ3mXxc7k2/OA==}
+    peerDependencies:
+      '@earendil-works/pi-ai': '>=0.80.6'
+      '@earendil-works/pi-coding-agent': '>=0.80.6'
+      '@earendil-works/pi-tui': '*'
+
+  pi-lsp@0.1.7:
+    resolution: {integrity: sha512-bEmxw2pZ3lUh5LDJFCShnmjbCltmSZLOp6neIl+sWEfOEwMBi6IdOoQ2W00Fdc+k8i2Sw17p7XGElykWmDQOkg==}
+    engines: {node: '>=20'}
+    peerDependencies:
+      '@earendil-works/pi-coding-agent': '*'
+      '@earendil-works/pi-tui': '*'
+      typebox: '*'
+
+  pi-permission-classifier@0.5.2:
+    resolution: {integrity: sha512-tUdZ6nW4LCxFmVQOaGX2i2zwq+UOAsIce+mdf/CEf9zyR0iE6iMMbvsRpbQwho+zvtqZwfWuQUYweJWQ712HoA==}
+    engines: {node: '>=22'}
+    peerDependencies:
+      '@earendil-works/pi-coding-agent': '>=0.84.3'
+      '@gotgenes/pi-permission-system': '>=27.0.0'
+
+  strip-ansi@7.2.0:
+    resolution: {integrity: sha512-yDPMNjp4WyfYBkHnjIRLfca1i6KMyGCtsVgoKe/z1+6vukgaENdgGBZt+ZmKPc4gavvEZ5OgHfHdrazhgNyG7w==}
+    engines: {node: '>=12'}
+
+  tree-sitter-bash@0.25.1:
+    resolution: {integrity: sha512-7hMytuYIMoXOq24yRulgIxthE9YmggZIOHCyPTTuJcu6EU54tYD+4G39cUb28kxC6jMf/AbPfWGLQtgPTdh3xw==}
+    peerDependencies:
+      tree-sitter: ^0.25.0
+    peerDependenciesMeta:
+      tree-sitter:
+        optional: true
+
+  vscode-jsonrpc@8.2.1:
+    resolution: {integrity: sha512-kdjOSJ2lLIn7r1rtrMbbNCHjyMPfRnowdKjBQ+mGq6NAW5QY2bEZC/khaC5OR8svbbjvLEaIXkOq45e2X9BIbQ==}
+    engines: {node: '>=14.0.0'}
+
+  vscode-jsonrpc@9.0.3:
+    resolution: {integrity: sha512-qETYf9PCl1lVfwR+oBmMfc4vP2nqLNA35ABxorw3j06+xlKRgDVxbLgKm4Y/xPL0YWdeDjLoI4ImICIT3nB0zQ==}
+    engines: {node: '>=14.0.0'}
+
+  vscode-languageserver-protocol@3.18.4:
+    resolution: {integrity: sha512-CCXbyr99dafRJzJH/0Ryk7ly5T8XPmSR0//OuF2w4m+9JiOin7zcAT5iET8GRE7Z9taFBejb3GbM0a0mbjdbrg==}
+
+  vscode-languageserver-types@3.18.4:
+    resolution: {integrity: sha512-nQsacoiijvl0fRf2q28uFDrAVwRhdCa3QveiF7/CX0r18mLR5FU/1WskSsCKOjmEbtteKUnY8x8Yzxop+k0zwg==}
+
+  web-tree-sitter@0.26.13:
+    resolution: {integrity: sha512-5bUZ7vbQ1kcondet96wzP974+JfCZDeQ7bTpacICm2nnvHpa5cO0ByRsoMcAhUP+743vpkb4m0BFlVSm+Ye9VA==}
+
+  zod@4.4.3:
+    resolution: {integrity: sha512-ytENFjIJFl2UwYglde2jchW2Hwm4GJFLDiSXWdTrJQBIN9Fcyp7n4DhxJEiWNAJMV1/BqWfW/kkg71UDcHJyTQ==}
+
+snapshots:
+
+  '@gotgenes/pi-permission-system@40.0.0':
+    dependencies:
+      tree-sitter-bash: 0.25.1
+      web-tree-sitter: 0.26.13
+      zod: 4.4.3
+    transitivePeerDependencies:
+      - tree-sitter
+
+  '@gotgenes/pi-subagents@23.2.0': {}
+
+  ansi-regex@6.4.0: {}
+
+  better-sqlite3@13.0.3:
+    dependencies:
+      node-addon-api: 8.9.2
+
+  node-addon-api@8.9.2: {}
+
+  node-gyp-build@4.8.4: {}
+
+  pi-hermes-memory@0.9.10:
+    dependencies:
+      better-sqlite3: 13.0.3
+      strip-ansi: 7.2.0
+
+  pi-lsp@0.1.7:
+    dependencies:
+      vscode-jsonrpc: 8.2.1
+      vscode-languageserver-protocol: 3.18.4
+
+  pi-permission-classifier@0.5.2(@gotgenes/pi-permission-system@40.0.0):
+    dependencies:
+      '@gotgenes/pi-permission-system': 40.0.0
+      zod: 4.4.3
+
+  strip-ansi@7.2.0:
+    dependencies:
+      ansi-regex: 6.4.0
+
+  tree-sitter-bash@0.25.1:
+    dependencies:
+      node-addon-api: 8.9.2
+      node-gyp-build: 4.8.4
+
+  vscode-jsonrpc@8.2.1: {}
+
+  vscode-jsonrpc@9.0.3: {}
+
+  vscode-languageserver-protocol@3.18.4:
+    dependencies:
+      vscode-jsonrpc: 9.0.3
+      vscode-languageserver-types: 3.18.4
+
+  vscode-languageserver-types@3.18.4: {}
+
+  web-tree-sitter@0.26.13: {}
+
+  zod@4.4.3: {}

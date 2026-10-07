@@ -2,6 +2,23 @@ README.md
 bun.lockb
 .gitignore
 .github
+# Pi credentials, generated packages, session history, and learned personal data.
+.pi/agent/auth.json
+.pi/agent/mcp-auth.json
+.pi/agent/models-store.json
+.pi/agent/trust.json
+.pi/agent/trust
+.local/share/pi-language-servers/node_modules
+.local/share/pi-language-servers/.pnpm-store
+.pi/agent/sessions
+.pi/agent/npm/node_modules
+.pi/agent/npm/.pnpm-store
+.pi/agent/git
+.pi/agent/pi-hermes-memory
+.pi/agent/projects-memory
+.pi/agent/extensions/*/logs
+.pi/agent/extensions/*/node_modules
+.pi/agent/extensions/node_modules
 .pi/agent/extensions/sandbox-ceiling/node_modules
 .pi/agent/extensions/sandbox-ceiling/.pnpm-store
 .pi/agent/extensions/sandbox-ceiling/.pnpm-cache

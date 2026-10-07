@@ -1,0 +1,23 @@
+{
+  "memoryMode": "policy-only",
+  "memoryPolicyStyle": "compact",
+  "lazyInitialization": true,
+  "sessionSearch": {"variant": "anchors"},
+  "reviewEnabled": true,
+  "reviewTransport": "direct",
+  "childExtensionPaths": [
+    "~/.pi/agent/npm/node_modules/@gotgenes/pi-permission-system/src/index.ts",
+    "~/.pi/agent/extensions/bash-classifier/index.ts",
+    "~/.pi/agent/extensions/resource-capability-gate/index.ts"
+  ],
+  "nudgeInterval": 20,
+  "nudgeToolCalls": 30,
+  "reviewRecentMessages": 20,
+  "correctionDetection": true,
+  "correctionStrongPatterns": ["違います", "そうではなく", "前にも言", "使わないで", "ではなく.+使", "^no[, ]", "^actually[, ]"],
+  "memoryOverflowStrategy": "reject",
+  "autoConsolidate": false,
+  "flushOnCompact": false,
+  "flushOnShutdown": false,
+  "standingInstructionsEnabled": false
+}

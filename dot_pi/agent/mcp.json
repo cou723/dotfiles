@@ -1,0 +1,32 @@
+{
+  "mcpServers": {
+    "github": {
+      "url": "https://api.githubcopilot.com/mcp/",
+      "headers": {"Authorization": "Bearer ${GITHUB_MCP_TOKEN}"},
+      "exposure": "codemode",
+      "description": "GitHub official MCP; writes require independent resource-capability approval",
+      "enabled": false
+    },
+    "slack": {
+      "url": "https://mcp.slack.com/mcp",
+      "oauth": {
+        "clientId": "SET_SLACK_APP_CLIENT_ID",
+        "clientSecret": "${SLACK_MCP_CLIENT_SECRET}"
+      },
+      "exposure": "codemode",
+      "description": "Slack official MCP; plain thread reply grants are workspace/channel/thread scoped",
+      "enabled": false
+    },
+    "backlog": {
+      "command": "pnpm",
+      "args": ["dlx", "backlog-mcp-server@0.20.5", "--enable-toolsets", "project,issue,git"],
+      "env": {
+        "BACKLOG_DOMAIN": "${BACKLOG_DOMAIN}",
+        "BACKLOG_API_KEY": "${BACKLOG_API_KEY}"
+      },
+      "exposure": "codemode",
+      "description": "Nulab Backlog MCP; all writes require human approval once per exact call",
+      "enabled": false
+    }
+  }
+}
