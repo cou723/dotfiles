@@ -62,6 +62,7 @@
       export HOME="$TMPDIR/home"
       mkdir -p "$HOME"
       PI_PACKAGE_DIR=${piPackage}/lib/pi SUBAGENT_ROOT=${extension} \
+      AGENT_DEFINITIONS=${./pi-defined-subagents/test-fixtures/agents} \
         node ${./pi-defined-subagents/smoke-test.mjs}
       touch $out
     '';

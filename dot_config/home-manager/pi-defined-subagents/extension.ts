@@ -2,18 +2,19 @@ import { readFileSync } from "node:fs";
 import { rm } from "node:fs/promises";
 import { homedir } from "node:os";
 import { join, resolve } from "node:path";
-import { fileURLToPath } from "node:url";
 import { Type } from "typebox";
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { runHeadlessModel } from "../node_modules/@agwab/pi-subagent/src/runners/headless-model.ts";
-import { AGENT_NAMES, loadRegistry, validateRequest, prepareJob, childEnvironment, boundedOutput } from "./policy.ts";
+import { loadRegistry, validateRequest, prepareJob, childEnvironment, boundedOutput } from "./policy.ts";
 
 const config = Object.freeze(JSON.parse(readFileSync(new URL("./runtime-config.json", import.meta.url), "utf8")));
-const definitions = fileURLToPath(new URL("../agents/", import.meta.url));
 
 export default async function definedSubagents(pi: ExtensionAPI) {
-  // Nix-store definitions only. No cwd lookup, project shadowing or caller overrides.
-  const registry = await loadRegistry(definitions);
+  // Load global user configuration once per factory/reload and freeze the policy snapshot.
+  // No cwd lookup, project shadowing, bundled defaults or caller overrides.
+  const sourceAgentDir = process.env.PI_CODING_AGENT_DIR
+    ? resolve(process.env.PI_CODING_AGENT_DIR) : join(homedir(), ".pi", "agent");
+  const registry = await loadRegistry(join(sourceAgentDir, "agents"));
   let active = false;
   pi.registerCommand("defined-agents", {
     description: "List trusted sub-agent definitions and enabled/draft status",
@@ -25,9 +26,10 @@ export default async function definedSubagents(pi: ExtensionAPI) {
   pi.registerTool({
     name: "subagent",
     label: "Defined sub-agent",
-    description: "Delegate a bounded task using a required trusted definition. researcher: investigation, edits/experiments only in a fresh tmp workspace, unrestricted network, read-only host filesystem. git-commit: disabled draft. Only {agent, task} accepted; tools, cwd, sandbox, model and prompts cannot be overridden. The worker's logs stay in artifacts; only a short final result is returned. Synchronous only; no nested agents, background jobs, resume or caller-defined workflows.",
+    description: "Delegate a bounded task using a required trusted global definition. Only {agent, task} accepted; tools, cwd, sandbox, model and prompts cannot be overridden. The worker's logs stay in artifacts; only a short final result is returned. Synchronous only; no nested delegation API, background jobs, resume or caller-defined workflows. Definitions: " +
+      [...registry.values()].map(def => `${def.name} (${def.enabled ? "enabled" : "disabled"}): ${def.description.slice(0, 180)}`).join("; "),
     parameters: Type.Object({
-      agent: Type.Union(AGENT_NAMES.map(name => Type.Literal(name))),
+      agent: Type.Union([...registry.keys()].map(name => Type.Literal(name))),
       task: Type.String({ minLength: 1, maxLength: 16000 }),
     }, { additionalProperties: false }),
     async execute(_id, params, signal, _onUpdate, ctx) {
@@ -38,8 +40,6 @@ export default async function definedSubagents(pi: ExtensionAPI) {
       active = true;
       let job: Awaited<ReturnType<typeof prepareJob>> | undefined;
       try {
-        const sourceAgentDir = process.env.PI_CODING_AGENT_DIR
-          ? resolve(process.env.PI_CODING_AGENT_DIR) : join(homedir(), ".pi", "agent");
         job = await prepareJob(homedir(), sourceAgentDir);
         const result = await runHeadlessModel({
           agent: definition.name,

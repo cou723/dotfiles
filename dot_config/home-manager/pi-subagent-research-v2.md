@@ -4,6 +4,8 @@
 **この調査をまとめた時点では、比較と設計判断まで。導入・フォーク・本番設定変更はしていない。**
 その後、ユーザー承認によりagwabのheadless runnerを使うLinux向け最小派生構成を実装・検証・反映した。
 実装後の条件と検証結果は [pi-defined-subagents/README.md](pi-defined-subagents/README.md) を参照。
+さらに、定義はNixパッケージから切り離し、chezmoiの `dot_pi/agent/agents/` から
+`~/.pi/agent/agents/` へ直接配置する方式に変更した。定義編集はapply／reloadだけで反映できる。
 以下の比較・probe結果は導入前の調査記録として残す。
 前回の `pi-subagent-research.md` の暫定推奨を、この要件に基づいて更新する。
 

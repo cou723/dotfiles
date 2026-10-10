@@ -11,8 +11,7 @@ bun.lockb
 .local/share/pi-language-servers/node_modules
 .local/share/pi-language-servers/.pnpm-store
 .pi/agent/sessions
-.pi/agent/npm/node_modules
-.pi/agent/npm/.pnpm-store
+.pi/agent/npm
 .pi/agent/git
 .pi/agent/pi-hermes-memory
 .pi/agent/projects-memory

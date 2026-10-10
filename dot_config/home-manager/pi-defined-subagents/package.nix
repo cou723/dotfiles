@@ -22,7 +22,6 @@ in pkgs.runCommand "pi-defined-subagents-0.1.0-agwab-0.6.4" {} ''
   printf 'export { default } from "%s";\n' "$out/extensions/defined-subagents.ts" > "$out/extensions/60-defined-subagents.ts"
   cp ${./policy.ts} "$out/extensions/policy.ts"
   cp ${config} "$out/extensions/runtime-config.json"
-  cp -r ${./agents} "$out/agents"
   for name in pi-ai pi-coding-agent pi-tui; do
     ln -s ${piPackage}/lib/pi/node_modules/@earendil-works/$name "$out/node_modules/@earendil-works/$name"
   done

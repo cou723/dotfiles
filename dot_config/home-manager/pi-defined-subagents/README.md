@@ -15,8 +15,8 @@ Linux / Pi 1.1.0用。`@agwab/pi-subagent` 0.6.4のheadless runnerを再利用�
 
 | 定義 | 状態 | 用途 |
 |---|---|---|
-| `agents/researcher.md` | 実行可能 | 調査・検証。編集や実験は新規tmp作業領域だけ |
-| `agents/git-commit.md` | 無効のたたき台 | Git手順と許可範囲を決めるための下書き。呼び出しは拒否 |
+| `~/.pi/agent/agents/researcher.md` | 実行可能 | 調査・検証。編集や実験は新規tmp作業領域だけ |
+| `~/.pi/agent/agents/git-commit.md` | 無効のたたき台 | Git手順と許可範囲を決めるための下書き。呼び出しは拒否 |
 
 未知・省略された定義、空の依頼、実行ポリシーの追加引数はエラーになる。
 `git-commit` は `enabled` だけを変更しても有効にできない。
@@ -24,9 +24,29 @@ Linux / Pi 1.1.0用。`@agwab/pi-subagent` 0.6.4のheadless runnerを再利用�
 
 ## 固定される条件
 
-定義の正本はこのディレクトリのMarkdown。ビルド時にNix storeへ取り込む。
-Piのグローバル／プロジェクト側のagent定義は探索しない。変更はソース編集・再ビルド・
-Home Manager反映・Pi再読み込みで行う。実行中の定義や条件を呼び出し側から差し替える経路はない。
+インストールと設定を分ける。Nixは拡張コード・Pi・bubblewrapだけを固定し、
+定義の原本はchezmoiの `dot_pi/agent/agents/*.md` に置く。chezmoiから
+`~/.pi/agent/agents/` へ通常ファイルとして直接配置し、Nixパッケージには含めない。
+`pi install` の生成パッケージ、認証、セッション、ログはchezmoiへ取り込まない。
+
+拡張はグローバル定義だけを起動時／reload時に読み、実行条件を不変のsnapshotにする。
+`PI_CODING_AGENT_DIR` を指定した親では、その配下の `agents/` を使う。
+プロジェクト定義や同梱のdefaultへfallbackしない。ディレクトリがない・空・不正な定義を含む場合は、
+sub-agent拡張の読み込みを拒否する。定義ファイルの名前とfrontmatterの `name` は一致させる。
+ファイル名は英小文字で始まり、英小文字・数字・`-`・`_` の64文字以内とし、symlinkは受け付けない。
+
+定義の編集・追加にはNixの再ビルドは不要。対応済みのポリシーなら、次だけで反映できる。
+
+```sh
+chezmoi edit ~/.pi/agent/agents/researcher.md
+chezmoi apply ~/.pi/agent/agents
+# Piで /reload（または新しいセッション）
+```
+
+配置先を直接編集した場合は、`chezmoi re-add ~/.pi/agent/agents/researcher.md` で原本へ取り込む。
+既に読み込んだsnapshotはファイル編集だけでは変わらない。新しいsandbox方式など、
+コンパイラがまだ対応していない実行条件を追加する場合は、拡張コードの更新が必要。
+子からの定義書き込みは、定義ディレクトリが作業用tmpの外にあるためsandboxで拒否する。
 
 - 呼び出し側が指定できるのは `agent` と `task` のみ。
 - 定義がrole prompt、tools、作業領域、sandbox、モデル選択方法、時間制限、結果上限を指定。
@@ -80,8 +100,9 @@ CPU・メモリ・ディスクのquota、厳密なモデルturn／cost上限も�
 ## 再ビルド・検証・反映
 
 ```sh
-# 管理元から配置。全dotfilesをapplyせず、Home Manager設定だけ対象にする。
-chezmoi apply ~/.config/home-manager
+# インストール更新時の手順。定義編集だけなら上記apply/reloadでよい。
+# 全dotfilesをapplyせず、実行環境と定義の配置先だけ対象にする。
+chezmoi apply ~/.config/home-manager ~/.pi/agent/agents
 
 nix build path:$HOME/.config/home-manager#pi-defined-subagents --no-link
 nix build path:$HOME/.config/home-manager#checks.x86_64-linux.pi-defined-subagents --no-link
@@ -104,8 +125,10 @@ nix run path:$HOME/.config/home-manager -- switch --flake path:$HOME/.config/hom
 ## 確認した範囲
 
 - 実際のPi loaderで登録でき、登録toolは `subagent` だけ。
+- runtimeパッケージに定義がないこと、グローバル定義の不足・不正・symlinkを拒否することを確認。
+- グローバル定義の編集・追加をreloadだけで反映でき、既存snapshotは変わらないことを確認。
 - 定義未指定・未知・無効のGit定義・不正YAML・未対応ポリシー・各種上書きを拒否。
-- 実bubblewrap上で内部書き込みを許可し、外部・symlink・親認証・Nix定義・親の記録への書き込みを拒否。
+- 実bubblewrap上で内部書き込みを許可し、外部・symlink・親認証・グローバル定義・親の記録への書き込みを拒否。
 - 実Pi 1.1.0がsandbox内で起動。
 - 全tool経路のfixtureで固定argv、プロジェクト定義の無視、要約上限、runtime削除、同時実行拒否、キャンセルを確認。
 - agwab runnerのJSON処理・結果保存・timeout、sandbox backend不在時のfail-closedを確認。
@@ -113,3 +136,4 @@ nix run path:$HOME/.config/home-manager -- switch --flake path:$HOME/.config/hom
 
 他のprovider、OAuthの期限切れ後の挙動、macOS、Git操作、長時間運用は未検証。
 候補比較の原本は `../pi-subagent-research-v2.md`。調査要約と実装判断は追加コミットの本文にも残す。
+`test-fixtures/agents/` はofflineテスト用のサンプルで、グローバル定義の原本でもruntime同梱定義でもない。

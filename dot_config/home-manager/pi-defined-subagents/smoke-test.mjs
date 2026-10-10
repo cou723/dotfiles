@@ -2,7 +2,7 @@
 import assert from 'node:assert/strict';
 import { readFile, writeFile, mkdir, mkdtemp, symlink, access, rm, cp, readdir, chmod } from 'node:fs/promises';
 import { join, dirname } from 'node:path';
-import { pathToFileURL } from 'node:url';
+import { pathToFileURL, fileURLToPath } from 'node:url';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 const exec = promisify(execFile);
@@ -12,7 +12,10 @@ assert.ok(root && host, 'SUBAGENT_ROOT and PI_PACKAGE_DIR are required');
 const { createJiti } = await import(pathToFileURL(join(host, 'node_modules/jiti/lib/jiti.mjs')));
 const jiti = createJiti(import.meta.url, { fsCache: false, moduleCache: false });
 const policy = await jiti.import(join(root, 'extensions/policy.ts'));
-const registry = await policy.loadRegistry(join(root, 'agents'));
+const fixtures = process.env.AGENT_DEFINITIONS ?? fileURLToPath(new URL('./test-fixtures/agents/', import.meta.url));
+assert.notEqual(fixtures, join(root, 'agents'));
+await assert.rejects(access(join(root, 'agents')), 'runtime package must not bundle user definitions');
+const registry = await policy.loadRegistry(fixtures);
 const researcher = registry.get('researcher');
 const draft = registry.get('git-commit');
 assert.equal(researcher.enabled, true);
@@ -30,7 +33,7 @@ for (const [key, value] of Object.entries({ sandbox: false, tools: ['bash'], cwd
   assert.throws(() => policy.validateRequest({ agent: 'researcher', task: 'test', [key]: value }, registry));
 }
 assert.equal(policy.validateRequest({ agent: 'researcher', task: 'test' }, registry).definition, researcher);
-const md = await readFile(join(root, 'agents/researcher.md'), 'utf8');
+const md = await readFile(join(fixtures, 'researcher.md'), 'utf8');
 for (const malformed of [md.replace('schema: 1', 'schema: 2'), md.replace('enabled: true', 'enabled: true\nenabled: false'),
   md.replace('tools: [read, bash, edit, write, grep, find, ls]', 'tools: [subagent]'),
   md.replace('filesystem: workspace-only', 'filesystem: unrestricted'),
@@ -39,12 +42,15 @@ for (const malformed of [md.replace('schema: 1', 'schema: 2'), md.replace('enabl
   md.replace('model: parent', 'model: caller'), md.replace('schema: 1', 'unknown: true\nschema: 1')]) {
   assert.throws(() => policy.parseDefinition('researcher', malformed));
 }
-const draftMarkdown = await readFile(join(root, 'agents/git-commit.md'), 'utf8');
+const draftMarkdown = await readFile(join(fixtures, 'git-commit.md'), 'utf8');
 assert.throws(() => policy.parseDefinition('git-commit', draftMarkdown.replace('enabled: false', 'enabled: true')));
 
 const testHome = await mkdtemp(join(process.env.HOME, 'defined-subagent-test-'));
 const sourceAgent = join(testHome, 'source-agent');
 await mkdir(sourceAgent);
+await cp(fixtures, join(sourceAgent, 'agents'), { recursive: true });
+await chmod(join(sourceAgent, 'agents'), 0o700);
+await chmod(join(sourceAgent, 'agents/researcher.md'), 0o600);
 await writeFile(join(sourceAgent, 'auth.json'), '{}');
 await writeFile(join(sourceAgent, 'settings.json'), '{"extensions":["untrusted"]}');
 const job = await policy.prepareJob(testHome, sourceAgent);
@@ -63,7 +69,34 @@ assert.ok((await policy.boundedOutput(oversized, 100)).length < 180);
 const loader = await import(pathToFileURL(join(host, 'node_modules/@earendil-works/pi-coding-agent/dist/core/extensions/loader.js')));
 const installedLink = join(testHome, '60-defined-subagents.ts');
 await symlink(join(root, 'extensions/60-defined-subagents.ts'), installedLink);
-const loaded = await loader.loadExtensions([installedLink], testHome);
+async function loadFromGlobalAgentDir(path, cwd, agentDir) {
+  const previous = process.env.PI_CODING_AGENT_DIR;
+  process.env.PI_CODING_AGENT_DIR = agentDir;
+  try { return await loader.loadExtensions([path], cwd); }
+  finally {
+    if (previous === undefined) delete process.env.PI_CODING_AGENT_DIR;
+    else process.env.PI_CODING_AGENT_DIR = previous;
+  }
+}
+await mkdir(join(testHome, '.pi/agents'), { recursive: true });
+await writeFile(join(testHome, '.pi/agents/researcher.md'), md);
+await writeFile(join(testHome, '.pi/agents/git-commit.md'), draftMarkdown);
+const emptyDefinitions = join(testHome, 'empty-definitions');
+await mkdir(emptyDefinitions);
+await assert.rejects(policy.loadRegistry(emptyDefinitions), /No trusted agent definitions/);
+const invalidDefinitions = join(testHome, 'invalid-definitions');
+await mkdir(invalidDefinitions);
+await writeFile(join(invalidDefinitions, 'researcher.md'), 'invalid YAML and no frontmatter');
+await assert.rejects(policy.loadRegistry(invalidDefinitions));
+await rm(join(invalidDefinitions, 'researcher.md'));
+await symlink(join(sourceAgent, 'agents/researcher.md'), join(invalidDefinitions, 'researcher.md'));
+await assert.rejects(policy.loadRegistry(invalidDefinitions), /direct Markdown file/);
+const missing = await loadFromGlobalAgentDir(installedLink, testHome, join(testHome, 'missing-global-agent-dir'));
+try {
+  assert.equal(missing.extensions.length, 0);
+  assert.equal(missing.errors.length, 1, 'missing global definitions must fail rather than load defaults');
+} finally { missing.runtime.invalidate(); }
+const loaded = await loadFromGlobalAgentDir(installedLink, testHome, sourceAgent);
 try {
   assert.deepEqual(loaded.errors, []);
   assert.equal(loaded.extensions.length, 1);
@@ -95,7 +128,7 @@ printf ok > internal.txt
 if printf bad > '${external}'; then exit 91; fi
 if printf bad > escape; then exit 92; fi
 if printf bad > '${parentArtifact}'; then exit 93; fi
-if printf bad > '${join(root, 'agents/researcher.md')}'; then exit 94; fi
+if printf bad > '${join(sourceAgent, 'agents/researcher.md')}'; then exit 94; fi
 if printf bad > '${join(sourceAgent, 'auth.json')}'; then exit 95; fi
 if printf bad > /tmp/pi-defined-subagent-escape; then exit 96; fi
 printf 'sandbox-probe-ok\\n'
@@ -106,6 +139,7 @@ printf 'sandbox-probe-ok\\n'
   assert.match(probe.stdout, /sandbox-probe-ok/);
   assert.equal(await readFile(external, 'utf8'), 'unchanged');
   assert.equal(await readFile(parentArtifact, 'utf8'), 'protected');
+  assert.equal(await readFile(join(sourceAgent, 'agents/researcher.md'), 'utf8'), md);
   assert.equal(await readFile(join(sourceAgent, 'auth.json'), 'utf8'), '{}');
   // Real Nix Pi executable starts inside bubblewrap, without auth or provider calls.
   const piVersion = await sandbox.withSandboxedArgv([config.pi, '--version'],
@@ -182,6 +216,29 @@ printf 'sandbox-probe-ok\\n'
     for (const option of ['--no-session', '--no-context-files', '--no-extensions', '--no-skills', '--tools', 'fixture/fixture']) assert.ok(invocation.includes(option));
     assert.ok(invocation.includes('read,bash,edit,write,grep,find,ls'));
     assert.equal(await readFile(join(sourceAgent, 'auth.json'), 'utf8'), '{}');
+
+    // Definition edits require only a reload, not a runtime rebuild. Existing factories
+    // retain their immutable snapshot even if the global file changes after loading.
+    const marker = 'RELOADED_GLOBAL_ROLE_MARKER';
+    await writeFile(join(sourceAgent, 'agents/researcher.md'), `${md}\n${marker}\n`);
+    const oldSnapshot = await delegate.execute('old-policy-snapshot', { agent: 'researcher', task: 'fixture task' }, undefined, undefined, ctx);
+    const oldArgv = await readFile(join(dirname(oldSnapshot.details.artifacts), 'work/invocation.txt'), 'utf8');
+    assert.ok(oldArgv.includes('OFFLINE_RESEARCH_ROLE_FIXTURE'));
+    assert.ok(!oldArgv.includes(marker), 'file edits must not alter an already-loaded policy snapshot');
+    await writeFile(join(sourceAgent, 'agents/reviewer.md'), md.replace('name: researcher', 'name: reviewer'));
+    await assert.rejects(delegate.execute('old-registry', { agent: 'reviewer', task: 'fixture task' }, undefined, undefined, ctx), /Unknown/);
+    const reloaded = await loader.loadExtensions([join(fixtureRoot, 'extensions/60-defined-subagents.ts')], testHome);
+    try {
+      assert.deepEqual(reloaded.errors, []);
+      const fresh = await reloaded.extensions[0].tools.get('subagent').definition.execute('new-policy-snapshot',
+        { agent: 'researcher', task: 'fixture task' }, undefined, undefined, ctx);
+      assert.ok((await readFile(join(dirname(fresh.details.artifacts), 'work/invocation.txt'), 'utf8')).includes(marker));
+      const added = await reloaded.extensions[0].tools.get('subagent').definition.execute('added-definition',
+        { agent: 'reviewer', task: 'fixture task' }, undefined, undefined, ctx);
+      assert.equal(added.details.agent, 'reviewer');
+      assert.equal(added.details.status, 'completed');
+    } finally { reloaded.runtime.invalidate(); }
+    console.log('PASS: global definition edits take effect on reload without rebuilding; existing policy snapshots remain unchanged.');
 
     // Long-lived fixture verifies the tool's single-job guard and finally cleanup.
     await writeFile(fixturePi, '#!/bin/sh\ntouch ready\nsleep 30\n', { mode: 0o700 });

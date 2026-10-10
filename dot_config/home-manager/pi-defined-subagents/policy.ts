@@ -1,8 +1,8 @@
-import { readFile, mkdir, mkdtemp, realpath, chmod, copyFile, rm } from "node:fs/promises";
+import { readFile, readdir, mkdir, mkdtemp, realpath, chmod, copyFile, rm } from "node:fs/promises";
 import { join } from "node:path";
 import { parseDocument } from "yaml";
 
-export const AGENT_NAMES = ["researcher", "git-commit"] as const;
+const AGENT_NAME = /^[a-z][a-z0-9_-]{0,63}$/;
 const BUILTIN_TOOLS = new Set(["read", "bash", "edit", "write", "grep", "find", "ls"]);
 const DEFINITION_KEYS = new Set([
   "schema", "name", "enabled", "description", "tools", "workspace", "sandbox", "model", "timeoutMs", "resultMaxChars",
@@ -38,9 +38,16 @@ export function parseDefinition(name: string, markdown: string) {
 
 export async function loadRegistry(directory: string) {
   const registry = new Map<string, ReturnType<typeof parseDefinition>>();
-  for (const name of AGENT_NAMES) {
-    registry.set(name, parseDefinition(name, await readFile(join(directory, `${name}.md`), "utf8")));
+  const entries = (await readdir(directory, { withFileTypes: true })).sort((a, b) => a.name.localeCompare(b.name));
+  for (const entry of entries) {
+    if (!entry.name.endsWith(".md")) continue;
+    const name = entry.name.slice(0, -3);
+    if (!entry.isFile() || !AGENT_NAME.test(name)) {
+      throw new Error(`Definition must be a direct Markdown file with a valid agent name: ${entry.name}`);
+    }
+    registry.set(name, parseDefinition(name, await readFile(join(directory, entry.name), "utf8")));
   }
+  if (!registry.size) throw new Error(`No trusted agent definitions in ${directory}`);
   return registry;
 }
 
@@ -53,7 +60,7 @@ export function validateRequest(params: unknown, registry: Map<string, ReturnTyp
   if (typeof agent !== "string" || !registry.has(agent)) throw new Error("Unknown or missing agent definition.");
   if (typeof task !== "string" || !task.trim() || task.length > 16000) throw new Error("task must be non-empty and at most 16000 characters.");
   const definition = registry.get(agent)!;
-  if (!definition.enabled) throw new Error(`${agent} is a disabled draft; approve the Git workflow and implement its sandbox policy first.`);
+  if (!definition.enabled) throw new Error(`${agent} is disabled; review its workflow and enable a supported execution policy first.`);
   return { definition, task };
 }
 
