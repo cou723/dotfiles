@@ -1,0 +1,14 @@
+[
+  {
+    "name": "pi-undo",
+    "version": "0.1.0",
+    "url": "https://registry.npmjs.org/pi-undo/-/pi-undo-0.1.0.tgz",
+    "hash": "sha256-3pJ5Tk8i1SLyIkvYHdgNZ1h5GQGclHJv4cPS3zgg/bk="
+  },
+  {
+    "name": "pi-undo-tree",
+    "version": "1.0.1",
+    "url": "https://registry.npmjs.org/pi-undo-tree/-/pi-undo-tree-1.0.1.tgz",
+    "hash": "sha256-iMp/uRr0IAHE7zvOraDZm7UoivfK2Z0vA5e3YaxsjbE="
+  }
+]

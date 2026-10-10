@@ -1,0 +1,14 @@
+[
+  {
+    "name": "@juicesharp/rpiv-ask-user-question",
+    "version": "2.12.0",
+    "url": "https://registry.npmjs.org/@juicesharp/rpiv-ask-user-question/-/rpiv-ask-user-question-2.12.0.tgz",
+    "hash": "sha256-9AeJNjjxiTo3MERPRntO3Bkkzy0gauWE91JeHoroYPY="
+  },
+  {
+    "name": "@juicesharp/rpiv-config",
+    "version": "2.12.0",
+    "url": "https://registry.npmjs.org/@juicesharp/rpiv-config/-/rpiv-config-2.12.0.tgz",
+    "hash": "sha256-5ZKpbqxsSPTx7n+pHvh/UOqCVeiH/wSuvHkEpL7Q8dQ="
+  }
+]
