@@ -1,4 +1,7 @@
 README.md
+# Git-managed live definitions: Home Manager owns the out-of-store directory link.
+pi
+.pi/agent/agents
 bun.lockb
 .gitignore
 .github

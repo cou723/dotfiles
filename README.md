@@ -105,9 +105,11 @@ Todoistは `pi mcp login todoist`、GitHub MCPは既存の `gh auth token` を�
 モデル・MCPの可変設定はPi側で管理し、OpenCodeの設定には依存しない。
 
 Linuxのsub-agentは `/defined-agents` で一覧を確認できる。実行可能な `researcher` と、
-無効の `git-commit` たたき台を用意している。定義の原本は `dot_pi/agent/agents/` で管理し、
-chezmoiから `~/.pi/agent/agents/` へ直接配置する。定義編集はapplyとPiの `/reload` だけで反映でき、
-Nixビルドは不要。生成パッケージ・認証・セッション・ログは管理しない。
+無効の `git-commit` たたき台を用意している。定義の実体はこのリポジトリの `pi/agents/`。
+Home Managerが `~/.pi/agent/agents/` からcheckout内の実体へディレクトリsymlinkを張る。
+どちらのパスを編集してもGit差分に出る。定義編集はPiの `/reload` だけで反映でき、
+chezmoi applyもNixビルドも不要。定義はchezmoiの配置対象外とする。
+生成パッケージ・認証・セッション・ログは管理しない。
 定義必須・tmp書き込み限定のbubblewrap構成、
 検証コマンド、制約は [pi-defined-subagents/README.md](dot_config/home-manager/pi-defined-subagents/README.md) を参照する。
 OpenCodeの過去セッション・認証データはPiへインポートしない。

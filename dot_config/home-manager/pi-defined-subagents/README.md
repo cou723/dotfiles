@@ -24,26 +24,32 @@ Linux / Pi 1.1.0用。`@agwab/pi-subagent` 0.6.4のheadless runnerを再利用�
 
 ## 固定される条件
 
-インストールと設定を分ける。Nixは拡張コード・Pi・bubblewrapだけを固定し、
-定義の原本はchezmoiの `dot_pi/agent/agents/*.md` に置く。chezmoiから
-`~/.pi/agent/agents/` へ通常ファイルとして直接配置し、Nixパッケージには含めない。
-`pi install` の生成パッケージ、認証、セッション、ログはchezmoiへ取り込まない。
+インストールと設定を分ける。Nixは拡張コード・Pi・bubblewrapを固定し、
+定義の実体はdotfilesリポジトリの `pi/agents/*.md` に置く。
+Home Managerの `mkOutOfStoreSymlink` で `~/.pi/agent/agents/` をそのディレクトリへリンクする。
+定義の内容はNixパッケージに含めず、chezmoiの配置対象からも外す。
+`pi install` の生成パッケージ、認証、セッション、ログはGitへ取り込まない。
+
+```text
+~/.pi/agent/agents/
+  → ~/.local/share/chezmoi/pi/agents/  （Git管理する実体）
+```
+
+リンクはNix store内の中継symlinkを経由するが、実体はcheckout内の通常ファイル。
+どちらのパスから編集・追加・削除しても同じ実体が変わり、dotfilesのGit差分に出る。
+設定内容の履歴／巻き戻しはGitで管理し、Home Managerの世代はリンクと実行環境を管理する。
+checkoutを移動する場合は `home-common.nix` のリンク先を変更して一度反映する。
 
 拡張はグローバル定義だけを起動時／reload時に読み、実行条件を不変のsnapshotにする。
 `PI_CODING_AGENT_DIR` を指定した親では、その配下の `agents/` を使う。
 プロジェクト定義や同梱のdefaultへfallbackしない。ディレクトリがない・空・不正な定義を含む場合は、
 sub-agent拡張の読み込みを拒否する。定義ファイルの名前とfrontmatterの `name` は一致させる。
-ファイル名は英小文字で始まり、英小文字・数字・`-`・`_` の64文字以内とし、symlinkは受け付けない。
+ファイル名は英小文字で始まり、英小文字・数字・`-`・`_` の64文字以内とする。
+定義ディレクトリのsymlinkは使用できるが、個々のMarkdownファイルのsymlinkは受け付けない。
 
-定義の編集・追加にはNixの再ビルドは不要。対応済みのポリシーなら、次だけで反映できる。
-
-```sh
-chezmoi edit ~/.pi/agent/agents/researcher.md
-chezmoi apply ~/.pi/agent/agents
-# Piで /reload（または新しいセッション）
-```
-
-配置先を直接編集した場合は、`chezmoi re-add ~/.pi/agent/agents/researcher.md` で原本へ取り込む。
+定義の編集・追加にはNixの再ビルドもchezmoi applyも不要。
+普段のエディタで `~/.pi/agent/agents/researcher.md` を編集し、Piで `/reload` するだけで反映できる。
+変更の保存はdotfilesで `git diff -- pi/agents` を確認してコミットする。
 既に読み込んだsnapshotはファイル編集だけでは変わらない。新しいsandbox方式など、
 コンパイラがまだ対応していない実行条件を追加する場合は、拡張コードの更新が必要。
 子からの定義書き込みは、定義ディレクトリが作業用tmpの外にあるためsandboxで拒否する。
@@ -100,9 +106,9 @@ CPU・メモリ・ディスクのquota、厳密なモデルturn／cost上限も�
 ## 再ビルド・検証・反映
 
 ```sh
-# インストール更新時の手順。定義編集だけなら上記apply/reloadでよい。
-# 全dotfilesをapplyせず、実行環境と定義の配置先だけ対象にする。
-chezmoi apply ~/.config/home-manager ~/.pi/agent/agents
+# 実行環境やリンク先を更新するときだけ必要。定義編集には不要。
+# Home Manager設定の配置には引き続きchezmoiを使用する。
+chezmoi apply ~/.config/home-manager
 
 nix build path:$HOME/.config/home-manager#pi-defined-subagents --no-link
 nix build path:$HOME/.config/home-manager#checks.x86_64-linux.pi-defined-subagents --no-link
@@ -125,7 +131,8 @@ nix run path:$HOME/.config/home-manager -- switch --flake path:$HOME/.config/hom
 ## 確認した範囲
 
 - 実際のPi loaderで登録でき、登録toolは `subagent` だけ。
-- runtimeパッケージに定義がないこと、グローバル定義の不足・不正・symlinkを拒否することを確認。
+- runtimeパッケージに定義がないこと、グローバル定義の不足・不正・個別ファイルsymlinkを拒否することを確認。
+- ディレクトリsymlink経由の読み込み・編集・追加・atomic saveと、両方のパスへの子からの書き込み拒否を確認。
 - グローバル定義の編集・追加をreloadだけで反映でき、既存snapshotは変わらないことを確認。
 - 定義未指定・未知・無効のGit定義・不正YAML・未対応ポリシー・各種上書きを拒否。
 - 実bubblewrap上で内部書き込みを許可し、外部・symlink・親認証・グローバル定義・親の記録への書き込みを拒否。

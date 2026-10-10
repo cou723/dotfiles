@@ -73,6 +73,11 @@ in
     source = "${definedSubagents}/extensions/60-defined-subagents.ts";
   };
 
+  # Link the Git checkout, not a Nix-store copy. Editing either path changes the same files.
+  # This directory is excluded from chezmoi deployment; Home Manager owns only the link.
+  home.file.".pi/agent/agents".source = config.lib.file.mkOutOfStoreSymlink
+    "${config.home.homeDirectory}/.local/share/chezmoi/pi/agents";
+
   # Pi discovers these directories automatically; keep mutable settings.json alone.
   home.file.".pi/agent/skills/yomiyasu".source = "${skills}/skills/yomiyasu";
   home.file.".pi/agent/skills/explainer".source = "${skills}/skills/explainer";

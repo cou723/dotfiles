@@ -1,6 +1,6 @@
 // No credentials and no model/API calls. OS probes are opt-in outside Nix's build sandbox.
 import assert from 'node:assert/strict';
-import { readFile, writeFile, mkdir, mkdtemp, symlink, access, rm, cp, readdir, chmod } from 'node:fs/promises';
+import { readFile, writeFile, mkdir, mkdtemp, symlink, access, rm, cp, readdir, chmod, realpath, rename } from 'node:fs/promises';
 import { join, dirname } from 'node:path';
 import { pathToFileURL, fileURLToPath } from 'node:url';
 import { execFile } from 'node:child_process';
@@ -48,9 +48,17 @@ assert.throws(() => policy.parseDefinition('git-commit', draftMarkdown.replace('
 const testHome = await mkdtemp(join(process.env.HOME, 'defined-subagent-test-'));
 const sourceAgent = join(testHome, 'source-agent');
 await mkdir(sourceAgent);
-await cp(fixtures, join(sourceAgent, 'agents'), { recursive: true });
-await chmod(join(sourceAgent, 'agents'), 0o700);
-await chmod(join(sourceAgent, 'agents/researcher.md'), 0o600);
+const definitionsDirectory = join(testHome, 'dotfiles/pi/agents');
+await mkdir(dirname(definitionsDirectory), { recursive: true });
+await cp(fixtures, definitionsDirectory, { recursive: true });
+await chmod(definitionsDirectory, 0o700);
+await chmod(join(definitionsDirectory, 'researcher.md'), 0o600);
+await symlink(definitionsDirectory, join(sourceAgent, 'agents'));
+assert.equal(await realpath(join(sourceAgent, 'agents')), definitionsDirectory);
+// Atomic editor saves replace a file within the linked directory, not the directory link.
+await writeFile(join(sourceAgent, 'agents/researcher.md.save'), md);
+await rename(join(sourceAgent, 'agents/researcher.md.save'), join(sourceAgent, 'agents/researcher.md'));
+assert.equal(await readFile(join(definitionsDirectory, 'researcher.md'), 'utf8'), md);
 await writeFile(join(sourceAgent, 'auth.json'), '{}');
 await writeFile(join(sourceAgent, 'settings.json'), '{"extensions":["untrusted"]}');
 const job = await policy.prepareJob(testHome, sourceAgent);
@@ -130,6 +138,7 @@ if printf bad > escape; then exit 92; fi
 if printf bad > '${parentArtifact}'; then exit 93; fi
 if printf bad > '${join(sourceAgent, 'agents/researcher.md')}'; then exit 94; fi
 if printf bad > '${join(sourceAgent, 'auth.json')}'; then exit 95; fi
+if printf bad > '${join(definitionsDirectory, 'researcher.md')}'; then exit 97; fi
 if printf bad > /tmp/pi-defined-subagent-escape; then exit 96; fi
 printf 'sandbox-probe-ok\\n'
 `;
@@ -221,11 +230,13 @@ printf 'sandbox-probe-ok\\n'
     // retain their immutable snapshot even if the global file changes after loading.
     const marker = 'RELOADED_GLOBAL_ROLE_MARKER';
     await writeFile(join(sourceAgent, 'agents/researcher.md'), `${md}\n${marker}\n`);
+    assert.ok((await readFile(join(definitionsDirectory, 'researcher.md'), 'utf8')).includes(marker));
     const oldSnapshot = await delegate.execute('old-policy-snapshot', { agent: 'researcher', task: 'fixture task' }, undefined, undefined, ctx);
     const oldArgv = await readFile(join(dirname(oldSnapshot.details.artifacts), 'work/invocation.txt'), 'utf8');
     assert.ok(oldArgv.includes('OFFLINE_RESEARCH_ROLE_FIXTURE'));
     assert.ok(!oldArgv.includes(marker), 'file edits must not alter an already-loaded policy snapshot');
     await writeFile(join(sourceAgent, 'agents/reviewer.md'), md.replace('name: researcher', 'name: reviewer'));
+    assert.match(await readFile(join(definitionsDirectory, 'reviewer.md'), 'utf8'), /name: reviewer/);
     await assert.rejects(delegate.execute('old-registry', { agent: 'reviewer', task: 'fixture task' }, undefined, undefined, ctx), /Unknown/);
     const reloaded = await loader.loadExtensions([join(fixtureRoot, 'extensions/60-defined-subagents.ts')], testHome);
     try {
