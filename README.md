@@ -97,11 +97,16 @@ aic   # pi --continue（直前のPiの会話から継続）
 aip   # pi --print（非対話実行）
 ```
 
-Piの設定は `~/.pi/agent/` に配置する。パッケージは `pi update --extensions` で取得する。
-OpenAIのサブスクリプションはPiの `/login` からOpenAI Codexへサインインする。
+Piの可変設定・認証・セッションは `~/.pi/agent/` に置き、Gitには保存しない。
+undo・質問UI・skills・定義必須sub-agentは `dot_config/home-manager/` のNix設定で
+バージョンを固定し、Home Managerから配置する。これらを `pi update --extensions` で更新しない。
+OpenAIのサブスクリプションはPiの `/login` からサインインする。
 Todoistは `pi mcp login todoist`、GitHub MCPは既存の `gh auth token` を利用する。
-スキルの正本は `dot_pi/agent/skills/` に置き、`~/.pi/agent/skills/` からPiが自動検出する。
-モデル・MCP・サブエージェント・拡張もPi側で管理し、OpenCodeの設定には依存しない。
+モデル・MCPの可変設定はPi側で管理し、OpenCodeの設定には依存しない。
+
+Linuxのsub-agentは `/defined-agents` で一覧を確認できる。実行可能な `researcher` と、
+無効の `git-commit` たたき台を用意している。定義必須・tmp書き込み限定のbubblewrap構成、
+検証コマンド、制約は [pi-defined-subagents/README.md](dot_config/home-manager/pi-defined-subagents/README.md) を参照する。
 OpenCodeの過去セッション・認証データはPiへインポートしない。
 `pnpm install` の短縮エイリアスは、Piとの衝突を避けて `pni` とする。
 
