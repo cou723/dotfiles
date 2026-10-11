@@ -9,6 +9,7 @@
 /dot_pi/**/private_models-store.json
 /dot_pi/**/sessions/
 /dot_pi/**/logs/
+/dot_pi/**/verdicts/
 /dot_pi/**/npm/
 /dot_pi/**/git/
 /dot_pi/**/pi-web-run/

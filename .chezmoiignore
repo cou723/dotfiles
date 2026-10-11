@@ -8,6 +8,10 @@ bun.lockb
 .pi/agent/models-store.json
 .pi/agent/models.json
 .pi/agent/logs
+.pi/agent/verdicts
+# Retired permission-gate configs/logs are local rollback data only.
+.pi/agent/extensions/pi-permission-classifier
+.pi/agent/extensions/pi-permission-system
 .pi/agent/schemas
 .pi/agent/pi-web-run
 .pi/agent/pi-web-session-*.json

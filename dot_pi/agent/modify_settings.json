@@ -12,10 +12,7 @@ settings.update({
     "defaultProvider": "openai",
     "defaultModel": "gpt-6.1-sol",
     "defaultTools": ["+codemode"],
-    "packages": [
-        "npm:pi-permission-classifier",
-        "npm:@gotgenes/pi-permission-system",
-    ],
+    "packages": ["npm:pi-verdict@0.15.0"],
 })
 json.dump(settings, sys.stdout, ensure_ascii=False, indent=2)
 sys.stdout.write("\n")

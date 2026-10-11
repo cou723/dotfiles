@@ -118,9 +118,26 @@ chezmoiは書き換え可能なJSON設定を担当する。Home Managerとの二
 - `modify_settings.json` はPython 3のmodifyスクリプト。既定モデル・ツール・npm拡張一覧だけを
   既存の `settings.json` にマージする。`deviceId`・変更履歴の既読バージョン・その他の
   ローカル設定は維持する。新しい端末では端末固有の項目をコピーしない。
-- `extensions/pi-permission-classifier/config.json` は判定タイムアウトを15秒にする。
-- `extensions/private_pi-permission-system/config.json` は現在の権限ルールを保存する。
-  `private_` はchezmoiの属性であり、適用先のディレクトリ名には含まれない。
+- npm拡張は `pi-verdict@0.15.0` に固定する。旧 `pi-permission-system` と
+  `pi-permission-classifier` はロードしない。
+- `config/pi-verdict.json` は権限ルールを保存する。秘密情報の固定保護と内蔵の拒否ルールを
+  有効にし、通常の操作は直近のユーザー発言とツール操作履歴を使って審査する。
+- `extensions/20-permission-luna-chat.ts` は `permission-chat/luna` を登録する。
+  チャット版 `openai/gpt-6-luna` にのみ委譲し、既存のOpenAI OAuth認証をPi経由で利用する。
+  同じIDのDecisions APIを選ばないための補助拡張であり、認証ファイルを読んだり
+  トークンをコピーしたりしない。主作業モデルはSolのまま。
+  分類器には判定理由を日本語で書くよう指定する。判定タグとallow/ask/denyは変更せず、
+  元の判定プロンプト・ユーザー依頼は保持する（固定ルールの理由・UI見出しは英語のまま）。
+  明示的に依頼された通常のディレクトリ調査とPi設定変更は、作業ディレクトリ外という
+  理由だけで確認しないよう指示する。実行コードの導入・外部サービス変更などの影響は別途評価する。
+  認証・秘密情報と、権限ゲート・分類器自身の設定やコードは引き続き保護する。
+  固定ルールの拒否・denyPathsによる確認は追加指示で解除しない。
+  適用済みの補助拡張もdenyルールで保護するため、変更・適用はPiの外で行う。
+- Lunaの思考はoff、リクエスト予算は1試行15秒。pi-verdictの再試行で最大2試行になる。
+  失敗・不正な応答は拒否する。外部への書き込みなどではAIが確認を求めることがある。
+- `codemodeNestedCalls: "gate"` によりcodemode内の呼び出しも審査する。
+  外側のcodemodeだけを `ignoreTools` に入れ、二重のスクリプト審査を避ける。
+- 判定ログは `~/.pi/agent/verdicts/` に保存し、chezmoiとGitの対象外とする。
 
 適用にはPython 3が必要（Home Managerの共通パッケージに含まれる）。
 Pi設定だけを確認・反映する場合は、次のように対象を限定する。
@@ -128,20 +145,29 @@ Pi設定だけを確認・反映する場合は、次のように対象を限定
 
 ```sh
 chezmoi diff ~/.pi/agent/settings.json \
-  ~/.pi/agent/extensions/pi-permission-classifier/config.json \
-  ~/.pi/agent/extensions/pi-permission-system/config.json
+  ~/.pi/agent/config/pi-verdict.json \
+  ~/.pi/agent/extensions/20-permission-luna-chat.ts
 chezmoi apply ~/.pi/agent/settings.json \
-  ~/.pi/agent/extensions/pi-permission-classifier/config.json \
-  ~/.pi/agent/extensions/pi-permission-system/config.json
+  ~/.pi/agent/config/pi-verdict.json \
+  ~/.pi/agent/extensions/20-permission-luna-chat.ts
 ```
 
 適用後はPiで `/reload`、または再起動する。
 `settings.json` の共有項目を変えるときは `modify_settings.json` の設定値を編集する。
 `chezmoi add ~/.pi/agent/settings.json` は使わない（modifyスクリプトを置き換えてしまう）。
-権限ルールをPi側で変更したときは、その `config.json` だけを `chezmoi add` で取り込む。
+権限ルールは **Piの外のエディタで** `config/pi-verdict.json` を変更し、
+`chezmoi add ~/.pi/agent/config/pi-verdict.json` で取り込む。
+pi-verdictは自身の設定・インストール済みコードへのエージェントからの変更を拒否する。
+chezmoi applyや拡張更新はPiの外で、Piを終了してから行うのが安全。
 `~/.pi/agent/` 全体の再帰的な取り込みは避ける。
 
-検証はリポジトリ内で `python3 .github/tests/test-pi-config.py` を実行する。
+検証はリポジトリ内で次を実行する。どちらもモデルAPIへの通信や秘密情報の取得はしない。
+
+```sh
+python3 .github/tests/test-pi-config.py
+pi --offline --no-session --no-mcp --no-skills --print \
+  -e .github/tests/test-permission-luna-chat.ts /test-permission-luna-chat
+```
 
 ## シークレットの扱い
 
@@ -170,5 +196,5 @@ chezmoi apply ~/.pi/agent/settings.json \
 | `dot_config/home-manager/` | `~/.config/home-manager/` (macOS / Linux) |
 | `dot_config/nix/nix.conf` | `~/.config/nix/nix.conf` (Linuxのみ) |
 | `dot_pi/agent/modify_settings.json` | `~/.pi/agent/settings.json` の共有項目のみマージ |
-| `dot_pi/agent/extensions/pi-permission-classifier/config.json` | 判定器設定（15秒タイムアウト） |
-| `dot_pi/agent/extensions/private_pi-permission-system/config.json` | 権限ルール |
+| `dot_pi/agent/config/pi-verdict.json` | 権限ルールと判定モデル |
+| `dot_pi/agent/extensions/20-permission-luna-chat.ts` | チャット版Lunaの判定用別名 |
