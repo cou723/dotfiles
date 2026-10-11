@@ -1,0 +1,21 @@
+#!/usr/bin/env python3
+"""Merge shared Pi preferences while preserving device-local/runtime fields."""
+import json
+import sys
+
+raw = sys.stdin.read()
+settings = json.loads(raw) if raw.strip() else {}
+if not isinstance(settings, dict):
+    raise SystemExit("Pi settings must be a JSON object")
+
+settings.update({
+    "defaultProvider": "openai",
+    "defaultModel": "gpt-6.1-sol",
+    "defaultTools": ["+codemode"],
+    "packages": [
+        "npm:pi-permission-classifier",
+        "npm:@gotgenes/pi-permission-system",
+    ],
+})
+json.dump(settings, sys.stdout, ensure_ascii=False, indent=2)
+sys.stdout.write("\n")

@@ -1,14 +1,10 @@
-{ config, pkgs, pi, ... }:
+{ pkgs, pi, ... }:
 let
   conversationHistory = import ./pi-conversation-history/package.nix {
     inherit pkgs;
     piPackage = pi.packages.${pkgs.stdenv.hostPlatform.system}.default;
   };
   skills = import ./pi-skills/package.nix { inherit pkgs; };
-  definedSubagents = if pkgs.stdenv.isLinux then import ./pi-defined-subagents/package.nix {
-    inherit pkgs;
-    piPackage = pi.packages.${pkgs.stdenv.hostPlatform.system}.default;
-  } else null;
   askUserQuestion = import ./pi-ask-user-question/package.nix {
     inherit pkgs;
     piPackage = pi.packages.${pkgs.stdenv.hostPlatform.system}.default;
@@ -67,16 +63,6 @@ in
 
   home.file.".pi/agent/extensions/50-ask-user-question.ts".source =
     "${askUserQuestion}/extensions/50-ask-user-question.ts";
-
-  # The minimal per-worker OS boundary is Linux-only. Never silently run it unconfined on macOS.
-  home.file.".pi/agent/extensions/60-defined-subagents.ts" = pkgs.lib.mkIf pkgs.stdenv.isLinux {
-    source = "${definedSubagents}/extensions/60-defined-subagents.ts";
-  };
-
-  # Link the Git checkout, not a Nix-store copy. Editing either path changes the same files.
-  # This directory is excluded from chezmoi deployment; Home Manager owns only the link.
-  home.file.".pi/agent/agents".source = config.lib.file.mkOutOfStoreSymlink
-    "${config.home.homeDirectory}/.local/share/chezmoi/pi/agents";
 
   # Pi discovers these directories automatically; keep mutable settings.json alone.
   home.file.".pi/agent/skills/yomiyasu".source = "${skills}/skills/yomiyasu";

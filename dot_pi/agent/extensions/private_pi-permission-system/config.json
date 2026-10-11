@@ -1,0 +1,46 @@
+{
+  "authorizerChain": ["classifier"],
+  "permission": {
+    "*": "ask",
+    "codemode": "allow",
+    "read": "allow",
+    "grep": "allow",
+    "find": "allow",
+    "ls": "allow",
+    "path": {
+      "*": "allow",
+      "~/.ssh/*": "deny",
+      "~/.gnupg/*": "deny",
+      "~/.aws/credentials": "deny",
+      "~/.pi/agent/auth.json": "deny",
+      "*.env": "deny",
+      "*.env.*": "deny",
+      "*.env.example": "allow"
+    },
+    "external_directory": {
+      "*": "ask",
+      "/tmp": "allow",
+      "/tmp/*": "allow"
+    },
+    "external_directory_read": {
+      "~/.pi": "allow",
+      "~/.pi/*": "allow",
+      "~/.config/home-manager": "allow",
+      "~/.config/home-manager/*": "allow",
+      "/nix/store/*": "allow"
+    },
+    "bash": {
+      "*": "ask",
+      "pwd": "allow",
+      "ls *": "allow",
+      "rg *": "allow",
+      "grep *": "allow",
+      "find *": "allow",
+      "readlink *": "allow",
+      "git status *": "allow",
+      "git diff *": "allow",
+      "git log *": "allow",
+      "git show *": "allow"
+    }
+  }
+}

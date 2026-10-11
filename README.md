@@ -97,23 +97,51 @@ aic   # pi --continue（直前のPiの会話から継続）
 aip   # pi --print（非対話実行）
 ```
 
-Piの可変設定・認証・セッションは `~/.pi/agent/` に置き、Gitには保存しない。
-undo・質問UI・skills・sub-agent拡張は `dot_config/home-manager/` のNix設定で
+Piの設定は `~/.pi/agent/` に置く。共有する設定はchezmoiで管理し、
+認証・セッション・ログ・端末固有のIDはGitに保存しない。
+undo・質問UI・skillsは `dot_config/home-manager/` のNix設定で
 バージョンを固定し、Home Managerから配置する。これらを `pi update --extensions` で更新しない。
 OpenAIのサブスクリプションはPiの `/login` からサインインする。
 Todoistは `pi mcp login todoist`、GitHub MCPは既存の `gh auth token` を利用する。
-モデル・MCPの可変設定はPi側で管理し、OpenCodeの設定には依存しない。
+既定モデル・ツール・npm拡張一覧はchezmoiで管理する。MCPの認証・個別設定はPi側で管理し、
+OpenCodeの設定には依存しない。
 
-Linuxのsub-agentは `/defined-agents` で一覧を確認できる。実行可能な `researcher` と、
-無効の `git-commit` たたき台を用意している。定義の実体はこのリポジトリの `pi/agents/`。
-Home Managerが `~/.pi/agent/agents/` からcheckout内の実体へディレクトリsymlinkを張る。
-どちらのパスを編集してもGit差分に出る。定義編集はPiの `/reload` だけで反映でき、
-chezmoi applyもNixビルドも不要。定義はchezmoiの配置対象外とする。
 生成パッケージ・認証・セッション・ログは管理しない。
-定義必須・tmp書き込み限定のbubblewrap構成、
-検証コマンド、制約は [pi-defined-subagents/README.md](dot_config/home-manager/pi-defined-subagents/README.md) を参照する。
 OpenCodeの過去セッション・認証データはPiへインポートしない。
 `pnpm install` の短縮エイリアスは、Piとの衝突を避けて `pni` とする。
+
+### Pi の共有設定
+
+共有設定のソースは `dot_pi/agent/`。NixはPi本体・質問UI・undo・skillsを担当し、
+chezmoiは書き換え可能なJSON設定を担当する。Home Managerとの二重管理はしない。
+
+- `modify_settings.json` はPython 3のmodifyスクリプト。既定モデル・ツール・npm拡張一覧だけを
+  既存の `settings.json` にマージする。`deviceId`・変更履歴の既読バージョン・その他の
+  ローカル設定は維持する。新しい端末では端末固有の項目をコピーしない。
+- `extensions/pi-permission-classifier/config.json` は判定タイムアウトを15秒にする。
+- `extensions/private_pi-permission-system/config.json` は現在の権限ルールを保存する。
+  `private_` はchezmoiの属性であり、適用先のディレクトリ名には含まれない。
+
+適用にはPython 3が必要（Home Managerの共通パッケージに含まれる）。
+Pi設定だけを確認・反映する場合は、次のように対象を限定する。
+認証ファイルや1Passwordの値を取り込む必要はない。
+
+```sh
+chezmoi diff ~/.pi/agent/settings.json \
+  ~/.pi/agent/extensions/pi-permission-classifier/config.json \
+  ~/.pi/agent/extensions/pi-permission-system/config.json
+chezmoi apply ~/.pi/agent/settings.json \
+  ~/.pi/agent/extensions/pi-permission-classifier/config.json \
+  ~/.pi/agent/extensions/pi-permission-system/config.json
+```
+
+適用後はPiで `/reload`、または再起動する。
+`settings.json` の共有項目を変えるときは `modify_settings.json` の設定値を編集する。
+`chezmoi add ~/.pi/agent/settings.json` は使わない（modifyスクリプトを置き換えてしまう）。
+権限ルールをPi側で変更したときは、その `config.json` だけを `chezmoi add` で取り込む。
+`~/.pi/agent/` 全体の再帰的な取り込みは避ける。
+
+検証はリポジトリ内で `python3 .github/tests/test-pi-config.py` を実行する。
 
 ## シークレットの扱い
 
@@ -141,3 +169,6 @@ OpenCodeの過去セッション・認証データはPiへインポートしな�
 | `dot_local/bin/executable_op` | `~/.local/bin/executable_op` (WSL 用 op.exe ラッパー) |
 | `dot_config/home-manager/` | `~/.config/home-manager/` (macOS / Linux) |
 | `dot_config/nix/nix.conf` | `~/.config/nix/nix.conf` (Linuxのみ) |
+| `dot_pi/agent/modify_settings.json` | `~/.pi/agent/settings.json` の共有項目のみマージ |
+| `dot_pi/agent/extensions/pi-permission-classifier/config.json` | 判定器設定（15秒タイムアウト） |
+| `dot_pi/agent/extensions/private_pi-permission-system/config.json` | 権限ルール |

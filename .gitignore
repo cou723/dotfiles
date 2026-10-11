@@ -1,3 +1,19 @@
+# Never commit Pi credentials, generated state, or session history.
+/dot_pi/**/auth.json
+/dot_pi/**/private_auth.json
+/dot_pi/**/mcp-auth.json
+/dot_pi/**/private_mcp-auth.json
+/dot_pi/**/models.json
+/dot_pi/**/private_models.json
+/dot_pi/**/models-store.json
+/dot_pi/**/private_models-store.json
+/dot_pi/**/sessions/
+/dot_pi/**/logs/
+/dot_pi/**/npm/
+/dot_pi/**/git/
+/dot_pi/**/pi-web-run/
+/dot_pi/**/pi-web-session-*.json
+/dot_pi/**/private_pi-web-session-*.json
 /dot_pi/agent/extensions/node_modules/
 /dot_local/share/pi-language-servers/node_modules/
 /dot_pi/agent/extensions/sandbox-ceiling/node_modules/

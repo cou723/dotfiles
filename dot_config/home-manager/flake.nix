@@ -49,24 +49,6 @@
       touch $out
     '';
 
-    packages.x86_64-linux.pi-defined-subagents = import ./pi-defined-subagents/package.nix {
-      pkgs = nixpkgs-linux.legacyPackages.x86_64-linux;
-      piPackage = pi.packages.x86_64-linux.default;
-    };
-
-    checks.x86_64-linux.pi-defined-subagents = let
-      pkgs = nixpkgs-linux.legacyPackages.x86_64-linux;
-      piPackage = pi.packages.x86_64-linux.default;
-      extension = import ./pi-defined-subagents/package.nix { inherit pkgs piPackage; };
-    in pkgs.runCommand "pi-defined-subagents-tests" { nativeBuildInputs = [ pkgs.nodejs_24 ]; } ''
-      export HOME="$TMPDIR/home"
-      mkdir -p "$HOME"
-      PI_PACKAGE_DIR=${piPackage}/lib/pi SUBAGENT_ROOT=${extension} \
-      AGENT_DEFINITIONS=${./pi-defined-subagents/test-fixtures/agents} \
-        node ${./pi-defined-subagents/smoke-test.mjs}
-      touch $out
-    '';
-
     packages.x86_64-linux.pi-skills = import ./pi-skills/package.nix {
       pkgs = nixpkgs-linux.legacyPackages.x86_64-linux;
     };

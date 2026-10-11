@@ -1,7 +1,4 @@
 README.md
-# Git-managed live definitions: Home Manager owns the out-of-store directory link.
-pi
-.pi/agent/agents
 bun.lockb
 .gitignore
 .github
@@ -9,6 +6,11 @@ bun.lockb
 .pi/agent/auth.json
 .pi/agent/mcp-auth.json
 .pi/agent/models-store.json
+.pi/agent/models.json
+.pi/agent/logs
+.pi/agent/schemas
+.pi/agent/pi-web-run
+.pi/agent/pi-web-session-*.json
 .pi/agent/trust.json
 .pi/agent/trust
 .local/share/pi-language-servers/node_modules
