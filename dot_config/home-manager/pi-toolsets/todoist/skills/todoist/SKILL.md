@@ -7,7 +7,7 @@ description: Todoist のプロジェクト・タスクを確認し、ユーザ�
 
 ## 依存と接続
 
-この Skill の Nix ツールセットは `pi-toolset-todoist-mcp` に依存する。
+この Skill の Nix パッケージには、`pi-toolset-todoist-mcp` の登録拡張も組み込まれている。
 MCP は公式 `https://ai.todoist.net/mcp` に Pi 標準 MCP で接続する。
 ローカルの Skill と登録設定は Nix 固定だが、リモートのツール仕様は変更され得る。
 
@@ -36,7 +36,8 @@ MCP は公式 `https://ai.todoist.net/mcp` に Pi 標準 MCP で接続する。
 
 ## 検証範囲
 
-Nix check は Pi loader による MCP 登録と Skill の依存配置を検査する。
-OAuth と実アカウントの操作は別の検査である。ブラウザ認証前に「アクセス成功」と報告しない。
+Nix check はカタログ全体をビルドし、公開リソースの存在を構築時に確認する。
+共通の配置検査は架空のパッケージを使い、Todoist の接続は検査しない。
+OAuth と実アカウントの操作は別途確認する。ブラウザ認証前に「アクセス成功」と報告しない。
 初回の実接続検査ではアカウント情報または少量のプロジェクト一覧だけを読み、
 タスクの作成・編集・完了・削除はしない。

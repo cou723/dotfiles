@@ -1,62 +1,56 @@
-# Todoist for the Nix-managed Pi environment
+# Nix で管理する Pi 環境の Todoist
 
-The selected `todoist` package contains both the local Skill and the MCP
-registration extension, composed with `components = [ todoistMcp ];` at Nix build
-time. Home Manager publishes that complete package; it does not traverse a
-separate dependency graph. No mutable npm install or MCP adapter is needed.
+選択する `todoist` パッケージには、この環境の Skill と MCP 登録拡張の両方が含まれます。
+Nix のビルド時に `components = [ todoistMcp ];` で組み込み、Home Manager はその完成パッケージを公開します。別の依存グラフは展開しません。可変な npm インストールや MCP アダプターは不要です。
 
-The extension registers `todoist` with Pi's built-in MCP client:
-- HTTP endpoint: https://ai.todoist.net/mcp
-- exposure: codemode
-- authentication: Pi OAuth, browser approval; service advertises data:read_write
+拡張は Pi 標準の MCP クライアントに `todoist` を登録します。
 
-Official source/docs: https://github.com/Doist/todoist-mcp
-Endpoint and OAuth metadata were checked at setup time. Those are live services;
-their implementations and tool schemas are not Nix-pinned. Local registration,
-Skill and Pi host are part of the Nix configuration. Secrets stay outside Nix.
+- HTTP 接続先：https://ai.todoist.net/mcp
+- ツールの公開方式（exposure）：codemode
+- 認証：Pi の OAuth とブラウザでの承認。サービスが提示するスコープは `data:read_write`
 
-## Authenticate after activation
+公式ソース・ドキュメント：https://github.com/Doist/todoist-mcp
 
-In the running Pi session:
+接続先と OAuth メタデータは導入時に確認しました。ただし、外部サービスの実装やツールスキーマは Nix で固定されていません。
+ローカルの登録設定、Skill、Pi 本体は Nix 構成に含まれます。秘密情報は Nix の外に保存します。
+
+## 適用後の認証
+
+起動中の Pi セッション内で実行します。
 
 ```text
 /reload
 /mcp login todoist
 ```
 
-Use `/mcp` to inspect status. A new Pi session also loads the registration.
-If the browser is on another machine, follow Pi's own callback-paste prompt.
-Do not paste tokens or OAuth callback URLs into ordinary chat.
+状態は `/mcp` で確認できます。Pi を新しく起動した場合も、登録拡張が読み込まれます。
+別の端末でブラウザを開く場合は、Pi が示すコールバックの貼り付け手順に従ってください。
+トークンや OAuth コールバック URL を通常のチャットに貼り付けないでください。
 
-The shell-level `pi mcp list/login` does not load extensions and therefore does
-not see this extension-registered server. Use Pi's interactive commands.
+シェルの `pi mcp list/login` は拡張を読み込まないため、この拡張が登録するサーバーを認識しません。Pi 内の対話コマンドを使ってください。
 
-Try `/skill:todoist` or ask to show a small project/task list. Initial checks should
-be read-only. Do not create a test task in the real account without asking.
+`/skill:todoist` を使うか、少量のプロジェクト・タスク一覧の表示を依頼してください。
+初回確認は読み取りだけにします。ユーザーに確認せず、実アカウントに検査用タスクを作らないでください。
 
-## State and removal
+## 状態の保存と削除
 
-Pi stores OAuth credentials in its mutable agent directory. The Home Manager
-module does not manage or overwrite that file. Disabling/enabling a registered
-server through /mcp applies only to the current session; Nix selection controls
-persistent enablement. A same-name file-defined MCP entry overrides the extension.
+Pi は OAuth 認証情報を、書き込み可能な agent ディレクトリに保存します。Home Manager モジュールは、そのファイルを管理・上書きしません。
+`/mcp` で登録済みサーバーを無効化・有効化する操作は、現在のセッションにだけ適用されます。継続的に有効にするかどうかは Nix のパッケージ選択で決めます。
+同名の MCP サーバーが設定ファイルにも定義されている場合は、ファイルの定義が拡張の登録を上書きします。
 
-To remove: deselect `todoist` and switch, then reload/restart Pi. The dependent
-registration disappears too unless selected elsewhere. Revoke/sign out OAuth
-separately if desired. Removal does not delete Todoist data.
+削除するには、`todoist` の選択を外して `switch` し、Pi を再読み込みまたは再起動してください。
+登録拡張も、他のパッケージで選択していなければ配置されなくなります。必要に応じて OAuth の認可取り消し・サインアウトを別途行ってください。パッケージを削除しても Todoist のデータは削除されません。
 
-## Build and first-use checks
+## ビルドと初回確認
 
-`checks.x86_64-linux.pi-toolsets` builds all catalogue packages, including this
-complete package, and checks declared resource existence during construction.
-The common module check uses synthetic fixtures, not a Todoist-specific test.
+`checks.x86_64-linux.pi-toolsets` は、この完成パッケージを含むカタログ全体をビルドします。
+宣言されたリソースの存在は構築時に確認します。共通モジュールの検査は架空のパッケージを使うもので、Todoist 専用のテストではありません。
 
-A successful build does not establish an authenticated connection. In Pi:
-1. Use `/mcp` to confirm the server is registered and inspect its status.
-2. If needed, use `/mcp login todoist` and approve in the browser.
-3. Request a small read-only project/task list to confirm authenticated access.
+ビルドが成功しても、認証済みの接続が成立したとは限りません。Pi 内で次を確認してください。
 
-Registration, authentication and a successful read are different states. A
-failed remote call is not automatically a Nix configuration error. Remote schemas
-can change independently of the local pins. Writes require a separate explicit
-request and are not part of installation diagnostics.
+1. `/mcp` でサーバーの登録と状態を確認する。
+2. 必要なら `/mcp login todoist` を実行し、ブラウザで承認する。
+3. 少量のプロジェクト・タスク一覧の読み取りを依頼し、認証後にアクセスできることを確認する。
+
+登録、認証、読み取り成功は別々の状態です。外部サービスの呼び出しに失敗しても、Nix の設定ミスとは限りません。リモートのスキーマは、ローカルの固定バージョンとは独立して変わり得ます。
+書き込みには別途明示的な依頼が必要で、導入時の診断には含めません。

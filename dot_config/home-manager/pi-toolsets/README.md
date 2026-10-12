@@ -1,12 +1,11 @@
-# Nix-managed Pi packages
+# Nix で管理する Pi パッケージ
 
-This is a local Home Manager convention, not an official Pi/Home Manager API.
-Nix builds complete packages; Home Manager only publishes their declared resources
-and runtime environment. It does not resolve or traverse a toolset dependency graph.
+これはこの環境独自の Home Manager 規約で、公式の Pi/Home Manager API ではありません。
+Nix は必要な資産を含む完成パッケージを構築します。Home Manager は、そのパッケージが宣言するリソースと実行環境を公開するだけで、ツールセット間の依存グラフを解決・展開しません。
 
-## Select packages
+## パッケージの選択
 
-In `home-common.nix`:
+`home-common.nix` で選択します。
 
 ```nix
 programs.pi = {
@@ -18,14 +17,13 @@ programs.pi = {
 };
 ```
 
-`toolsets` retains its existing name, but its entries are complete Pi packages.
-The module deduplicates identical selections and rejects colliding resource
-paths or package names. Do not select a component separately when a complete
-package already publishes it. Shared components can be composed into one package.
+オプション名は従来の `toolsets` のままですが、選ぶ対象は完成した Pi パッケージです。
+モジュールは同じパッケージの重複選択を除き、リソースの配置先やパッケージ名の衝突を拒否します。
+完成パッケージに組み込み済みの構成要素を、別途選択しないでください。共有する構成要素は一つのパッケージにまとめられます。
 
-## Build a complete package
+## 完成パッケージの構成
 
-`default.nix` uses `mk-toolset.nix`:
+`default.nix` から `mk-toolset.nix` を使います。
 
 ```nix
 example = mkToolset {
@@ -37,71 +35,51 @@ example = mkToolset {
 };
 ```
 
-`components` is composition at Nix evaluation/build time, not another dependency
-resolver. nixpkgs `buildEnv` merges the resource trees. A complete package's
-manifest, resource declarations, runtime packages and remaining requirements
-include its components. Components can themselves be composed packages; ordinary
-Nix references provide build dependencies and retain referenced outputs.
-Cycles in Nix package construction are not supported.
+`components` は Nix の評価・ビルド時に行うパッケージ構成で、別の依存リゾルバではありません。
+nixpkgs の `buildEnv` がリソースのディレクトリ構造を合成します。完成パッケージのマニフェスト、公開リソース、実行時パッケージ、未充足条件には、構成要素の情報も含まれます。
+構成要素自体も、他の資産を組み込んだパッケージにできます。通常の Nix の参照関係によってビルド依存を接続し、参照先の出力を保持します。循環したビルド依存には対応しません。
 
-The builder emits a native Pi `package.json` and an informational `toolset.json`.
-It preserves whole resource trees (including sibling/support files), excludes
-component manifests from the merge, rejects conflicting files, and checks that
-exported paths exist. Source revisions/hashes remain in the existing package
-files and `pi-skills/sources.nix`; the lock file is unchanged.
+ビルダーは Pi 標準の `package.json` と、情報用の `toolset.json` を生成します。
+リソースのディレクトリ全体を保持するため、同階層の資産や補助ファイルも残ります。構成要素のマニフェストは合成対象から除き、ファイルの衝突を拒否し、公開パスの存在を確認します。
+ソースのリビジョンとハッシュは既存のパッケージ定義と `pi-skills/sources.nix` に記録したままで、ロックファイルは変更していません。
 
-The Home Manager module only:
-- links the completed packages' extensions, skills, prompts and themes;
-- supplies their runtime packages and a PATH-prepending `pi` launcher;
-- writes `~/.pi/agent/toolsets.json` for the selected complete packages;
-- leaves settings, credentials, OAuth state, trust decisions and logs untouched.
+Home Manager モジュールの役割は次のとおりです。
 
-Pi does not read `toolset.json` as a dependency specification. Do not also load
-these packages via Pi settings or `-e` in this global environment: that duplicates
-resource registration. In a project, `-e` can load a complete package directly;
-see the management Skill's [reference](management-skill/skills/pi-nix-toolsets/references/toolsets.md).
+- 完成パッケージの extensions・skills・prompts・themes をリンクする。
+- 実行時パッケージと、それらのコマンドのパスを PATH の先頭に加える `pi` ランチャーを提供する。
+- 選択した完成パッケージの一覧を `~/.pi/agent/toolsets.json` に書く。
+- 可変設定、認証情報、OAuth 状態、信頼設定、ログは変更しない。
 
-## Verification proportional to custom code
+Pi は `toolset.json` を依存仕様として読みません。このグローバル環境で、同じパッケージを Pi の設定や `-e` からも読み込むと、リソースが重複登録されます。
+プロジェクト限定の環境では、`-e` で完成パッケージを直接読み込めます。管理 Skill の[追加例](management-skill/skills/pi-nix-toolsets/references/toolsets.md)を参照してください。
+
+## ビルドと検査
 
 ```sh
 cd ~/.config/home-manager
 nix build .#checks.x86_64-linux.pi-toolsets \
   .#checks.x86_64-linux.pi-toolset-module --no-link -L
 nix build .#homeConfigurations.coura.activationPackage --no-link -L
-# Activation is a separate, explicit operation:
+# 実環境への適用は、別途明示的に行う。
 home-manager switch --flake .#coura
 ```
 
-- `pi-toolsets` builds the catalogue using `linkFarm`. Adding a definition needs
-  no test-list update. It is a build gate, not an end-to-end runtime test.
-- `pi-toolset-module` uses a small synthetic fixture for our custom publication,
-  runtime launcher, deselection, collision and mutable-file boundaries. It does
-  not enumerate installed Skills or compare hard-coded package counts.
-- Existing focused checks for custom extensions and the compatibility `pi-skills`
-  package remain unchanged. A new simple asset package does not require a test
-  script; add one only for meaningful custom conversion/execution behaviour.
+- `pi-toolsets` は `linkFarm` でカタログ内の全パッケージをビルドします。定義を追加してもテスト一覧の更新は不要です。これはビルドの確認で、実行時の一連の動作を検査するものではありません。
+- `pi-toolset-module` は小さな架空のパッケージを使い、独自の配置処理、ランチャー、選択解除、衝突検出、可変ファイルを管理対象にしないことを検査します。導入する Skills の列挙や固定件数の比較はしません。
+- 既存の独自拡張と、互換用 `pi-skills` パッケージの個別検査は維持しています。単純な資産パッケージの追加に専用テストは不要です。独自の変換・実行処理に検査すべき挙動がある場合に追加します。
 
-Build success is not proof of authentication, network availability, MCP tool
-compatibility or an entire Skill workflow. First-use checks belong outside the
-Nix build: confirm registration, authenticate interactively, then perform a small
-read-only call with the user's permission. Do not create real-account test data.
-After activation, restart Pi through the updated launcher to inherit PATH;
-`/reload` alone cannot replace the process's inherited environment.
+ビルド成功は、認証、ネットワーク接続、MCP ツールの互換性、Skill の全手順の動作を保証しません。
+初回確認は Nix ビルドの外で行います。登録状態を確認し、本人が対話的に認証した後、ユーザーの了承を得て少量の読み取りを行ってください。実アカウントに検査用データを作成しないでください。
+適用後は更新されたランチャー経由で Pi を再起動し、PATH を引き継いでください。`/reload` だけでは、起動済みプロセスの環境を置き換えられません。
 
-## Current boundaries
+## 各パッケージの対応範囲
 
-- **todoist** is one complete package containing the Skill and native MCP
-  registration. The HTTP endpoint does not pin the remote implementation;
-  see [Todoist](todoist/README.md).
-- **yomiyasu** supplies its pinned Skill and Python.
-- **explainer** supplies five pinned Skills, Node 24, Python and D2. Project JS
-  dependencies, browsers, TALA, formal-methods tools and fresh subagents are not
-  fully provisioned. Linux's locked D2 v0.7.1 does not supply the newer terminal
-  renderer/TALA workflow.
-- **context7** uses a pinned native extension, not an MCP adapter; network/auth
-  remain runtime conditions.
-- **permissions/history/question** keep their existing pinned extension packages.
+- **todoist**：Skill と Pi 標準 MCP の登録拡張を一つの完成パッケージにまとめています。HTTP 接続先の固定はリモート実装の固定ではありません。[Todoist の説明](todoist/README.md)を参照してください。
+- **yomiyasu**：固定した Skill と Python を提供します。
+- **explainer**：固定した5つの Skills、Node 24、Python、D2 を提供します。プロジェクトの JS 依存、ブラウザ、TALA、形式手法ツール、fresh subagent の実行環境は、すべてが整っているわけではありません。Linux で固定している D2 v0.7.1 は、新しい端末レンダラー・TALA を使う手順には対応しません。
+- **context7**：MCP アダプターではなく、固定した Pi ネイティブ拡張を使います。ネットワークと認証は実行時の条件です。
+- **permissions/history/question**：既存の固定済み拡張パッケージを維持しています。
 
-`requirements` records remaining conditions; it does not verify or satisfy them.
-MCP/Hooks/Agents still need a concrete Pi execution mechanism. Secrets never
-belong in Nix outputs or Git. The combined `pi-skills` compatibility output remains.
+`requirements` は未充足条件の記録であり、検査や依存の供給は行いません。
+MCP・Hooks・Agents の実行には、具体的な Pi の実行方式への接続が必要です。秘密情報を Nix の出力や Git に入れないでください。
+Skills をまとめた互換用の `pi-skills` 出力も引き続き提供しています。
