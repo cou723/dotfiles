@@ -20,7 +20,7 @@ Canonical config lives beside this README. chezmoi templates include these files
 Edit `additionalPolicy` in `auto-review.json` to change classification policy.
 `includeBaselinePolicy: false` disables the bundled Guardian policy, but not the
 upstream fixed output protocol. The reviewer uses the existing `openai` login and
-`gpt-6.1-sol`; change `provider`/`model` to use another registered reviewer model.
+`gpt-6-luna`; change `provider`/`model` to use another registered reviewer model.
 Every reviewed action makes a separate paid model request, potentially retried
 within the configured 30-second total timeout.
 
