@@ -1,24 +1,19 @@
 { pkgs, pi, ... }:
 let
-  conversationHistory = import ./pi-conversation-history/package.nix {
-    inherit pkgs;
-    piPackage = pi.packages.${pkgs.stdenv.hostPlatform.system}.default;
-  };
-  permissionReview = import ./pi-permission-auto-review/package.nix {
-    inherit pkgs;
-    piPackage = pi.packages.${pkgs.stdenv.hostPlatform.system}.default;
-  };
-  context7 = import ./pi-context7/package.nix {
-    inherit pkgs;
-    piPackage = pi.packages.${pkgs.stdenv.hostPlatform.system}.default;
-  };
-  skills = import ./pi-skills/package.nix { inherit pkgs; };
-  askUserQuestion = import ./pi-ask-user-question/package.nix {
-    inherit pkgs;
-    piPackage = pi.packages.${pkgs.stdenv.hostPlatform.system}.default;
-  };
+  piPackage = pi.packages.${pkgs.stdenv.hostPlatform.system}.default;
+  toolsets = import ./pi-toolsets { inherit pkgs piPackage; };
 in
 {
+  imports = [ ./pi-toolsets/home-module.nix ];
+
+  programs.pi = {
+    enable = true;
+    package = piPackage;
+    toolsets = with toolsets; [
+      permissions history askUserQuestion context7 yomiyasu explainer nixToolsets todoist
+    ];
+  };
+
   home.stateVersion = "24.11";
   nixpkgs.config.allowUnfree = true;
 
@@ -37,7 +32,6 @@ in
     gh
     ghq
     chezmoi
-    pi.packages.${pkgs.stdenv.hostPlatform.system}.default
 
     # C/C++
     clang-tools
@@ -46,11 +40,6 @@ in
 
     # Rust
     rustup
-
-    # Skill script runtimes, pinned by flake.lock (explainer requires Node 24+).
-    python3
-    nodejs_24
-    d2
 
     # Python
     uv
@@ -62,33 +51,6 @@ in
     gcc
     gnumake
   ];
-
-  home.file.".pi/agent/extensions/10-permission-system.ts".source =
-    "${permissionReview}/extensions/10-permission-system.ts";
-  home.file.".pi/agent/extensions/15-permission-auto-review.ts".source =
-    "${permissionReview}/extensions/15-permission-auto-review.ts";
-
-  # Conversation-only navigation; never snapshots or restores workspace files.
-  home.file.".pi/agent/extensions/30-conversation-undo.ts".source =
-    "${conversationHistory}/extensions/30-conversation-undo.ts";
-  home.file.".pi/agent/extensions/40-conversation-undo-tree.ts".source =
-    "${conversationHistory}/extensions/40-conversation-undo-tree.ts";
-
-  home.file.".pi/agent/extensions/50-ask-user-question.ts".source =
-    "${askUserQuestion}/extensions/50-ask-user-question.ts";
-
-  home.file.".pi/agent/extensions/70-context7.ts".source =
-    "${context7}/extensions/70-context7.ts";
-  home.file.".pi/agent/skills/context7-docs".source = "${context7}/skills/context7-docs";
-  home.file.".pi/agent/prompts/c7-docs.md".source = "${context7}/prompts/c7-docs.md";
-
-  # Pi discovers these directories automatically; keep mutable settings.json alone.
-  home.file.".pi/agent/skills/yomiyasu".source = "${skills}/skills/yomiyasu";
-  home.file.".pi/agent/skills/explainer".source = "${skills}/skills/explainer";
-  home.file.".pi/agent/skills/explainer-book".source = "${skills}/skills/explainer-book";
-  home.file.".pi/agent/skills/first-reader".source = "${skills}/skills/first-reader";
-  home.file.".pi/agent/skills/d2-diagram".source = "${skills}/skills/d2-diagram";
-  home.file.".pi/agent/skills/d2-slides".source = "${skills}/skills/d2-slides";
 
   programs.direnv = {
     enable = true;

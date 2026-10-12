@@ -1,6 +1,11 @@
 # Pi skills (Home Manager)
 
-`package.nix` fixes both GitHub commit IDs and unpacked SHA-256 hashes.
+The current environment selects independent yomiyasu/explainer toolsets via
+`programs.pi.toolsets`; see [the toolset documentation](../pi-toolsets/README.md).
+Source pins now live in `sources.nix`. `package.nix` preserves the combined
+`pi-skills` output for compatibility and its existing checks.
+
+`sources.nix` fixes both GitHub commit IDs and unpacked SHA-256 hashes.
 `flake.lock` fixes nixpkgs, Home Manager and Pi; keep it together with this directory,
 `flake.nix` and the home modules when copying/backing up the configuration.
 No `pi install`, `npx ...@latest`, mutable Git checkout, or startup download is used.
@@ -37,9 +42,9 @@ This is not an end-to-end test of all explainer tools.
 Installing the skills is not the same as installing every document-rendering,
 browser, model-checking or subagent integration. Basic instruction-based use
 needs no npm install. An already-running shell/Pi process may still have another
-Node version earlier in PATH (this session had Node 22). For tools requiring
-Node 24, start a fresh environment and check `node --version`, or explicitly use
-`~/.nix-profile/bin/node` and put `~/.nix-profile/bin` first in PATH. The upstream explainer scripts intentionally resolve many
+Node version earlier in PATH. After switching, the toolset module's Pi launcher
+prepends the declared runtime binary paths; restart Pi through that launcher.
+Check `node --version` inside Pi's bash environment. The upstream explainer scripts intentionally resolve many
 JS dependencies from the **document project**, not from the skill directory.
 Do not run the unversioned `npm i -D ...` example if dependency reproducibility
 is important.
@@ -70,7 +75,7 @@ suitable subagent integration is available.
 
 ## Update intentionally
 
-Review upstream changes, replace the commit IDs in `package.nix`, obtain the new
+Review upstream changes, replace the commit IDs in `sources.nix`, obtain the new
 hashes using `nix store prefetch-file --json --unpack <archive-url>`, run the
 check above, and switch Home Manager. A normal switch never advances the skill
 revisions. Update `flake.lock` separately only when changing the runtime/toolchain.

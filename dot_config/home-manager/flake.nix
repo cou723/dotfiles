@@ -49,6 +49,33 @@
       touch $out
     '';
 
+    packages.x86_64-linux.pi-toolset-yomiyasu =
+      (import ./pi-toolsets { pkgs = nixpkgs-linux.legacyPackages.x86_64-linux;
+        piPackage = pi.packages.x86_64-linux.default; }).yomiyasu;
+    packages.x86_64-linux.pi-toolset-explainer =
+      (import ./pi-toolsets { pkgs = nixpkgs-linux.legacyPackages.x86_64-linux;
+        piPackage = pi.packages.x86_64-linux.default; }).explainer;
+    packages.x86_64-linux.pi-toolset-nix-management =
+      (import ./pi-toolsets { pkgs = nixpkgs-linux.legacyPackages.x86_64-linux;
+        piPackage = pi.packages.x86_64-linux.default; }).nixToolsets;
+    packages.aarch64-darwin.pi-toolset-yomiyasu =
+      (import ./pi-toolsets { pkgs = nixpkgs.legacyPackages.aarch64-darwin;
+        piPackage = pi.packages.aarch64-darwin.default; }).yomiyasu;
+    packages.aarch64-darwin.pi-toolset-explainer =
+      (import ./pi-toolsets { pkgs = nixpkgs.legacyPackages.aarch64-darwin;
+        piPackage = pi.packages.aarch64-darwin.default; }).explainer;
+    packages.aarch64-darwin.pi-toolset-nix-management =
+      (import ./pi-toolsets { pkgs = nixpkgs.legacyPackages.aarch64-darwin;
+        piPackage = pi.packages.aarch64-darwin.default; }).nixToolsets;
+    checks.x86_64-linux.pi-toolset-module = import ./pi-toolsets/module-check.nix {
+      pkgs = nixpkgs-linux.legacyPackages.x86_64-linux;
+      piPackage = pi.packages.x86_64-linux.default;
+    };
+    checks.x86_64-linux.pi-toolsets = import ./pi-toolsets/check.nix {
+      pkgs = nixpkgs-linux.legacyPackages.x86_64-linux;
+      piPackage = pi.packages.x86_64-linux.default;
+    };
+
     packages.x86_64-linux.pi-skills = import ./pi-skills/package.nix {
       pkgs = nixpkgs-linux.legacyPackages.x86_64-linux;
     };
