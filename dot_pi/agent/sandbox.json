@@ -1,0 +1,35 @@
+{
+  "enabled": true,
+  "sandboxUserShell": false,
+  "permissionPromptTimeoutSeconds": 60,
+  "network": {
+    "disabled": false,
+    "allowedDomains": [],
+    "deniedDomains": [],
+    "strictAllowlist": true,
+    "allowLocalBinding": false,
+    "allowAllUnixSockets": false,
+    "allowUnauthenticatedSocksProxy": false
+  },
+  "filesystem": {
+    "allowRead": [".", "/nix/store", "/tmp", "~/.pi/agent/skills", "~/.pi/agent/extensions", "~/.config/home-manager", "~/.local/share/chezmoi"],
+    "allowWrite": [".", "/tmp"],
+    "denyRead": ["~/.ssh", "~/.aws", "~/.gnupg", "~/.pi/agent/auth.json", "~/.pi/agent/mcp-auth.json", ".env"],
+    "denyWrite": [".env", "~/.pi/agent/auth.json", "~/.pi/agent/mcp-auth.json"],
+    "protectNonexistentFiles": true
+  },
+  "profiles": {
+    "review": {
+      "filesystem": { "allowWrite": [] },
+      "network": { "disabled": false, "allowedDomains": [], "strictAllowlist": true }
+    },
+    "workspace": {
+      "filesystem": { "allowWrite": [".", "/tmp"] },
+      "network": { "disabled": false, "allowedDomains": [], "strictAllowlist": true }
+    },
+    "workspace-network": {
+      "filesystem": { "allowWrite": [".", "/tmp"] },
+      "network": { "disabled": false, "allowedDomains": ["registry.npmjs.org", "api.github.com"], "strictAllowlist": true }
+    }
+  }
+}

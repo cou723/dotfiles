@@ -1,0 +1,12 @@
+{
+  "name": "local-xzzpig-sandbox-ui",
+  "private": true,
+  "type": "module",
+  "pi": { "extensions": ["./index.ts"] },
+  "dependencies": { "@xzzpig/pi-sandbox": "0.8.0" },
+  "devDependencies": { "tsx": "^4.20.6" },
+  "scripts": {
+    "prepare-runtime": "node prepare-runtime.mjs",
+    "test": "tsx --test test/*.test.ts"
+  }
+}
