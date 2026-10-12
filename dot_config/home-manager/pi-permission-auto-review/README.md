@@ -1,81 +1,60 @@
-# Pi automatic permission review
+# Pi の権限リクエストの自動レビュー
 
-Home Manager installs two ordered extension entry points on Linux and macOS:
+Home Manager は Linux と macOS に、次の順序で拡張のエントリーポイントを配置します。
 
-- `10-permission-system.ts`: `@gotgenes/pi-permission-system` 39.0.0
-- `15-permission-auto-review.ts`: `@mzwing/pi-permission-auto-review` 0.8.0
+- `10-permission-system.ts`：`@gotgenes/pi-permission-system` 39.0.0
+- `15-permission-auto-review.ts`：`@mzwing/pi-permission-auto-review` 0.8.0
 
-The npm tarballs and runtime dependencies are hash-pinned in `npm-sources.json`.
-No npm lifecycle scripts run. The Bash parser uses the published WASM, so native
-`tree-sitter-bash` build dependencies are not needed. Host Pi packages are linked
-from the flake's Pi derivation, not duplicated.
+npm tarball と実行時の依存は、`npm-sources.json` でハッシュを固定しています。
+npm のライフサイクルスクリプトは実行しません。Bash パーサーには公開済みの WASM を使うため、ネイティブの `tree-sitter-bash` のビルド依存は不要です。
+ホストの Pi パッケージは flake の Pi derivation からリンクし、重複して導入しません。
 
-## Configuration (chezmoi)
+## chezmoi の設定
 
-Canonical config lives beside this README. chezmoi templates include these files:
+設定の管理元は、この README と同じディレクトリにあります。chezmoi のテンプレートは、次のファイルを取り込みます。
 
 - `permission-system.json` → `~/.pi/agent/extensions/pi-permission-system/config.json`
 - `auto-review.json` → `~/.pi/agent/extensions/pi-permission-auto-review/config.json`
 
-Edit `additionalPolicy` in `auto-review.json` to change classification policy.
-`includeBaselinePolicy: false` disables the bundled Guardian policy, but not the
-upstream fixed output protocol. The reviewer uses the existing `openai` login and
-`gpt-6-luna`; change `provider`/`model` to use another registered reviewer model.
-Every reviewed action makes a separate paid model request, potentially retried
-within the configured 30-second total timeout.
+分類ポリシーを変えるには、`auto-review.json` の `additionalPolicy` を編集してください。
+`includeBaselinePolicy: false` は同梱の Guardian ポリシーを無効にしますが、上流の固定出力プロトコルは無効にしません。
+レビューモデルは既存の `openai` ログインと `gpt-6-luna` を使います。別の登録済みモデルを使うには、`provider` / `model` を変更してください。
+レビューする操作ごとに、別の有料モデルリクエストが発生します。設定された合計30秒のタイムアウト内で再試行する場合もあります。
 
-Tool surfaces default to `ask` and the `auto-review` authorizer resolves them.
-Three exact tool names bypass model review: `ask_user_question` and the official
-Context7 extension's `resolve-library-id` / `query-docs`. No generic MCP or shell
-exemption is added. Context7 queries are sent to its API: do not include secrets,
-personal data, or proprietary source in those arguments.
-`path` and `external_directory` are uniformly `allow`: they do not decide which
-directories are safe, and do not bypass the later tool/Bash/MCP review. There are
-no directory-specific allow/deny patterns. `yoloMode` is disabled.
+ツールの権限設定は既定で `ask` になり、`auto-review` の認可処理が判定します。
+モデルのレビューを省略するのは、`ask_user_question` と、公式 Context7 拡張の `resolve-library-id` / `query-docs` の3つの名前に一致するツールだけです。
+MCP 全般やシェルを対象とする例外は追加していません。Context7 のクエリは同サービスの API に送信されるため、引数に秘密情報、個人情報、非公開のソースコードを含めないでください。
+`path` と `external_directory` は一律に `allow` です。これらはディレクトリの安全性を判定せず、後続のツール・Bash・MCP のレビューも省略しません。
+ディレクトリごとの許可・拒否パターンはありません。`yoloMode` は無効です。
 
-Restart Pi or `/reload` after deploying the extension/config. The upstream
-`/permission-auto-review show` command displays effective reviewer settings;
-`/permission-auto-review` opens its editor. Local edits will be overwritten by
-chezmoi: change the canonical source for durable configuration.
+拡張と設定を配置した後は、Pi を再起動するか `/reload` を実行してください。
+上流の `/permission-auto-review show` コマンドで、実際に適用されているレビュー設定を表示できます。`/permission-auto-review` は設定エディターを開きます。
+ローカルでの編集は chezmoi に上書きされるため、継続して使う設定は管理元で変更してください。
 
-## Verdict contract
+## 判定結果の仕様
 
-The AI returns JSON with `outcome: "allow" | "deny"`, not a boolean and not a
-three-way decision. Optional fields are `risk_level`, `user_authorization`, and
-`rationale`. The Japanese custom policy denies ambiguous actions with a reason;
-it does not ask the model to return unsupported `ask` or `defer` values.
+AI が返すのは `outcome: "allow" | "deny"` を含む JSON です。真偽値でも、3択の判定でもありません。
+任意のフィールドは `risk_level`、`user_authorization`、`rationale` です。
+日本語の独自ポリシーでは、曖昧な操作を理由付きで拒否します。未対応の `ask` や `defer` を返すようモデルに求めてはいません。
 
-The authorizer itself has three states: `allow`, `deny`, and `defer`. `defer` is
-an extension fallback for failures such as provider errors, timeouts, invalid
-responses/config, or internal errors, not an AI-selected verdict. Cancellation
-and the denial circuit breaker instead deny.
+認可処理自体には、`allow`、`deny`、`defer` の3つの状態があります。
+`defer` は、プロバイダーのエラー、タイムアウト、不正な応答・設定、内部エラーなどが起きた際に拡張が使うフォールバックであり、AI が選ぶ判定結果ではありません。
+一方、キャンセル時や拒否のサーキットブレーカー作動時は拒否します。
 
-## Limits
+## 制限事項
 
-- A reviewer denial blocks execution. Model/credential/timeout/parse failures
-  defer to human confirmation; headless permission requests are denied.
-- The upstream reviewer does not automatically inject tool descriptions or
-  side-effect annotations. Effects are inferred from request evidence. Unknown
-  effects must not be assumed safe under the configured policy.
-- Complete direct-call arguments are recovered from the active transcript.
-  Nested codemode calls are gated by Pi, but their complete arguments are not
-  necessarily available to this reviewer. Permission payload/preview is used
-  when transcript lookup fails. This is not proven full-argument coverage.
-- Trusted project configs, session grants, and explicit interactive approvals can
-  change effective routing. Do not grant session-wide approval if every call must
-  receive a model review. This configuration is not an OS sandbox.
-- Review logs are local under the permission-system config directory and excluded
-  from chezmoi/Git; they may contain commands and arguments. Reviewer evidence is
-  sent to the configured provider.
+- レビューモデルが拒否すると、実行を止めます。モデル・認証情報・タイムアウト・応答解析の問題が起きた場合は、人による確認に委ねます。ヘッドレス環境の権限リクエストは拒否します。
+- 上流のレビューモデルには、ツールの説明や副作用の注記が自動で渡されません。作用はリクエストに含まれる情報から推定します。設定済みのポリシーでは、不明な作用を安全とみなしてはいけません。
+- 直接呼び出したツールの引数全体は、現在の会話記録から取得します。codemode 内の入れ子の呼び出しも Pi が実行可否を制御しますが、このレビューモデルが引数全体を取得できるとは限りません。会話記録から取得できない場合は、権限リクエストのデータやプレビューを使います。すべての引数を取得できることは実証されていません。
+- 信頼済みのプロジェクト設定、セッション単位の許可、明示的な対話での承認によって、実際の判定経路が変わる場合があります。すべての呼び出しをモデルでレビューする必要がある場合は、セッション全体を許可しないでください。この設定は OS のサンドボックスではありません。
+- レビューログはローカルの permission-system 設定ディレクトリに保存され、chezmoi / Git の管理対象から除外されています。コマンドや引数が含まれる場合があります。レビューの判断材料は、設定したプロバイダーに送信されます。
 
-## Test
+## テスト
 
 ```sh
 nix build .#checks.x86_64-linux.pi-permission-auto-review --no-link -L
 ```
 
-Run from the Home Manager flake directory. This checks the real Pi loader,
-registered hooks, config routing, custom policy, complete direct-call argument
-serialization, verdict parsing, and both WASM files without credentials/API calls.
-It does not measure live model judgement quality or prove every nested call's
-argument coverage.
+Home Manager の flake ディレクトリで実行してください。
+認証情報や API 呼び出しを使わずに、実際の Pi ローダー、登録済みフック、設定による判定経路、独自ポリシー、直接呼び出したツールの引数全体のシリアライズ、判定結果の解析、両方の WASM ファイルを確認します。
+実際のモデルの判断品質を測るものではありません。また、すべての入れ子の呼び出しについて引数全体を取得できることを証明するものでもありません。

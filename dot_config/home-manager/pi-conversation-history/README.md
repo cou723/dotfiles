@@ -1,72 +1,63 @@
-# Pi conversation-only undo / branch navigation (Nix-managed)
+# Nix で管理する Pi の会話巻き戻しと分岐移動
 
-## Installed upstream packages
+## 導入する上流パッケージ
 
-- `pi-undo` **0.1.0** (Richard Anaya): `/undo [N]`.
-  Source is the pinned npm tarball; this release has no repository URL in its manifest.
-- [`pi-undo-tree`](https://github.com/ergenekonyigit/pi-undo-tree) **1.0.1**:
-  `/undo-tree`, visual backward/forward navigation and branch selection.
+- `pi-undo` 0.1.0（Richard Anaya）：`/undo [N]` を提供します。ソースには固定した npm tarball を使います。このリリースのマニフェストにはリポジトリ URL がありません。
+- [`pi-undo-tree`](https://github.com/ergenekonyigit/pi-undo-tree) 1.0.1：`/undo-tree` を提供します。画面上で前後のターンへ移動し、分岐を選択できます。
 
-Both packages are unmodified. Nix pins the npm URLs, versions and SHA-256 hashes
-in `npm-sources.json`. They have no non-host runtime dependencies; peer packages
-resolve to the same Nix-managed Pi runtime. No npm install, lifecycle scripts,
-custom runtime adapter or upstream patch is used.
+どちらのパッケージも変更せずに使います。Nix は npm の URL、バージョン、SHA-256 ハッシュを `npm-sources.json` で固定します。
+ホストが提供するもの以外に実行時の依存はありません。peer パッケージは、同じ Nix 管理の Pi 実行環境から解決されます。
+npm インストール、ライフサイクルスクリプト、独自の実行時アダプター、上流へのパッチは使いません。
 
-Pi was upgraded from 1.0.4 to **1.1.0** by updating only the `pi` input in
-`../flake.lock` (stable commit `abe508e1b89912adde45528136c3221eb69acdd7`).
-The other flake inputs were not updated.
+`../flake.lock` の `pi` 入力だけを更新し、Pi を 1.0.4 から 1.1.0 に更新しました。
+固定先は安定版のコミット `abe508e1b89912adde45528136c3221eb69acdd7` です。他の flake 入力は更新していません。
 
-## Usage
+## 使い方
 
 ```text
-/undo       # rewind one user turn
-/undo 3     # rewind three user turns
-/undo-tree  # interactive navigation, including returning to an abandoned branch
+/undo       # ユーザーの入力1回分を巻き戻す
+/undo 3     # ユーザーの入力3回分を巻き戻す
+/undo-tree  # 対話画面で移動する。離れた分岐にも戻れる
 ```
 
-`N` counts **user submissions/turns**, not assistant messages or tool calls.
-The selected original prompt is returned to the editor; edit and submit it to
-start a replacement branch. While the agent is working, abort with Escape first.
-When N exceeds the available history, undo stops at the beginning of the branch.
+`N` が数えるのは、アシスタントのメッセージやツール呼び出しではなく、**ユーザーの送信回数**（ターン数）です。
+選択した元のプロンプトがエディターに戻ります。編集して送信すると、代わりの分岐が始まります。
+エージェントが処理中の場合は、先に Escape で中断してください。
+`N` が履歴の範囲を超えると、その分岐の先頭で巻き戻しが止まります。
 
-Inside `/undo-tree`:
+`/undo-tree` 内では、次のキーを使います。
 
-- `↑` / `k`: move to the parent turn.
-- `↓` / `j`: move forward to a child turn (visual redo).
-- `←` / `h`, `→` / `l`: select alternative branches.
-- `Enter`: switch to the selected turn **without a summary**.
-- `e`: return to before the selected prompt and refill the editor for a retry.
-- `q` / Escape: cancel the screen.
-- `S` / Shift+Enter: switch with a model-generated summary. Avoid this when you
-  want the later context excluded entirely; it can make an API call.
+- `↑` / `k`：親のターンへ移動します。
+- `↓` / `j`：子のターンへ進みます。画面上でのやり直しに相当します。
+- `←` / `h`、`→` / `l`：別の分岐を選びます。
+- `Enter`：要約せずに、選択したターンへ切り替えます。
+- `e`：選択したプロンプトの直前に戻り、再試行できるようエディターにプロンプトを戻します。
+- `q` / Escape：画面を閉じ、操作を取り消します。
+- `S` / Shift+Enter：モデルが生成する要約を付けて切り替えます。後続の文脈を完全に除外したい場合は使わないでください。API 呼び出しが発生する場合があります。
 
-There is **no standalone `/redo` slash command** in this combination. Use
-`/undo-tree`, select the original branch/turn, and press Enter. Native `/tree`
-also remains available. Unlike a transient redo stack, abandoned branches remain
-available even after a new prompt creates another branch.
+この組み合わせには、独立した `/redo` スラッシュコマンドはありません。
+`/undo-tree` で元の分岐とターンを選び、Enter を押してください。標準の `/tree` も引き続き使えます。
+一時的なやり直し用スタックとは異なり、新しいプロンプトで別の分岐を作った後も、離れた分岐に戻れます。
 
-Use the slash command rather than the advertised Ctrl+Shift+U shortcut: the
-upstream shortcut has a non-command context fallback and is not covered by our
-native AgentSession navigation test.
+上流で案内されている Ctrl+Shift+U ではなく、スラッシュコマンドを使ってください。
+このショートカットには、コマンド用ではないコンテキストを使うフォールバック処理があり、ローカルの標準 AgentSession を使った移動テストでは検査していません。
 
-## Scope and safety
+## 対応範囲と安全性
 
-Only the active conversation branch / model context changes. Neither extension
-captures workspace snapshots, restores/deletes files, runs Git, or undoes shell
-or external effects. Original messages remain in the same session tree; this is
-not deletion of the session JSONL. Existing files and changes remain as they are.
+変更されるのは、現在の会話の分岐とモデルのコンテキストだけです。
+どちらの拡張も、作業ディレクトリのスナップショット取得、ファイルの復元・削除、Git の実行、シェル操作や外部への作用の取り消しは行いません。
+元のメッセージは同じセッションツリーに残ります。セッションの JSONL を削除する操作ではありません。
+既存のファイルと変更内容はそのまま残ります。
 
-Consequently, retrying a prompt sees the **current disk state**, not the disk
-state at the earlier conversation point. The permission-system and classifier
-extensions have been removed; these navigation extensions do not gate tool calls.
+そのため、プロンプトを再試行するときに参照されるのは、以前の会話時点のディスク状態ではなく、**現在のディスク状態**です。
+permission-system と classifier の拡張は削除済みです。これらの会話移動用拡張は、ツール呼び出しの実行可否を制御しません。
 
-`pi-undo` is a small 0.1.0 release with no upstream test suite declared. The
-local build-time integration test checks its real behavior against the pinned
-Pi runtime instead of assuming compatibility from its README.
+`pi-undo` は小規模な 0.1.0 リリースで、上流のテストスイートは宣言されていません。
+ローカルのビルド時統合テストでは、README だけを根拠に互換性を判断せず、固定した Pi 実行環境で実際の動作を確認します。
 
-## Deployment and tests
+## 配置とテスト
 
-Home Manager deploys only one-line re-export entrypoints:
+Home Manager が配置するのは、1行の再エクスポートで構成したエントリーポイントだけです。
 
 - `~/.pi/agent/extensions/30-conversation-undo.ts`
 - `~/.pi/agent/extensions/40-conversation-undo-tree.ts`
@@ -76,13 +67,11 @@ nix build /home/coura/.config/home-manager#checks.x86_64-linux.pi-conversation-h
 home-manager switch --flake /home/coura/.config/home-manager#coura
 ```
 
-`smoke-test.mjs` is build-time-only. It uses the real Pi loader, SessionManager,
-and AgentSession against isolated test paths, with synthetic history and no
-model/API calls. It checks `/undo N`, rebuilt model context, retention of the
-abandoned branch, real visualizer rendering and forward selection, default and
-excessive N, invalid inputs, busy/cancel behavior and an unchanged workspace file.
+`smoke-test.mjs` はビルド時にだけ使います。
+隔離したテスト用パスで、実際の Pi ローダー、SessionManager、AgentSession と人工的な履歴を使います。モデルや API は呼び出しません。
+検査対象は、`/undo N`、モデルのコンテキストの再構築、離れた分岐の保持、実際のツリー表示と先のターンの選択、`N` の既定値と範囲超過、不正な入力、処理中とキャンセル時の動作、作業ディレクトリ内のファイルが変わらないことです。
 
-For future Pi updates, update only that input, run the navigation check, then switch:
+今後 Pi を更新するときも、その入力だけを更新し、移動機能の検査を実行してから適用してください。
 
 ```sh
 cd /home/coura/.config/home-manager
@@ -91,5 +80,5 @@ nix build .#checks.x86_64-linux.pi-conversation-history --no-link -L
 home-manager switch --flake .#coura
 ```
 
-Restart Pi after a version update; `/reload` reloads extensions but cannot replace
-the running Pi executable/runtime.
+バージョンを更新した後は Pi を再起動してください。
+`/reload` は拡張を再読み込みしますが、実行中の Pi 本体や実行環境は置き換えられません。
