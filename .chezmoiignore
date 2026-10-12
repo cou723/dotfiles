@@ -11,7 +11,10 @@ bun.lockb
 .pi/agent/verdicts
 # Retired permission-gate configs/logs are local rollback data only.
 .pi/agent/extensions/pi-permission-classifier
-.pi/agent/extensions/pi-permission-system
+# Permission configs are deployed; only generated runtime state is excluded.
+.pi/agent/extensions/pi-permission-system/logs
+.pi/agent/extensions/10-permission-system.ts
+.pi/agent/extensions/15-permission-auto-review.ts
 .pi/agent/schemas
 .pi/agent/pi-web-run
 .pi/agent/pi-web-session-*.json

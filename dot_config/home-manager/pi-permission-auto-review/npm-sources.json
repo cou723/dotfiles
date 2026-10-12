@@ -1,0 +1,32 @@
+[
+  {
+    "name": "@gotgenes/pi-permission-system",
+    "version": "39.0.0",
+    "url": "https://registry.npmjs.org/@gotgenes/pi-permission-system/-/pi-permission-system-39.0.0.tgz",
+    "hash": "sha256-+hGv1J0nb6qULqfPj1LV8aMbUaZPFJsgHtSsEowcK/Y="
+  },
+  {
+    "name": "@mzwing/pi-permission-auto-review",
+    "version": "0.8.0",
+    "url": "https://registry.npmjs.org/@mzwing/pi-permission-auto-review/-/pi-permission-auto-review-0.8.0.tgz",
+    "hash": "sha256-JmrPZY8gbu5/Nqq1L2OVJM13UoObxRDLN6c+vfLsbyk="
+  },
+  {
+    "name": "zod",
+    "version": "4.6.5",
+    "url": "https://registry.npmjs.org/zod/-/zod-4.6.5.tgz",
+    "hash": "sha256-p4wMUz3jDcHEr8JZrEOsBuOQyw2o0uMurjVTAbULNvw="
+  },
+  {
+    "name": "web-tree-sitter",
+    "version": "0.26.9",
+    "url": "https://registry.npmjs.org/web-tree-sitter/-/web-tree-sitter-0.26.9.tgz",
+    "hash": "sha256-qs2KtgWPwTLlMVJtclNHarxWsMZGN+IDewIJIFwUaRs="
+  },
+  {
+    "name": "tree-sitter-bash",
+    "version": "0.25.1",
+    "url": "https://registry.npmjs.org/tree-sitter-bash/-/tree-sitter-bash-0.25.1.tgz",
+    "hash": "sha256-1LKBlQjql8uJU//34wSmENRDAHvTlcjwOhXemorkpvk="
+  }
+]

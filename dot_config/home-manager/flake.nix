@@ -86,6 +86,28 @@
       touch $out
     '';
 
+    packages.x86_64-linux.pi-permission-auto-review = import ./pi-permission-auto-review/package.nix {
+      pkgs = nixpkgs-linux.legacyPackages.x86_64-linux;
+      piPackage = pi.packages.x86_64-linux.default;
+    };
+    packages.aarch64-darwin.pi-permission-auto-review = import ./pi-permission-auto-review/package.nix {
+      pkgs = nixpkgs.legacyPackages.aarch64-darwin;
+      piPackage = pi.packages.aarch64-darwin.default;
+    };
+    checks.x86_64-linux.pi-permission-auto-review = let
+      pkgs = nixpkgs-linux.legacyPackages.x86_64-linux;
+      piPackage = pi.packages.x86_64-linux.default;
+      extension = import ./pi-permission-auto-review/package.nix { inherit pkgs piPackage; };
+    in pkgs.runCommand "pi-permission-auto-review-tests" { nativeBuildInputs = [ pkgs.nodejs_24 ]; } ''
+      export HOME="$TMPDIR/home"
+      mkdir -p "$HOME"
+      PI_PACKAGE_DIR=${piPackage}/lib/pi REVIEW_ROOT=${extension} \
+        POLICY_CONFIG=${./pi-permission-auto-review/permission-system.json} \
+        REVIEW_CONFIG=${./pi-permission-auto-review/auto-review.json} \
+        node ${./pi-permission-auto-review/smoke-test.mjs}
+      touch $out
+    '';
+
     homeConfigurations = {
       "yuki.ueyama" = home-manager.lib.homeManagerConfiguration {
         pkgs = nixpkgs.legacyPackages.aarch64-darwin;

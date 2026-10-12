@@ -1,0 +1,17 @@
+{
+  "authorizerChain": [
+    "auto-review"
+  ],
+  "yoloMode": false,
+  "permissionReviewLog": true,
+  "debugLog": false,
+  "piInfrastructureReadPaths": [],
+  "permission": {
+    "*": "ask",
+    "bash": "ask",
+    "mcp": "ask",
+    "skill": "ask",
+    "path": "allow",
+    "external_directory": "allow"
+  }
+}

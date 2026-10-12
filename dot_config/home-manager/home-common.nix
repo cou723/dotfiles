@@ -4,6 +4,10 @@ let
     inherit pkgs;
     piPackage = pi.packages.${pkgs.stdenv.hostPlatform.system}.default;
   };
+  permissionReview = import ./pi-permission-auto-review/package.nix {
+    inherit pkgs;
+    piPackage = pi.packages.${pkgs.stdenv.hostPlatform.system}.default;
+  };
   skills = import ./pi-skills/package.nix { inherit pkgs; };
   askUserQuestion = import ./pi-ask-user-question/package.nix {
     inherit pkgs;
@@ -54,6 +58,11 @@ in
     gcc
     gnumake
   ];
+
+  home.file.".pi/agent/extensions/10-permission-system.ts".source =
+    "${permissionReview}/extensions/10-permission-system.ts";
+  home.file.".pi/agent/extensions/15-permission-auto-review.ts".source =
+    "${permissionReview}/extensions/15-permission-auto-review.ts";
 
   # Conversation-only navigation; never snapshots or restores workspace files.
   home.file.".pi/agent/extensions/30-conversation-undo.ts".source =
