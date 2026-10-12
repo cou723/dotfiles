@@ -44,7 +44,7 @@ in {
         message = "Pi toolset names must be unique.";
       }
     ];
-    # Preserve mutable Pi settings, credentials, trust state and extension logs.
+    # Pi の可変設定、認証情報、信頼状態、拡張ログは管理対象にせず保持する。
     home.file = builtins.listToAttrs entries // {
       ".pi/agent/toolsets.json".text = builtins.toJSON inventory;
     };

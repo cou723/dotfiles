@@ -1,6 +1,6 @@
 { pkgs }:
-# Compose a complete Pi package with nixpkgs buildEnv. Home Manager does not
-# traverse dependencies: resources and runtime requirements are already flattened.
+# nixpkgs の buildEnv で、必要な資産を含む完成パッケージを構成する。
+# リソースと実行条件は集約済みなので、Home Manager で依存グラフをたどる必要はない。
 { name, source, resources ? {}, runtimePackages ? [], components ? [], requirements ? [] }:
 let
   lib = pkgs.lib;
@@ -34,7 +34,7 @@ assert lib.all (path: path != "" && !(lib.hasPrefix "/" path)
 pkgs.buildEnv {
   inherit name;
   paths = [ source ] ++ components;
-  # Exclude component manifests; this complete package has its own manifest.
+  # 完成パッケージ用の manifest を生成するため、構成要素の manifest は取り込まない。
   pathsToLink = map (kind: "/${kind}") kinds ++ [ "/upstream" ];
   ignoreCollisions = false;
   passthru.piToolset = {

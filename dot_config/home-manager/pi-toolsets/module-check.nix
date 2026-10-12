@@ -40,7 +40,7 @@ let
   collision = evaluate [ complete component ];
   launcher = builtins.head chosen.home.packages;
 in
-# Only custom placement/launcher behaviour is tested, not the installed catalogue.
+# 導入するパッケージ一覧ではなく、独自の配置処理とランチャーの挙動だけを検査する。
 assert lib.all (a: a.assertion) chosen.assertions;
 assert chosen.home.file.".pi/agent/extensions/fixture.js".source == "${complete}/extensions/fixture.js";
 assert chosen.home.file ? ".pi/agent/skills/fixture";
