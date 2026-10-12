@@ -69,7 +69,6 @@
         piPackage = pi.packages.aarch64-darwin.default; }).nixToolsets;
     checks.x86_64-linux.pi-toolset-module = import ./pi-toolsets/module-check.nix {
       pkgs = nixpkgs-linux.legacyPackages.x86_64-linux;
-      piPackage = pi.packages.x86_64-linux.default;
     };
     checks.x86_64-linux.pi-toolsets = import ./pi-toolsets/check.nix {
       pkgs = nixpkgs-linux.legacyPackages.x86_64-linux;

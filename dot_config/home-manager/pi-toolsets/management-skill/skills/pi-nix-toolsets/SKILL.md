@@ -1,98 +1,84 @@
 ---
 name: pi-nix-toolsets
-description: 外部の MCP、Skills、Hooks、Agents、Pi 拡張を Nix で固定し、依存を明示したツールセットとして導入・更新・削除するときに使う。Home Manager の Pi 環境とプロジェクト限定の環境を区別し、設定・実行依存・検査を一緒に管理する。
+description: 外部の MCP、Skills、Hooks、Agents、Pi 拡張を Nix で固定し、依存を明示した完成パッケージとして導入・更新・削除するときに使う。Home Manager の Pi 環境とプロジェクト限定の環境を区別し、配置・実行環境・初回接続を確認する。
 ---
 
 # Nix で Pi ツールセットを管理する
 
-## 目的と管理単位
+## 原則
 
-利用側は「どのセットを使うか」を宣言し、セット側はソース、実行依存、Pi リソース、未充足の実行条件、検査を持つ。単に再現可能なコピーを増やすのではなく、依存の成立条件をセットの近くに記録する。
-
-密結合した MCP・Skill・Hook・Agent は一つのセットにする。共有される別セットへの依存は `dependencies = [ otherToolset ];` として明示する。Home Manager はその依存も推移的に配置する。プロジェクト用ランチャーを作る場合は、その依存のリソース・runtimePackages も自分で展開し、ルートだけ渡して完了としない。単に同じ devShell に列挙しただけで依存関係を表現したと言わない。循環したビルド依存を作らない。実行時の相互参照とビルド依存は区別する。
-
-既存の Nix だけで足りる場合、APM/Renkei、Claude 互換層、新しいレジストリを勝手に追加しない。
+利用側は使う完成パッケージを選び、パッケージ側は固定ソース・Pi リソース・実行環境を構成する。
+依存する資産は Nix の構築時に組み込む。環境側に別の依存リゾルバを作らない。
+密結合した MCP・Skill・Hook・Agent はまとめる。既存の Nix で足りるなら、
+APM/Renkei、Claude 互換層、新しいレジストリを勝手に追加しない。
 
 ## 最初に確認する
 
-1. 対象リポジトリ、AGENTS.md、git status、flake.nix/lock、Home Manager と現在の Pi 設定を確認する。秘密情報は表示しない。
-2. ユーザーに不足情報だけを聞く：配布元 URL、グローバルか特定プロジェクトか、必要な機能・認証、既存の Hooks/Subagents 基盤。質問はまとめる。
-3. `~/.config/home-manager/pi-toolsets/` があれば、このローカル規約を使う。別環境では存在しないオプションを公式機能として説明しない。
-4. Pi のインストール済み docs/packages.md、skills.md、mcp.md を読み、変更する API の関連文書も確認する。Hooks/Subagents を実装するなら extensions.md と該当バックエンドの文書を読む。Nix/API の不明点は最新ドキュメントを確認する。
-5. ソースの README、manifest、Skill 本文、実行スクリプト、依存 lock を読む。インストールやネットワーク実行前に信頼と副作用を確認する。
+1. 対象リポジトリ、AGENTS.md、git status、flake.nix/lock、Home Manager と Pi 設定を確認する。秘密は表示しない。
+2. chezmoi 等を使う場合は配置先と Git 管理元を区別する。管理元を正本とし、別作業の変更を巻き込まない。
+3. 不足情報だけをまとめて聞く：配布元、グローバルかプロジェクト限定か、認証、必要な Hooks/Subagents 基盤。
+4. Pi のインストール済み docs/packages.md、skills.md、mcp.md と、変更する API の文書を読む。
+5. ソースの README、manifest、Skill 本文、スクリプト、lock を読み、信頼性・副作用・ライセンスを確認する。
 
-## 依存表を先に作る
+## 依存と未充足条件
 
-各セットについて記録する：
-
-- ソース URL と固定コミット／バージョン、取得ハッシュ。
-- 公開する extensions/skills/prompts/themes。
-- ローカル MCP プログラムとそのビルド依存、または外部 HTTP の接続先。
-- 呼び出すコマンドとランタイム（Python、Node、D2 等）。
-- 必須の別セット、ツール名・入力出力などの互換条件。
-- Hooks/Subagents の必要なバックエンドと、実際に使うイベント／機能。
-- 秘密情報、外部サービス、ブラウザ、特定レイアウトなど実行時条件。
-- 検証範囲：読込のみ／スクリプト実行／実 MCP 呼出／ワークフロー全体。
-
-必須条件を `requirements` の文章に書くだけで解決済みにしない。供給できる依存は Nix の実行環境へ接続し、供給しない条件は検査と報告で未充足とする。オプション機能と必須機能を分ける。
+各パッケージについて、固定 URL/commit/version/hash、公開資産、呼び出すコマンド、
+必要な別資産、秘密情報、外部サービス、ブラウザ、実行バックエンドを整理する。
+供給できる依存は Nix の参照・完成物・実行ラッパーに接続する。供給しない条件は
+requirements に記録し、未充足と報告する。必須条件とオプション機能を分ける。
+HTTP URL の固定はリモート実装やツールスキーマの固定ではない。
 
 ## この環境の構成
 
-- `pi-toolsets/mk-toolset.nix`：固定した資産から Pi package.json と toolset.json を生成。
-- `pi-toolsets/default.nix`：セットごとの資産・実行依存・条件を宣言。
-- `pi-toolsets/home-module.nix`：`programs.pi.toolsets` を Home Manager の配置、Pi ランチャー、ランタイム、一覧へ接続。
-- `home-common.nix`：グローバルに使うセットを選択。
-- `flake.nix`：公開パッケージと checks。
+- pi-toolsets/mk-toolset.nix：buildEnv で資産を合成し、完成物の package.json/toolset.json を生成。
+- pi-toolsets/default.nix：資産・components・runtimePackages・requirements を宣言。
+- pi-toolsets/home-module.nix：選ばれた完成物を配置し、Pi ランチャーと実行環境を提供。
+- home-common.nix：グローバルで使う完成物を選択。
+- flake.nix：公開パッケージ、カタログのビルド、少量の共通配置検査。
 
-Pi package.json はリソースの公開仕様であり、MCP・Hooks・Agents の汎用依存解決仕様ではない。toolset.json はこの環境独自の情報で、Pi が自動解決するものではない。
+これらはローカル規約で、公式 Pi/Home Manager API ではない。toolset.json は情報用で、
+Pi が依存解決する manifest ではない。追加例は references/toolsets.md を読む。
 
-## 取り込み方
+## パッケージ化
 
-### Skills / Prompts / Pi 拡張
+固定ソースを source に渡し、自身の resources と runtimePackages を宣言する。
+他の Pi 資産が必要なら components に完成パッケージを渡す。リソースと実行条件は
+構成時に集約されるため、Home Manager やプロジェクトで依存先を展開し直さない。
+組み込み済み component を利用側で重ねて選ばない。共有資産が衝突する場合は、
+一つの完成物にまとめる。循環したビルド依存は作らない。
 
-固定した Nix ソースを `source` に渡し、resources と runtimePackages を宣言する。Skill は scripts/references/assets と相対配置を保持する。相互参照する sibling Skills はまとめる。
-
-`runtimePackages` に書いたパッケージは Home Manager の環境と Pi ランチャーの PATH に接続される。buildInputs/nativeBuildInputs だけに置いて実行依存を解決したつもりにならない。Python/Node のライブラリも必要なら、その依存を持つ実行環境を作る。
-
-拡張の Pi 提供モジュールを別バージョンで重複導入しない。既存 package.nix のホストモジュール接続方法を踏襲する。上流に適切な Pi package があれば再利用し、宣言の二重管理を避ける。
+Skill の scripts/references/assets と相対配置を保持する。既存の Pi package を再利用し、
+ホスト提供モジュールを別バージョンで重複導入しない。
+runtimePackages は Pi ランチャーの PATH に接続される。buildInputs だけで実行依存を
+満たしたつもりにならない。必要な Python/Node ライブラリも固定した環境へ組み込む。
 
 ### MCP
 
-原則 Pi 標準 MCP を使う。command と args は別々にし、Nix で完成した実行ファイルまたは固定された wrapper を使う。
-
-- グローバルは `~/.pi/agent/mcp.json`、プロジェクトは `.pi/mcp.json`。
-- この Home Manager モジュールは MCP 設定の生成・マージをまだ提供しない。必要なら明示的に追加し、既存設定との衝突・可変データを設計する。resources に架空の mcp キーを追加しない。
-- `npx @latest`、未固定 uvx、起動時 git pull は使わない。Node/Python の固定だけではダウンロードされる MCP 本体は固定されない。
-- command が裸の実行名なら、Pi を起動する Nix 環境の PATH にその実行ファイルを必ず供給する。強い固定が必要なら store の絶対パスを使う。
-- トークンは環境変数参照や OAuth。Nix store、生成 JSON、ログ、Git に秘密を入れない。
-- mcp.json を read-only にする場合、Pi の `/mcp` が状態を保存できない点を説明する。宣言を変更して再生成する方式か、管理対象キーだけを可変ファイルへ反映する方式を選ぶ。無断で可変設定全体を置換しない。
-- プロジェクトへの接続範囲はセキュリティ隔離ではない。サーバーの権限・許可パスも制限する。
-- HTTP サービスの URL 固定はサーバー実装のバージョン固定ではない。
+Pi 標準 MCP の登録拡張か、グローバル ~/.pi/agent/mcp.json／プロジェクト .pi/mcp.json を使う。
+このモジュールは mcp.json の生成・マージをしない。必要なら既存設定との衝突を設計する。
+command と args は分け、Nix で完成した実行ファイルまたはラッパーを使う。
+未固定の npx/uvx、@latest、起動時 git pull は使わない。
+秘密は環境変数参照や OAuth に置き、Nix store・生成 JSON・ログ・Git に入れない。
+read-only の mcp.json は /mcp による保存を制限する。登録拡張の状態確認・認証には
+Pi 内の /mcp を使う。shell の pi mcp は拡張登録サーバーを読み込まない。
 
 ### Hooks / Agents
 
-Pi 標準 Skills の配置だけでは実行できない。選んだ Pi 拡張の仕様に変換するか、必要なら Pi ネイティブの実行処理を用意し、それをセットの依存にする。
+具体的な Pi 実行バックエンドへ接続する。Claude 設定を置いただけで互換としない。
+イベント、入出力、終了コード、タイムアウト、権限、fresh session を確認する。
+保護処理の失敗時に許可へ倒れないか等、独自の実行処理には焦点を絞った検査を置く。
 
-Claude の設定ファイルを置いただけで互換としない。Hook イベント、stdin、戻り値、タイムアウト、Agent のツール・権限・モデル・fresh session の挙動を確認する。未対応は黙って落とさず報告する。保護 Hook の失敗時に許可へ倒れるかも検査する。
+## スコープ・更新・確認
 
-## 固定・スコープ・更新
+グローバルは programs.pi.toolsets、プロジェクト限定は flake/devShell と -e を使う。
+同じ資産を自動探索と package 設定/-e の両方で登録しない。devShell は隔離ではない。
+commit/version と hash を固定する。flake.lock だけでは起動時ダウンロードを固定しない。
 
-Nix ソースは commit/version と hash で固定する。flake.lock だけでは fetchurl の URL や任意の起動時ダウンロードを固定しない。更新は明示的な変更として、影響するセットと checks を一緒に扱う。
+1. Nix の評価・ビルドと、生成物・実行環境を確認する。プラットフォームを明記する。
+2. 単純な資産追加に専用テストや固定件数・全資産の手書き一覧を追加しない。独自の変換・分岐・実行処理がある場合だけ、意味のある検査を検討する。
+3. 初回利用や大きな更新では Pi で読み込みを確認する。読み込み成功と全 workflow の動作成功を区別する。
+4. MCP は登録 → 本人の認証 → 了承を得た少量の読み取りを別々に確認する。実アカウントの作成・更新・完了を診断目的で行わない。
+5. 適用は別操作。依頼の範囲を確認し、switch 前に旧世代への戻し方を示す。秘密・可変設定・手置き資産は消さない。
 
-グローバル導入は `programs.pi.toolsets` に追加する。プロジェクト限定なら home-common.nix に追加しない。プロジェクトの flake/devShell で runtimePackages を供給し、Pi のローカル package 設定または `pi -e <store-package>` で読み込む。MCP はプロジェクトの `.pi/mcp.json` に限定する。生成設定は既存のローカル設定と秘密を上書きしない。ユーザーがプロジェクトを trust することを勝手に省略しない。
-
-同じセットを Home Manager の自動探索と package 設定/-e の両方から読み込むと重複する。どちらか一つにする。プロジェクト固有セットの例は references/toolsets.md を読む。
-
-## 必須の検証と完了報告
-
-1. Nix の評価・ビルド。該当プラットフォームを確認する。
-2. 生成 manifest、resource の存在、名前衝突、依存の配置。
-3. ピンした Pi の loader で Skills/拡張を検査。可能なら最小のスクリプト実行。
-4. 必要な実行ファイルが Pi の環境で固定したものになること。
-5. MCP は了承を得て `pi mcp list` と無害な実呼出。認証不足と仕様不一致は分ける。
-6. Hooks/Agents は対象の挙動を再生。読み込み成功だけを動作成功と言わない。
-7. セットを選ばない場合の配置・依存の除去を確認。他の用途が使う共有依存やユーザーの手置き資産は消さない。
-
-既存の flake checks を壊さない。Home Manager の switch は設定変更の実適用である。依頼に適用が含まれるか確認し、実施前に旧世代へ戻す方法を示す。
-
-報告には変更ファイル、固定元、宣言した依存、実行した検査、未検証条件、適用と `/reload` の要否を記す。認証・外部サービス・fresh subagent のテストを実施していないなら、その旨を明記する。
+完了時は変更ファイル、固定元、組み込んだ依存、実施した確認、未検証条件、適用の有無を報告する。
+適用後の PATH 更新にはランチャー経由の再起動が必要で、/reload だけでは反映されない。

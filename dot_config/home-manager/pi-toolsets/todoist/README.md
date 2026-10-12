@@ -1,8 +1,9 @@
 # Todoist for the Nix-managed Pi environment
 
-The selected `todoist` toolset exports the local Todoist Skill and declares
-`dependencies = [ todoistMcp ];`. Home Manager includes the registration extension
-transitively. No manual `pi mcp add`, mutable npm install or MCP adapter is needed.
+The selected `todoist` package contains both the local Skill and the MCP
+registration extension, composed with `components = [ todoistMcp ];` at Nix build
+time. Home Manager publishes that complete package; it does not traverse a
+separate dependency graph. No mutable npm install or MCP adapter is needed.
 
 The extension registers `todoist` with Pi's built-in MCP client:
 - HTTP endpoint: https://ai.todoist.net/mcp
@@ -44,9 +45,18 @@ To remove: deselect `todoist` and switch, then reload/restart Pi. The dependent
 registration disappears too unless selected elsewhere. Revoke/sign out OAuth
 separately if desired. Removal does not delete Todoist data.
 
-## Tests
+## Build and first-use checks
 
-`checks.x86_64-linux.pi-toolsets` validates Skill loading and actual Pi loader
-registration with network forbidden. The module check validates dependency
-inclusion, deselection and that mcp.json is not overwritten.
-These tests do not prove authenticated access to an account or write operations.
+`checks.x86_64-linux.pi-toolsets` builds all catalogue packages, including this
+complete package, and checks declared resource existence during construction.
+The common module check uses synthetic fixtures, not a Todoist-specific test.
+
+A successful build does not establish an authenticated connection. In Pi:
+1. Use `/mcp` to confirm the server is registered and inspect its status.
+2. If needed, use `/mcp login todoist` and approve in the browser.
+3. Request a small read-only project/task list to confirm authenticated access.
+
+Registration, authentication and a successful read are different states. A
+failed remote call is not automatically a Nix configuration error. Remote schemas
+can change independently of the local pins. Writes require a separate explicit
+request and are not part of installation diagnostics.

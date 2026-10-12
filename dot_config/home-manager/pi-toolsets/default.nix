@@ -12,7 +12,8 @@ in {
     name = "pi-toolset-todoist";
     source = ./todoist;
     resources.skills = [ "todoist" ];
-    dependencies = [ todoistMcp ];
+    # The complete package contains both the Skill and its MCP registration.
+    components = [ todoistMcp ];
   };
   yomiyasu = mkToolset {
     name = "pi-toolset-yomiyasu";

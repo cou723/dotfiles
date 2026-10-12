@@ -2,11 +2,7 @@
 let
   cfg = config.programs.pi;
   metadata = package: package.piToolset;
-  selected = map (entry: entry.package) (lib.genericClosure {
-    startSet = map (package: { key = toString package; inherit package; }) cfg.toolsets;
-    operator = entry: map (package: { key = toString package; inherit package; })
-      (metadata entry.package).dependencies;
-  });
+  selected = lib.unique cfg.toolsets;
   entries = lib.concatMap (package:
     lib.concatMap (kind: map (path: {
       name = ".pi/agent/${kind}/${path}";
@@ -21,7 +17,6 @@ let
     resources = (metadata package).resources;
     runtimePackages = map toString (metadata package).runtimePackages;
     requirements = (metadata package).requirements;
-    dependencies = map toString (metadata package).dependencies;
   }) selected;
   launcher = pkgs.writeShellScriptBin "pi" ''
     ${lib.optionalString (runtimePackages != []) ''export PATH="${lib.makeBinPath runtimePackages}:$PATH"''}

@@ -1,20 +1,27 @@
-{ pkgs, piPackage }:
+{ pkgs }:
 let
   lib = pkgs.lib;
   mkToolset = import ./mk-toolset.nix { inherit pkgs; };
-  toolsets = import ./default.nix { inherit pkgs piPackage; };
-  parent = mkToolset {
-    name = "test-parent";
-    source = ./management-skill;
-    dependencies = [ toolsets.yomiyasu ];
+  runtime = pkgs.writeShellScriptBin "fixture-runtime" ''echo runtime-ok'';
+  host = pkgs.writeShellScriptBin "pi" ''exec fixture-runtime'';
+  component = mkToolset {
+    name = "fixture-component";
+    source = pkgs.writeTextDir "extensions/fixture.js" "export default () => {};";
+    resources.extensions = [ "fixture.js" ];
+    runtimePackages = [ runtime ];
   };
-  collision = mkToolset {
-    name = "test-collision";
-    source = import ../pi-skills/yomiyasu.nix { inherit pkgs; };
-    resources.skills = [ "yomiyasu" ];
+  complete = mkToolset {
+    name = "fixture-complete";
+    source = pkgs.writeTextDir "skills/fixture/SKILL.md" ''
+      ---
+      name: fixture
+      description: Test fixture
+      ---
+    '';
+    resources.skills = [ "fixture" ];
+    components = [ component ];
   };
-  # Evaluate the module contract without activation or user settings.
-  evaluate = selected: lib.evalModules {
+  evaluate = selected: (lib.evalModules {
     modules = [
       ./home-module.nix
       ({ lib, ... }: {
@@ -24,32 +31,28 @@ let
           assertions = lib.mkOption { type = lib.types.listOf lib.types.attrs; default = []; };
         };
       })
-      { programs.pi = { enable = true; package = piPackage; toolsets = selected; }; }
+      { programs.pi = { enable = true; package = host; toolsets = selected; }; }
     ];
     specialArgs = { inherit pkgs; };
-  };
-  todoist = (evaluate [ toolsets.todoist ]).config;
-  chosen = (evaluate [ parent ]).config;
-  empty = (evaluate []).config;
-  bad = (evaluate [ toolsets.yomiyasu collision ]).config;
-  inventory = builtins.fromJSON (builtins.unsafeDiscardStringContext chosen.home.file.".pi/agent/toolsets.json".text);
+  }).config;
+  chosen = evaluate [ complete ];
+  empty = evaluate [];
+  collision = evaluate [ complete component ];
   launcher = builtins.head chosen.home.packages;
 in
-assert lib.all (a: a.assertion) todoist.assertions;
-assert todoist.home.file ? ".pi/agent/skills/todoist";
-assert todoist.home.file ? ".pi/agent/extensions/80-todoist-mcp.ts";
-assert !(empty.home.file ? ".pi/agent/extensions/80-todoist-mcp.ts");
-assert !(todoist.home.file ? ".pi/agent/mcp.json");
+# Only custom placement/launcher behaviour is tested, not the installed catalogue.
 assert lib.all (a: a.assertion) chosen.assertions;
-assert chosen.home.file ? ".pi/agent/skills/yomiyasu";
-assert !(empty.home.file ? ".pi/agent/skills/yomiyasu");
+assert chosen.home.file.".pi/agent/extensions/fixture.js".source == "${complete}/extensions/fixture.js";
+assert chosen.home.file ? ".pi/agent/skills/fixture";
+assert !(empty.home.file ? ".pi/agent/skills/fixture");
 assert !(chosen.home.file ? ".pi/agent/settings.json");
 assert !(chosen.home.file ? ".pi/agent/auth.json");
-assert builtins.length inventory == 2;
-assert builtins.elem pkgs.python3 chosen.home.packages;
-assert !(lib.all (a: a.assertion) bad.assertions);
-pkgs.runCommand "pi-toolset-module-tests" {} ''
-  grep -F '${pkgs.python3}/bin' ${launcher}/bin/pi
-  ${launcher}/bin/pi --version | grep -E '^[0-9]+\.[0-9]+\.[0-9]+'
+assert !(chosen.home.file ? ".pi/agent/mcp.json");
+assert builtins.elem runtime chosen.home.packages;
+assert !(lib.all (a: a.assertion) collision.assertions);
+pkgs.runCommand "pi-toolset-placement-check" {} ''
+  test -e ${complete}/skills/fixture/SKILL.md
+  test -e ${complete}/extensions/fixture.js
+  ${launcher}/bin/pi | grep '^runtime-ok$'
   touch "$out"
 ''
