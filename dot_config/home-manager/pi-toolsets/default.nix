@@ -7,7 +7,6 @@ let
   question = import ../pi-ask-user-question/package.nix { inherit pkgs piPackage; };
   todoistMcp = import ./todoist/mcp.nix { inherit pkgs; };
 in {
-  inherit todoistMcp;
   todoist = mkToolset {
     name = "pi-toolset-todoist";
     source = ./todoist;

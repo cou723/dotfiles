@@ -75,30 +75,6 @@
       piPackage = pi.packages.x86_64-linux.default;
     };
 
-    packages.x86_64-linux.pi-skills = import ./pi-skills/package.nix {
-      pkgs = nixpkgs-linux.legacyPackages.x86_64-linux;
-    };
-    packages.aarch64-darwin.pi-skills = import ./pi-skills/package.nix {
-      pkgs = nixpkgs.legacyPackages.aarch64-darwin;
-    };
-
-    checks.x86_64-linux.pi-skills = let
-      pkgs = nixpkgs-linux.legacyPackages.x86_64-linux;
-      skills = import ./pi-skills/package.nix { inherit pkgs; };
-    in pkgs.runCommand "pi-skills-tests" { nativeBuildInputs = [ pkgs.nodejs_24 pkgs.python3 ]; } ''
-      export PYTHONDONTWRITEBYTECODE=1
-      export SKILLS_ROOT=${skills}/skills
-      export PI_PACKAGE_DIR=${pi.packages.x86_64-linux.default}/lib/pi
-      node ${./pi-skills/smoke-test.mjs}
-      python3 ${skills}/skills/yomiyasu/scripts/yomiyasu_lint.py --help >/dev/null
-      printf '設定を変更しました。\n' > before.txt
-      cp before.txt after.txt
-      python3 ${skills}/skills/yomiyasu/scripts/yomiyasu_lint.py before.txt --json > lint.json
-      python3 ${skills}/skills/yomiyasu/scripts/yomiyasu_diff.py before.txt after.txt --json > diff.json
-      python3 -c 'import json; json.load(open("lint.json")); json.load(open("diff.json"))'
-      touch $out
-    '';
-
     checks.x86_64-linux.pi-conversation-history = let
       pkgs = nixpkgs-linux.legacyPackages.x86_64-linux;
       piPackage = pi.packages.x86_64-linux.default;

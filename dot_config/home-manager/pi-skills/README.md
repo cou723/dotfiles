@@ -1,7 +1,8 @@
 # Pi Skills の Home Manager 構成
 
 現在の環境では、`programs.pi.toolsets` で yomiyasu と explainer を個別に選択します。[ツールセットの説明](../pi-toolsets/README.md)を参照してください。
-ソースの固定情報は `sources.nix` にあります。`package.nix` は互換用に、両者をまとめた `pi-skills` 出力と既存の検査を維持しています。
+ソースの固定情報は `sources.nix` にあり、`yomiyasu.nix` と `explainer.nix` がそれぞれの資産を構築します。
+利用する公開出力は `pi-toolset-yomiyasu` と `pi-toolset-explainer` です。
 
 `sources.nix` は GitHub のコミット ID と、展開後の SHA-256 ハッシュを固定します。
 `flake.lock` は nixpkgs、Home Manager、Pi を固定します。構成のコピーやバックアップでは、このディレクトリ、`flake.nix`、Home Manager モジュールと一緒に保存してください。
@@ -21,15 +22,15 @@ Python 3、Node.js 24、D2 は、固定した nixpkgs リビジョンから提�
 
 ```sh
 home-manager switch --flake ~/.config/home-manager#coura
-nix build ~/.config/home-manager#checks.x86_64-linux.pi-skills --no-link -L
+nix build ~/.config/home-manager#checks.x86_64-linux.pi-toolsets --no-link -L
 ```
 
 macOS の適用では `#yuki.ueyama` を使ってください。
 Darwin の評価は確認済みですが、Linux ホスト上では Darwin のビルドを行っていません。
 
 Pi 内で `/reload` するか再起動してから、`/skill:yomiyasu` または `/skill:explainer` を実行してください。
-スモークテストは固定した Pi の Skill ローダーと、Home Manager と同じ方式のディレクトリリンクを使い、6つの Skills が衝突せず見つかることを確認します。
-小さな検査用データに対して yomiyasu の lint・diff スクリプトも実行します。explainer の全ツールを一通り実行する検査ではありません。
+`pi-toolsets` は yomiyasu・explainer を含む現行カタログをビルドし、宣言した公開リソースの存在を確認します。
+ビルド成功は、Skill の全手順や explainer の全ツールの動作を保証しません。
 
 ## explainer の追加依存
 
@@ -46,7 +47,7 @@ Pi の bash 環境内で `node --version` を確認してください。
 文書作成用の新規プロジェクトでは、これらを固定された依存構成の出発点にできます。
 
 ```sh
-skills=$(nix build ~/.config/home-manager#pi-skills --no-link --print-out-paths)
+skills=$(nix build ~/.config/home-manager#pi-toolset-explainer --no-link --print-out-paths)
 # 新規プロジェクトで実行する。既存プロジェクトの manifest は上書きしない。
 cp "$skills/upstream/package.json" "$skills/upstream/package-lock.json" .
 chmod u+w package.json package-lock.json
