@@ -108,6 +108,29 @@
       touch $out
     '';
 
+    packages.x86_64-linux.pi-context7 = import ./pi-context7/package.nix {
+      pkgs = nixpkgs-linux.legacyPackages.x86_64-linux;
+      piPackage = pi.packages.x86_64-linux.default;
+    };
+    packages.aarch64-darwin.pi-context7 = import ./pi-context7/package.nix {
+      pkgs = nixpkgs.legacyPackages.aarch64-darwin;
+      piPackage = pi.packages.aarch64-darwin.default;
+    };
+    checks.x86_64-linux.pi-context7 = let
+      pkgs = nixpkgs-linux.legacyPackages.x86_64-linux;
+      piPackage = pi.packages.x86_64-linux.default;
+      context7 = import ./pi-context7/package.nix { inherit pkgs piPackage; };
+      permissionReview = import ./pi-permission-auto-review/package.nix { inherit pkgs piPackage; };
+    in pkgs.runCommand "pi-context7-tests" { nativeBuildInputs = [ pkgs.nodejs_24 ]; } ''
+      export HOME="$TMPDIR/home"
+      mkdir -p "$HOME"
+      PI_PACKAGE_DIR=${piPackage}/lib/pi CONTEXT7_ROOT=${context7} \
+        REVIEW_ROOT=${permissionReview} \
+        POLICY_CONFIG=${./pi-permission-auto-review/permission-system.json} \
+        node ${./pi-context7/smoke-test.mjs}
+      touch $out
+    '';
+
     homeConfigurations = {
       "yuki.ueyama" = home-manager.lib.homeManagerConfiguration {
         pkgs = nixpkgs.legacyPackages.aarch64-darwin;

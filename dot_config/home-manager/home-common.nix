@@ -8,6 +8,10 @@ let
     inherit pkgs;
     piPackage = pi.packages.${pkgs.stdenv.hostPlatform.system}.default;
   };
+  context7 = import ./pi-context7/package.nix {
+    inherit pkgs;
+    piPackage = pi.packages.${pkgs.stdenv.hostPlatform.system}.default;
+  };
   skills = import ./pi-skills/package.nix { inherit pkgs; };
   askUserQuestion = import ./pi-ask-user-question/package.nix {
     inherit pkgs;
@@ -72,6 +76,11 @@ in
 
   home.file.".pi/agent/extensions/50-ask-user-question.ts".source =
     "${askUserQuestion}/extensions/50-ask-user-question.ts";
+
+  home.file.".pi/agent/extensions/70-context7.ts".source =
+    "${context7}/extensions/70-context7.ts";
+  home.file.".pi/agent/skills/context7-docs".source = "${context7}/skills/context7-docs";
+  home.file.".pi/agent/prompts/c7-docs.md".source = "${context7}/prompts/c7-docs.md";
 
   # Pi discovers these directories automatically; keep mutable settings.json alone.
   home.file.".pi/agent/skills/yomiyasu".source = "${skills}/skills/yomiyasu";

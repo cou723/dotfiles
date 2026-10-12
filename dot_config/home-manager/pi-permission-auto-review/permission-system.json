@@ -8,6 +8,9 @@
   "piInfrastructureReadPaths": [],
   "permission": {
     "*": "ask",
+    "ask_user_question": "allow",
+    "resolve-library-id": "allow",
+    "query-docs": "allow",
     "bash": "ask",
     "mcp": "ask",
     "skill": "ask",

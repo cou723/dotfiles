@@ -24,7 +24,11 @@ upstream fixed output protocol. The reviewer uses the existing `openai` login an
 Every reviewed action makes a separate paid model request, potentially retried
 within the configured 30-second total timeout.
 
-All tool surfaces default to `ask` and the `auto-review` authorizer resolves them.
+Tool surfaces default to `ask` and the `auto-review` authorizer resolves them.
+Three exact tool names bypass model review: `ask_user_question` and the official
+Context7 extension's `resolve-library-id` / `query-docs`. No generic MCP or shell
+exemption is added. Context7 queries are sent to its API: do not include secrets,
+personal data, or proprietary source in those arguments.
 `path` and `external_directory` are uniformly `allow`: they do not decide which
 directories are safe, and do not bypass the later tool/Bash/MCP review. There are
 no directory-specific allow/deny patterns. `yoloMode` is disabled.
