@@ -34,6 +34,18 @@ Restart Pi or `/reload` after deploying the extension/config. The upstream
 `/permission-auto-review` opens its editor. Local edits will be overwritten by
 chezmoi: change the canonical source for durable configuration.
 
+## Verdict contract
+
+The AI returns JSON with `outcome: "allow" | "deny"`, not a boolean and not a
+three-way decision. Optional fields are `risk_level`, `user_authorization`, and
+`rationale`. The Japanese custom policy denies ambiguous actions with a reason;
+it does not ask the model to return unsupported `ask` or `defer` values.
+
+The authorizer itself has three states: `allow`, `deny`, and `defer`. `defer` is
+an extension fallback for failures such as provider errors, timeouts, invalid
+responses/config, or internal errors, not an AI-selected verdict. Cancellation
+and the denial circuit breaker instead deny.
+
 ## Limits
 
 - A reviewer denial blocks execution. Model/credential/timeout/parse failures

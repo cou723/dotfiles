@@ -41,6 +41,10 @@ try {
     })).outcome, outcome);
   }
   assert.throws(() => review.parseReviewAssessment('not JSON'));
+  for (const outcome of ['ask', 'defer', true, false]) {
+    assert.throws(() => review.parseReviewAssessment(JSON.stringify({ outcome })),
+      'AI verdicts are allow/deny only; defer is an extension fallback');
+  }
   // Ensure both published WASM files work without native node-gyp bindings.
   const require = createRequire(join(root, 'node_modules/@gotgenes/pi-permission-system/package.json'));
   const { Parser, Language } = await import(pathToFileURL(require.resolve('web-tree-sitter')));
