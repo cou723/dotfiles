@@ -1,39 +1,49 @@
+import { readFileSync } from "node:fs";
+import { homedir } from "node:os";
+import { join } from "node:path";
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 
-export default function (pi: ExtensionAPI): void {
-  pi.registerMcpServer("gmail", {
-    command: "@gmailCommand@",
-    exposure: "hidden",
-    description: "Gmail: search and read messages/threads, retrieve attachments, create drafts and send only after human confirmation.",
-    toolExposure: {
-      start_google_auth: "codemode",
-      search_gmail_messages: "codemode",
-      get_gmail_message_content: "codemode",
-      get_gmail_messages_content_batch: "codemode",
-      get_gmail_thread_content: "codemode",
-      get_gmail_threads_content_batch: "codemode",
-      get_gmail_attachment_content: "codemode",
-      draft_gmail_message: "codemode",
-      send_gmail_message: "codemode",
-    },
-  });
-
-  // MCP calls from codemode also pass through tool_call. No approval caching:
-  // each attempt must be confirmed, even after a failed/ambiguous send.
-  pi.on("tool_call", async (event, ctx) => {
-    if (event.toolName !== "mcp__gmail__send_gmail_message") return;
-    if (!ctx.hasUI) {
-      return { block: true, reason: "Gmail sending requires an interactive human confirmation." };
+export default function (pi: ExtensionAPI) {
+  const path = process.env.GMAIL_MCP_CLIENT_SECRET_PATH ??
+    join(process.env.XDG_CONFIG_HOME ?? join(homedir(), ".config"), "pi-gmail", "client_secret.json");
+  let client: { client_id: string; client_secret: string } | undefined;
+  try {
+    const web = JSON.parse(readFileSync(path, "utf8")).web;
+    if (typeof web?.client_id !== "string" || !web.client_id.trim() ||
+        typeof web?.client_secret !== "string" || !web.client_secret.trim() ||
+        !Array.isArray(web.redirect_uris) ||
+        !web.redirect_uris.includes("http://127.0.0.1:8766/callback")) {
+      throw new Error("Invalid OAuth client configuration");
     }
-    try {
-      // JSON escapes control characters in untrusted addresses, subjects and bodies.
-      const approved = await ctx.ui.confirm(
-        "Gmail を送信しますか？（外部への送信・取り消し不可）",
-        "以下の実際の引数を確認してください。承認はこの1回だけ有効です。\n\n" + JSON.stringify(event.input, null, 2),
+    client = { client_id: web.client_id, client_secret: web.client_secret };
+  } catch {
+    // Never expose JSON contents, parser errors, or secrets to the chat/log.
+    pi.on("session_start", async (_event, ctx) => {
+      if (ctx.hasUI) ctx.ui.notify(
+        "Gmail MCP は未設定です。~/.config/pi-gmail/client_secret.json に Web application の OAuth JSON（redirect URI: http://127.0.0.1:8766/callback）を保存して /reload してください。GMAIL_MCP_CLIENT_SECRET_PATH による指定も可能です。",
+        "warning",
       );
-      if (approved !== true) return { block: true, reason: "Gmail send was not approved." };
-    } catch {
-      return { block: true, reason: "Gmail send confirmation failed; sending is blocked." };
-    }
+    });
+  }
+
+  pi.registerMcpServer("gmail", {
+    url: "https://gmailmcp.googleapis.com/mcp/v1",
+    enabled: client !== undefined,
+    description: "Google official Gmail MCP: search/read mail and create drafts on request. Sending and label changes are not exposed.",
+    exposure: "hidden",
+    toolExposure: {
+      search_threads: "codemode",
+      get_thread: "codemode",
+      get_message: "codemode",
+      list_drafts: "codemode",
+      list_labels: "codemode",
+      create_draft: "codemode",
+    },
+    oauth: {
+      ...(client ? { clientId: client.client_id, clientSecret: client.client_secret } : {}),
+      callbackUrl: "http://127.0.0.1:8766/callback",
+      scope: "https://www.googleapis.com/auth/gmail.readonly https://www.googleapis.com/auth/gmail.compose",
+      authServerMetadataUrl: "https://accounts.google.com/.well-known/openid-configuration",
+    },
   });
 }
