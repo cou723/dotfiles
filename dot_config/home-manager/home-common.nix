@@ -1,7 +1,7 @@
-{ pkgs, pi, ... }:
+{ pkgs, pi, workspaceMcp, ... }:
 let
   piPackage = pi.packages.${pkgs.stdenv.hostPlatform.system}.default;
-  toolsets = import ./pi-toolsets { inherit pkgs piPackage; };
+  toolsets = import ./pi-toolsets { inherit pkgs piPackage workspaceMcp; };
 in
 {
   imports = [ ./pi-toolsets/home-module.nix ];
@@ -10,7 +10,7 @@ in
     enable = true;
     package = piPackage;
     toolsets = with toolsets; [
-      permissions history askUserQuestion context7 yomiyasu explainer nixToolsets todoist subagents gitWorkflow
+      permissions history askUserQuestion context7 yomiyasu explainer nixToolsets todoist gmail subagents gitWorkflow
     ];
   };
 

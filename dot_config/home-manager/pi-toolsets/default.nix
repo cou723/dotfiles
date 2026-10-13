@@ -1,4 +1,4 @@
-{ pkgs, piPackage }:
+{ pkgs, piPackage, workspaceMcp }:
 let
   mkToolset = import ./mk-toolset.nix { inherit pkgs; };
   permission = import ../pi-permission-auto-review/package.nix { inherit pkgs piPackage; };
@@ -7,6 +7,7 @@ let
   question = import ../pi-ask-user-question/package.nix { inherit pkgs piPackage; };
   todoistMcp = import ./todoist/mcp.nix { inherit pkgs; };
 in {
+  gmail = import ./gmail { inherit pkgs workspaceMcp; };
   subagents = mkToolset {
     name = "pi-toolset-subagents";
     source = import ../pi-subagents/package.nix { inherit pkgs piPackage; };

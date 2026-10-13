@@ -110,6 +110,17 @@ OpenCodeの設定には依存しない。
 OpenCodeの過去セッション・認証データはPiへインポートしない。
 `pnpm install` の短縮エイリアスは、Piとの衝突を避けて `pni` とする。
 
+### Pi から Gmail を使う
+
+Gmail は [Workspace MCP toolset](dot_config/home-manager/pi-toolsets/gmail/README.md) を使う。
+サーバーと依存を Nix で固定し、Pi の codemode から検索・本文／スレッド・添付の取得、
+下書き作成、送信を行う。送信ごとに人間向けの確認ダイアログがあり、非対話実行では送信しない。
+
+初回は本人が Google Cloud の Gmail API と OAuth クライアントを設定し、JSON を
+`~/.config/workspace-mcp/client_secret.json` に保存する。秘密は Git・chezmoi・Nix store に入れない。
+Google 認証は `start_google_auth` ツール経由で行う（`/mcp login gmail` ではない）。
+OAuth の権限範囲、適用・ロールバック、初回確認の手順は上記 README を参照。
+
 ### Pi の共有設定
 
 共有設定のソースは `dot_pi/agent/`。NixはPi本体・権限審査・質問UI・undo・skillsを担当し、

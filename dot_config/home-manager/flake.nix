@@ -9,13 +9,46 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
     nixpkgs-linux.url = "github:NixOS/nixpkgs/nixpkgs-unstable";
+    workspace-mcp-src = {
+      url = "github:taylorwilsdon/google_workspace_mcp/v2.1.0";
+      flake = false;
+    };
+    pyproject-nix = {
+      url = "github:pyproject-nix/pyproject.nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+    uv2nix = {
+      url = "github:pyproject-nix/uv2nix";
+      inputs.pyproject-nix.follows = "pyproject-nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+    pyproject-build-systems = {
+      url = "github:pyproject-nix/build-system-pkgs";
+      inputs.pyproject-nix.follows = "pyproject-nix";
+      inputs.uv2nix.follows = "uv2nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
     home-manager-linux = {
       url = "github:nix-community/home-manager";
       inputs.nixpkgs.follows = "nixpkgs-linux";
     };
   };
 
-  outputs = { nixpkgs, home-manager, nixpkgs-linux, home-manager-linux, pi, ... }: {
+  outputs = { nixpkgs, home-manager, nixpkgs-linux, home-manager-linux, pi,
+    workspace-mcp-src, pyproject-nix, uv2nix, pyproject-build-systems, ... }:
+  let
+    mkWorkspaceMcp = pkgs: import ./pi-toolsets/gmail/server.nix {
+      inherit pkgs pyproject-nix uv2nix pyproject-build-systems;
+      source = workspace-mcp-src;
+    };
+    toolsetsFor = pkgs: import ./pi-toolsets {
+      inherit pkgs;
+      piPackage = pi.packages.${pkgs.stdenv.hostPlatform.system}.default;
+      workspaceMcp = mkWorkspaceMcp pkgs;
+    };
+  in {
+    packages.x86_64-linux.workspace-mcp = mkWorkspaceMcp nixpkgs-linux.legacyPackages.x86_64-linux;
+    packages.aarch64-darwin.workspace-mcp = mkWorkspaceMcp nixpkgs.legacyPackages.aarch64-darwin;
     packages.aarch64-darwin.default = home-manager.packages.aarch64-darwin.home-manager;
     packages.x86_64-linux.default = home-manager-linux.packages.x86_64-linux.home-manager;
 
@@ -49,24 +82,14 @@
       touch $out
     '';
 
-    packages.x86_64-linux.pi-toolset-yomiyasu =
-      (import ./pi-toolsets { pkgs = nixpkgs-linux.legacyPackages.x86_64-linux;
-        piPackage = pi.packages.x86_64-linux.default; }).yomiyasu;
-    packages.x86_64-linux.pi-toolset-explainer =
-      (import ./pi-toolsets { pkgs = nixpkgs-linux.legacyPackages.x86_64-linux;
-        piPackage = pi.packages.x86_64-linux.default; }).explainer;
-    packages.x86_64-linux.pi-toolset-nix-management =
-      (import ./pi-toolsets { pkgs = nixpkgs-linux.legacyPackages.x86_64-linux;
-        piPackage = pi.packages.x86_64-linux.default; }).nixToolsets;
-    packages.aarch64-darwin.pi-toolset-yomiyasu =
-      (import ./pi-toolsets { pkgs = nixpkgs.legacyPackages.aarch64-darwin;
-        piPackage = pi.packages.aarch64-darwin.default; }).yomiyasu;
-    packages.aarch64-darwin.pi-toolset-explainer =
-      (import ./pi-toolsets { pkgs = nixpkgs.legacyPackages.aarch64-darwin;
-        piPackage = pi.packages.aarch64-darwin.default; }).explainer;
-    packages.aarch64-darwin.pi-toolset-nix-management =
-      (import ./pi-toolsets { pkgs = nixpkgs.legacyPackages.aarch64-darwin;
-        piPackage = pi.packages.aarch64-darwin.default; }).nixToolsets;
+    packages.x86_64-linux.pi-toolset-gmail = (toolsetsFor nixpkgs-linux.legacyPackages.x86_64-linux).gmail;
+    packages.aarch64-darwin.pi-toolset-gmail = (toolsetsFor nixpkgs.legacyPackages.aarch64-darwin).gmail;
+    packages.x86_64-linux.pi-toolset-yomiyasu = (toolsetsFor nixpkgs-linux.legacyPackages.x86_64-linux).yomiyasu;
+    packages.x86_64-linux.pi-toolset-explainer = (toolsetsFor nixpkgs-linux.legacyPackages.x86_64-linux).explainer;
+    packages.x86_64-linux.pi-toolset-nix-management = (toolsetsFor nixpkgs-linux.legacyPackages.x86_64-linux).nixToolsets;
+    packages.aarch64-darwin.pi-toolset-yomiyasu = (toolsetsFor nixpkgs.legacyPackages.aarch64-darwin).yomiyasu;
+    packages.aarch64-darwin.pi-toolset-explainer = (toolsetsFor nixpkgs.legacyPackages.aarch64-darwin).explainer;
+    packages.aarch64-darwin.pi-toolset-nix-management = (toolsetsFor nixpkgs.legacyPackages.aarch64-darwin).nixToolsets;
     packages.x86_64-linux.pi-subagents = import ./pi-subagents/package.nix {
       pkgs = nixpkgs-linux.legacyPackages.x86_64-linux;
       piPackage = pi.packages.x86_64-linux.default;
@@ -87,12 +110,27 @@
         node ${./pi-subagents/smoke-test.mjs}
       touch $out
     '';
+    checks.x86_64-linux.pi-gmail = let
+      pkgs = nixpkgs-linux.legacyPackages.x86_64-linux;
+      server = mkWorkspaceMcp pkgs;
+      toolset = (toolsetsFor pkgs).gmail;
+      launcher = builtins.head toolset.piToolset.runtimePackages;
+    in pkgs.runCommand "pi-gmail-tests" { nativeBuildInputs = [ pkgs.nodejs_24 ]; } ''
+      export HOME="$TMPDIR/home"
+      mkdir -p "$HOME"
+      PI_PACKAGE_DIR=${pi.packages.x86_64-linux.default}/lib/pi GMAIL_ROOT=${toolset} \
+        node ${./pi-toolsets/gmail/smoke-test.mjs}
+      GMAIL_COMMAND=${launcher}/bin/pi-gmail-mcp \
+        ${server}/bin/python ${./pi-toolsets/gmail/server-smoke-test.py}
+      touch $out
+    '';
     checks.x86_64-linux.pi-toolset-module = import ./pi-toolsets/module-check.nix {
       pkgs = nixpkgs-linux.legacyPackages.x86_64-linux;
     };
     checks.x86_64-linux.pi-toolsets = import ./pi-toolsets/check.nix {
       pkgs = nixpkgs-linux.legacyPackages.x86_64-linux;
       piPackage = pi.packages.x86_64-linux.default;
+      workspaceMcp = mkWorkspaceMcp nixpkgs-linux.legacyPackages.x86_64-linux;
     };
 
     checks.x86_64-linux.pi-conversation-history = let
@@ -156,12 +194,18 @@
     homeConfigurations = {
       "yuki.ueyama" = home-manager.lib.homeManagerConfiguration {
         pkgs = nixpkgs.legacyPackages.aarch64-darwin;
-        extraSpecialArgs = { inherit pi; };
+        extraSpecialArgs = {
+          inherit pi;
+          workspaceMcp = mkWorkspaceMcp nixpkgs.legacyPackages.aarch64-darwin;
+        };
         modules = [ ./home-common.nix ./home-darwin.nix ];
       };
       "coura" = home-manager-linux.lib.homeManagerConfiguration {
         pkgs = nixpkgs-linux.legacyPackages.x86_64-linux;
-        extraSpecialArgs = { inherit pi; };
+        extraSpecialArgs = {
+          inherit pi;
+          workspaceMcp = mkWorkspaceMcp nixpkgs-linux.legacyPackages.x86_64-linux;
+        };
         modules = [ ./home-common.nix ./home-linux.nix ];
       };
     };

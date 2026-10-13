@@ -1,0 +1,37 @@
+// Load the real Pi extension; exercise the gate without invoking Gmail.
+import assert from 'node:assert/strict';
+import { join } from 'node:path';
+import { pathToFileURL } from 'node:url';
+const host = join(process.env.PI_PACKAGE_DIR, 'node_modules/@earendil-works/pi-coding-agent');
+const { loadExtensions } = await import(pathToFileURL(join(host, 'dist/core/extensions/loader.js')));
+const loaded = await loadExtensions([join(process.env.GMAIL_ROOT, 'extensions/85-gmail.ts')], process.cwd());
+assert.deepEqual(loaded.errors, []);
+const server = loaded.runtime.mcpServers.get('gmail');
+assert.ok(server);
+assert.equal(server.config.exposure, 'hidden');
+assert.equal(server.config.toolExposure.send_gmail_message, 'codemode');
+assert.equal(server.config.toolExposure.manage_gmail_filter, undefined);
+assert.ok(server.config.command.startsWith('/nix/store/'));
+const handlers = loaded.extensions[0].handlers.get('tool_call');
+assert.equal(handlers.length, 1);
+const gate = handlers[0];
+const input = { user_google_email: 'me@example.invalid', to: 'you@example.invalid', subject: 'test\u001b[2J', body: 'Test only', bcc: 'bcc@example.invalid', thread_id: 'thread' };
+const send = { toolName: 'mcp__gmail__send_gmail_message', input, parentToolCallId: 'codemode-1' };
+let confirmations = 0;
+const context = (approved) => ({ hasUI: true, ui: { confirm: async (_title, message) => {
+  confirmations++;
+  assert.ok(message.includes(JSON.stringify(input, null, 2)), 'Full actual input is shown, including BCC and thread');
+  assert.ok(!message.includes('\u001b'), 'Terminal control characters are escaped');
+  return approved;
+} } });
+assert.equal(await gate({ ...send, toolName: 'mcp__gmail__search_gmail_messages' }, context(false)), undefined);
+assert.equal(confirmations, 0);
+assert.equal((await gate(send, { hasUI: false })).block, true);
+assert.equal((await gate(send, context(false))).block, true);
+assert.equal(await gate(send, context(true)), undefined);
+assert.equal(await gate(send, context(true)), undefined);
+assert.equal(confirmations, 3, 'No cached approval, including nested codemode calls');
+assert.equal((await gate(send, context(undefined))).block, true);
+assert.equal((await gate(send, context('yes'))).block, true);
+assert.equal((await gate(send, { hasUI: true, ui: { confirm: async () => { throw Error('UI unavailable'); } } })).block, true);
+console.log('Gmail registration and fail-closed send confirmation: OK (no account/API calls)');
