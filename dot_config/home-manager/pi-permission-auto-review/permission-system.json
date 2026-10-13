@@ -10,6 +10,7 @@
     "*": "ask",
     "codemode": "allow",
     "subagent": "allow",
+    "contact_supervisor": "allow",
     "ask_user_question": "allow",
     "resolve-library-id": "allow",
     "query-docs": "allow",

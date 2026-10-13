@@ -22,6 +22,23 @@ Claude 定義 `name: audit` は **`claude-audit`** として呼び出す（Pi �
 `subagent` は上流のツール名であり、Claude Code の `Agent` / `Task` ツールの引数そのものとは互換でない。
 詳しい操作は同梱の `extensions/subagent/docs/` にある。
 
+## グローバル Researcher
+
+chezmoi 管理の `dot_pi/agent/agents/researcher.md` を
+`~/.pi/agent/agents/researcher.md` に配置する。ユーザー定義なので上流の同名 builtin を置き換える。
+呼び出し名は `researcher`（別名 `Researcher`）。プロジェクトの同名定義があればそちらが優先される。
+
+- fresh コンテキストで調査・検証を完結し、親には結論、参照先、検証結果、未確認事項だけを返す。
+- `advertise: true` で親に短い役割説明を公開する。調査手順の本文は子専用。
+- 調査対象は読み取り専用。書き込みは自分で作った `/tmp/researcher.*` の配下のみ。
+- `tools` / `extensions` の allowlist は置かず、標準ツールと通常の拡張探索を使う。`async: true` を既定にして、既存の Context7 などの ambient 拡張を子でも読み込む。前景実行を明示した場合は ambient 拡張を継承しない。上流 builtin の `pi-web-access` は必須ではない。
+- 権限審査は親と同じ既存の必須拡張に従う。ツールの完全な同一性は実行基盤に依存し、再委任は許可しない。
+- 読み取り専用や秘密へのアクセス禁止は行動規約であり、OS レベルの強制ではない。`edit` などが利用可能でも役割上は調査対象を変更しない。現行構成に OS sandbox はない。
+
+定義だけの適用は `chezmoi apply ~/.pi/agent/agents/researcher.md`、その後 `/reload`。
+例えば「researcher に、この仕様が現在の実装で成立するか調べさせて。対象は …」と依頼する。
+親は問い・対象・必要な出力を渡し、探索や検証の具体的な手順は子に任せる。
+
 ## 互換性と差分
 
 | 機能 | この構成 |
