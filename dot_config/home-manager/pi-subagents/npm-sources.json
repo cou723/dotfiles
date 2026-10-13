@@ -1,0 +1,44 @@
+[
+  {
+    "name": "pi-subagents",
+    "version": "0.77.0",
+    "url": "https://registry.npmjs.org/pi-subagents/-/pi-subagents-0.77.0.tgz",
+    "hash": "sha256-SSJqQUyr7lbzddr6VQHykpvyS6lMSySR4+ZmxbrkTQc="
+  },
+  {
+    "name": "jiti",
+    "version": "2.7.0",
+    "url": "https://registry.npmjs.org/jiti/-/jiti-2.7.0.tgz",
+    "hash": "sha256-jdDTZftJwOfMQtagDfb7LakFb8JEkglDRvw07NvPKMo="
+  },
+  {
+    "name": "yaml",
+    "version": "2.8.3",
+    "url": "https://registry.npmjs.org/yaml/-/yaml-2.8.3.tgz",
+    "hash": "sha256-lTmAXXRH3vK+1cW0rKzCgzYsXoCrxdk0crLzXwy/ha0="
+  },
+  {
+    "name": "acorn",
+    "version": "8.18.0",
+    "url": "https://registry.npmjs.org/acorn/-/acorn-8.18.0.tgz",
+    "hash": "sha256-CtTA8o+bxbtvPrh5tP04Jl3vbX4eXWH5b3juaop76Uo="
+  },
+  {
+    "name": "undici",
+    "version": "8.10.2",
+    "url": "https://registry.npmjs.org/undici/-/undici-8.10.2.tgz",
+    "hash": "sha256-dAY4rjLXjSZGpnJ5UONl+ia2+oeRP6CW5g7Ur+tGNKo="
+  },
+  {
+    "name": "@js-temporal/polyfill",
+    "version": "0.5.1",
+    "url": "https://registry.npmjs.org/@js-temporal/polyfill/-/polyfill-0.5.1.tgz",
+    "hash": "sha256-yZpNpWeKVaM9/TDJd4Ut+sm757i6xzmZ8YWMFnvms+M="
+  },
+  {
+    "name": "jsbi",
+    "version": "4.3.0",
+    "url": "https://registry.npmjs.org/jsbi/-/jsbi-4.3.0.tgz",
+    "hash": "sha256-xHUJ7I4/kbbe1jIRPurlf8wUTuxxLTI+OsLz3R8NAkc="
+  }
+]

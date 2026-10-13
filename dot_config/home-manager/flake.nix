@@ -67,6 +67,26 @@
     packages.aarch64-darwin.pi-toolset-nix-management =
       (import ./pi-toolsets { pkgs = nixpkgs.legacyPackages.aarch64-darwin;
         piPackage = pi.packages.aarch64-darwin.default; }).nixToolsets;
+    packages.x86_64-linux.pi-subagents = import ./pi-subagents/package.nix {
+      pkgs = nixpkgs-linux.legacyPackages.x86_64-linux;
+      piPackage = pi.packages.x86_64-linux.default;
+    };
+    packages.aarch64-darwin.pi-subagents = import ./pi-subagents/package.nix {
+      pkgs = nixpkgs.legacyPackages.aarch64-darwin;
+      piPackage = pi.packages.aarch64-darwin.default;
+    };
+    checks.x86_64-linux.pi-subagents = let
+      pkgs = nixpkgs-linux.legacyPackages.x86_64-linux;
+      piPackage = pi.packages.x86_64-linux.default;
+      extension = import ./pi-subagents/package.nix { inherit pkgs piPackage; };
+    in pkgs.runCommand "pi-subagents-tests" { nativeBuildInputs = [ pkgs.nodejs_24 ]; } ''
+      export HOME="$TMPDIR/home"
+      mkdir -p "$HOME"
+      PI_PACKAGE_DIR=${piPackage}/lib/pi SUBAGENTS_ROOT=${extension} \
+        MOCK_PROVIDER=${./pi-subagents/mock-provider.ts} \
+        node ${./pi-subagents/smoke-test.mjs}
+      touch $out
+    '';
     checks.x86_64-linux.pi-toolset-module = import ./pi-toolsets/module-check.nix {
       pkgs = nixpkgs-linux.legacyPackages.x86_64-linux;
     };

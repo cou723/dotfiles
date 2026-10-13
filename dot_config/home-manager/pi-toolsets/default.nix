@@ -7,6 +7,13 @@ let
   question = import ../pi-ask-user-question/package.nix { inherit pkgs piPackage; };
   todoistMcp = import ./todoist/mcp.nix { inherit pkgs; };
 in {
+  subagents = mkToolset {
+    name = "pi-toolset-subagents";
+    source = import ../pi-subagents/package.nix { inherit pkgs piPackage; };
+    resources.extensions = [ "subagent" ];
+    runtimePackages = [ pkgs.nodejs_24 pkgs.git ];
+    requirements = [ "Pi model authentication at runtime; Claude CLI is not required. Native children require the existing permission extensions; external/remote runners are intentionally rejected." ];
+  };
   todoist = mkToolset {
     name = "pi-toolset-todoist";
     source = ./todoist;

@@ -12,7 +12,7 @@ programs.pi = {
   enable = true;
   package = piPackage;
   toolsets = with toolsets; [
-    permissions history askUserQuestion context7 yomiyasu explainer nixToolsets todoist
+    permissions history askUserQuestion context7 yomiyasu explainer nixToolsets todoist subagents
   ];
 };
 ```
@@ -78,6 +78,7 @@ home-manager switch --flake .#coura
 - **yomiyasu**：固定した Skill と Python を提供します。
 - **explainer**：固定した5つの Skills、Node 24、Python、D2 を提供します。プロジェクトの JS 依存、ブラウザ、TALA、形式手法ツール、fresh subagent の実行環境は、すべてが整っているわけではありません。Linux で固定している D2 v0.7.1 は、新しい端末レンダラー・TALA を使う手順には対応しません。
 - **context7**：MCP アダプターではなく、固定した Pi ネイティブ拡張を使います。ネットワークと認証は実行時の条件です。
+- **subagents**：固定した pi-subagents 0.77.0 と Claude 定義の互換アダプター。子にも既存の権限拡張を必須ロードします。ネイティブ子の fresh 実行は決定論的なテストモデルで検証済みですが、実認証を使う背景・再開・worktree の全手順は別途検証が必要です。[対応範囲と差分](../pi-subagents/README.md)を参照してください。
 - **permissions/history/question**：既存の固定済み拡張パッケージを維持しています。
 
 `requirements` は未充足条件の記録であり、検査や依存の供給は行いません。

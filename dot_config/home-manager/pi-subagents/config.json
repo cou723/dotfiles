@@ -1,0 +1,8 @@
+{
+  "toolActivation": "eager",
+  "defaultSubagentContext": "fresh",
+  "asyncByDefault": false,
+  "globalConcurrencyLimit": 4,
+  "worktreeProvider": "native",
+  "artifactDir": "session"
+}
