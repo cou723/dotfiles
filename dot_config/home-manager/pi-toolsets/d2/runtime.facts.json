@@ -1,0 +1,6 @@
+{
+  "boxes": ["d2", "explainer", "home", "pi"],
+  "deps": ["d2->explainer", "explainer->home", "home->pi"],
+  "exhaustive": true,
+  "maxColumns": 70
+}
