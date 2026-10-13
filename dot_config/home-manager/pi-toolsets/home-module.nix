@@ -19,6 +19,8 @@ let
     requirements = (metadata package).requirements;
   }) selected;
   launcher = pkgs.writeShellScriptBin "pi" ''
+    # Pi itself is updated through the flake, not pi.dev's release notification.
+    export PI_SKIP_VERSION_CHECK=1
     ${lib.optionalString (runtimePackages != []) ''export PATH="${lib.makeBinPath runtimePackages}:$PATH"''}
     exec ${cfg.package}/bin/pi "$@"
   '';

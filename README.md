@@ -90,6 +90,8 @@ chezmoi update    # git pull + apply を一発で実行
 Pi は `github:earendil-works/pi/stable` の default パッケージを Home Manager で
 macOS / Linux 共通にインストールする。`nix profile add` は不要で、上記の
 Home Manager の切り替えコマンドで反映する。バージョンは `flake.lock` で固定する。
+Nix管理のランチャーでは `PI_SKIP_VERSION_CHECK=1` を設定し、Pi本体の新版通知を無効にする。
+更新はNix側で行い、モデル一覧の更新やnpm拡張の更新確認は無効にしない。
 
 ```sh
 ai    # pi
