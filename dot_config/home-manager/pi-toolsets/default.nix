@@ -6,6 +6,7 @@ let
   context7 = import ../pi-context7/package.nix { inherit pkgs piPackage; };
   question = import ../pi-ask-user-question/package.nix { inherit pkgs piPackage; };
   todoistMcp = import ./todoist/mcp.nix { inherit pkgs; };
+  d2 = import ./d2/package.nix { inherit pkgs; };
 in {
   gmail = import ./gmail { inherit pkgs; };
   subagents = mkToolset {
@@ -32,10 +33,9 @@ in {
     name = "pi-toolset-explainer";
     source = import ../pi-skills/explainer.nix { inherit pkgs; };
     resources.skills = [ "explainer" "explainer-book" "first-reader" "d2-diagram" "d2-slides" ];
-    runtimePackages = [ pkgs.nodejs_24 pkgs.python3 pkgs.d2 ];
+    runtimePackages = [ pkgs.nodejs_24 pkgs.python3 d2 ];
     requirements = [
       "Document rendering: project-local locked JS dependencies and a matching Playwright browser; not supplied by this toolset."
-      "D2 workflows: TALA and the required terminal renderer must be verified; nixpkgs D2 alone is not a guarantee."
       "Fresh-reader workflows: a suitable fresh-subagent execution backend; not installed here."
       "Formal-methods workflows: TLC/Apalache/Z3 as needed; not installed here."
     ];

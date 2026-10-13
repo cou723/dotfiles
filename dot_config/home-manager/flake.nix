@@ -59,9 +59,15 @@
     packages.aarch64-darwin.pi-toolset-gmail = (toolsetsFor nixpkgs.legacyPackages.aarch64-darwin).gmail;
     packages.x86_64-linux.pi-toolset-yomiyasu = (toolsetsFor nixpkgs-linux.legacyPackages.x86_64-linux).yomiyasu;
     packages.x86_64-linux.pi-toolset-explainer = (toolsetsFor nixpkgs-linux.legacyPackages.x86_64-linux).explainer;
+    packages.x86_64-linux.pi-d2 = import ./pi-toolsets/d2/package.nix {
+      pkgs = nixpkgs-linux.legacyPackages.x86_64-linux;
+    };
     packages.x86_64-linux.pi-toolset-nix-management = (toolsetsFor nixpkgs-linux.legacyPackages.x86_64-linux).nixToolsets;
     packages.aarch64-darwin.pi-toolset-yomiyasu = (toolsetsFor nixpkgs.legacyPackages.aarch64-darwin).yomiyasu;
     packages.aarch64-darwin.pi-toolset-explainer = (toolsetsFor nixpkgs.legacyPackages.aarch64-darwin).explainer;
+    packages.aarch64-darwin.pi-d2 = import ./pi-toolsets/d2/package.nix {
+      pkgs = nixpkgs.legacyPackages.aarch64-darwin;
+    };
     packages.aarch64-darwin.pi-toolset-nix-management = (toolsetsFor nixpkgs.legacyPackages.aarch64-darwin).nixToolsets;
     packages.x86_64-linux.pi-subagents = import ./pi-subagents/package.nix {
       pkgs = nixpkgs-linux.legacyPackages.x86_64-linux;
