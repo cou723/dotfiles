@@ -1,7 +1,7 @@
-{ pkgs, pi, workspaceMcp, ... }:
+{ pkgs, pi, ... }:
 let
   piPackage = pi.packages.${pkgs.stdenv.hostPlatform.system}.default;
-  toolsets = import ./pi-toolsets { inherit pkgs piPackage workspaceMcp; };
+  toolsets = import ./pi-toolsets { inherit pkgs piPackage; };
 in
 {
   imports = [ ./pi-toolsets/home-module.nix ];
