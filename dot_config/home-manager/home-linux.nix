@@ -1,5 +1,4 @@
 { pkgs, ... }:
-
 {
   home.username = "coura";
   home.homeDirectory = "/home/coura";
@@ -8,8 +7,6 @@
     # ユーティリティ
     xclip
     ripgrep
-    bubblewrap
-    socat
     deno
     strace
 
