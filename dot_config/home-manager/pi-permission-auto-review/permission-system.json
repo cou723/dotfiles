@@ -8,6 +8,7 @@
   "piInfrastructureReadPaths": [],
   "permission": {
     "*": "ask",
+    "subagent": "allow",
     "ask_user_question": "allow",
     "resolve-library-id": "allow",
     "query-docs": "allow",

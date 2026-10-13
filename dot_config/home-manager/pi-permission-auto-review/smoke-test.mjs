@@ -20,7 +20,7 @@ try {
   assert.deepEqual(policy.authorizerChain, ['auto-review']);
   assert.equal(policy.yoloMode, false);
   assert.equal(policy.permission['*'], 'ask');
-  for (const name of ['ask_user_question', 'resolve-library-id', 'query-docs']) {
+  for (const name of ['subagent', 'ask_user_question', 'resolve-library-id', 'query-docs']) {
     assert.equal(policy.permission[name], 'allow');
   }
   for (const surface of ['bash', 'mcp', 'skill']) assert.equal(policy.permission[surface], 'ask');
