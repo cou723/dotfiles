@@ -11,7 +11,7 @@ home-common.nix の programs.pi.toolsets で選ぶ。既存 yomiyasu 定義が�
 mk-toolset.nix の入力：
 - name：パッケージの一意名。
 - source：skills/、extensions/、prompts/、themes/ を含む path/derivation。
-- resources：自身が公開する相対パスのリスト（glob は使わない）。
+- resources：自身が公開する相対パスのリスト（glob は使わない）。extensions/skills/prompts/themes に加え、pi-subagents 用の agents に対応。agents は `pi-subagents.agents` としてパッケージに宣言し、グローバルでは `~/.pi/agent/agents/` に配置する。
 - runtimePackages：Pi 起動環境に供給する Nix packages。
 - components：組み込む他の mkToolset 出力。buildEnv が資産を合成し、公開リソース・実行環境・条件を完成物に集約する。
 - requirements：供給していない実行条件。宣言だけで検査済みにはならない。

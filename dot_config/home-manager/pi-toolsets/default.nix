@@ -64,6 +64,16 @@ in {
     source = question;
     resources.extensions = [ "50-ask-user-question.ts" ];
   };
+  gitWorkflow = mkToolset {
+    name = "pi-toolset-git-workflow";
+    source = ./git-workflow;
+    resources = {
+      skills = [ "git-workflow" ];
+      agents = [ "git-committer.md" ];
+    };
+    runtimePackages = [ pkgs.git ];
+    requirements = [ "pi-subagents native runtime and Pi model authentication; supplied globally by the selected subagents toolset, not bundled here." ];
+  };
   nixToolsets = mkToolset {
     name = "pi-toolset-nix-management";
     source = ./management-skill;

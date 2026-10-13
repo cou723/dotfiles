@@ -4,7 +4,9 @@
 { name, source, resources ? {}, runtimePackages ? [], components ? [], requirements ? [] }:
 let
   lib = pkgs.lib;
-  kinds = [ "extensions" "skills" "prompts" "themes" ];
+  piKinds = [ "extensions" "skills" "prompts" "themes" ];
+  # agents は Pi 本体ではなく pi-subagents が読む資産。
+  kinds = piKinds ++ [ "agents" ];
   ownResources = lib.genAttrs kinds (kind: resources.${kind} or []);
   exported = lib.genAttrs kinds (kind: lib.unique (
     ownResources.${kind} ++ lib.concatMap (p: p.piToolset.resources.${kind}) components
@@ -15,7 +17,9 @@ let
     inherit name;
     private = true;
     keywords = [ "pi-package" ];
-    pi = lib.mapAttrs (kind: paths: map (path: "./${kind}/${path}") paths) exported;
+    pi = lib.genAttrs piKinds (kind: map (path: "./${kind}/${path}") exported.${kind});
+  } // lib.optionalAttrs (exported.agents != []) {
+    "pi-subagents".agents = lib.unique (map (path: builtins.dirOf "./agents/${path}") exported.agents);
   };
   metadata = {
     inherit name;

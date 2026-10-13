@@ -8,7 +8,7 @@ let
       name = ".pi/agent/${kind}/${path}";
       value.source = "${package}/${kind}/${path}";
     }) (metadata package).resources.${kind})
-    [ "extensions" "skills" "prompts" "themes" ]) selected;
+    [ "extensions" "skills" "prompts" "themes" "agents" ]) selected;
   destinations = map (entry: entry.name) entries;
   runtimePackages = lib.unique (lib.concatMap (package: (metadata package).runtimePackages) selected);
   inventory = map (package: {

@@ -12,7 +12,7 @@ programs.pi = {
   enable = true;
   package = piPackage;
   toolsets = with toolsets; [
-    permissions history askUserQuestion context7 yomiyasu explainer nixToolsets todoist subagents
+    permissions history askUserQuestion context7 yomiyasu explainer nixToolsets todoist subagents gitWorkflow
   ];
 };
 ```
@@ -45,7 +45,9 @@ nixpkgs の `buildEnv` がリソースのディレクトリ構造を合成しま
 
 Home Manager モジュールの役割は次のとおりです。
 
-- 完成パッケージの extensions・skills・prompts・themes をリンクする。
+- 完成パッケージの extensions・skills・prompts・themes・agents をリンクする。
+  agents は pi-subagents の資産で、Pi 本体の `pi.agents` ではない。
+  パッケージ経由でも読めるよう `package.json` の `pi-subagents.agents` に探索ディレクトリを宣言する。
 - 実行時パッケージと、それらのコマンドのパスを PATH の先頭に加える `pi` ランチャーを提供する。
 - 選択した完成パッケージの一覧を `~/.pi/agent/toolsets.json` に書く。
 - 可変設定、認証情報、OAuth 状態、信頼設定、ログは変更しない。
@@ -74,6 +76,7 @@ home-manager switch --flake .#coura
 
 ## 各パッケージの対応範囲
 
+- **gitWorkflow**：個人の Git 方針を持つ Skill と、fresh context で作業する `git-committer` Agent を提供します。親には短い結果だけを返します。同じ作業ツリーで直列実行し、コミットは依頼・許可の範囲のみ。pi-subagents 基盤は別途選択した `subagents` が供給します。登録のみでは実際のコミット動作の確認にはなりません。
 - **todoist**：Skill と Pi 標準 MCP の登録拡張を一つの完成パッケージにまとめています。HTTP 接続先の固定はリモート実装の固定ではありません。[Todoist の説明](todoist/README.md)を参照してください。
 - **yomiyasu**：固定した Skill と Python を提供します。
 - **explainer**：固定した5つの Skills、Node 24、Python、D2 を提供します。プロジェクトの JS 依存、ブラウザ、TALA、形式手法ツール、fresh subagent の実行環境は、すべてが整っているわけではありません。Linux で固定している D2 v0.7.1 は、新しい端末レンダラー・TALA を使う手順には対応しません。
