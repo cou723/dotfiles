@@ -16,6 +16,9 @@
 /dot_pi/**/pi-web-session-*.json
 /dot_pi/**/private_pi-web-session-*.json
 /dot_pi/agent/extensions/node_modules/
+/dot_pi/agent/extensions/**/node_modules/
+/dot_pi/pi-permission-gate.jsonl
+/dot_pi/private_pi-permission-gate.jsonl
 /dot_local/share/pi-language-servers/node_modules/
 /dot_pi/agent/extensions/sandbox-ceiling/node_modules/
 /dot_pi/agent/extensions/sandbox-ceiling/.pnpm-store/

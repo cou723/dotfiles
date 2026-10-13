@@ -9,6 +9,9 @@ bun.lockb
 .pi/agent/models.json
 .pi/agent/logs
 .pi/agent/verdicts
+.pi/pi-permission-gate.jsonl
+# Removed during the user-side migration; never deploy the retired gate config.
+.pi/agent/config/pi-verdict.json
 # Retired permission-gate configs/logs are local rollback data only.
 .pi/agent/extensions/pi-permission-classifier
 # Permission configs are deployed; only generated runtime state is excluded.

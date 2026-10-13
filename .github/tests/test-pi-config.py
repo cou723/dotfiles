@@ -1,7 +1,6 @@
 """Run with python3 .github/tests/test-pi-config.py (no credentials required)."""
 import json
 from pathlib import Path
-import re
 import subprocess
 import sys
 import unittest
@@ -22,9 +21,10 @@ def merge(settings):
 class PiConfigTests(unittest.TestCase):
     def test_new_machine(self):
         config = merge("")
+        self.assertEqual(config["defaultProvider"], "openai")
         self.assertEqual(config["defaultModel"], "gpt-6.1-sol")
         self.assertEqual(config["defaultTools"], ["+codemode"])
-        self.assertEqual(config["packages"], ["npm:pi-verdict@0.15.0"])
+        self.assertEqual(config["packages"], ["npm:@calesennett/pi-codex-fast"])
         self.assertNotIn("deviceId", config)
         self.assertNotIn("lastChangelogVersion", config)
 
@@ -32,12 +32,20 @@ class PiConfigTests(unittest.TestCase):
         config = merge(json.dumps({
             "deviceId": "test-device", "lastChangelogVersion": "test-version",
             "theme": "light", "defaultModel": "old-model", "packages": ["old-package"],
+            "retry": {"provider": {"maxRetries": 2}}, "mcp": {"test": "local"},
+            "permissionGate": {"model": "old", "fallback": "allow", "obsolete": True},
         }))
         self.assertEqual(config["deviceId"], "test-device")
         self.assertEqual(config["lastChangelogVersion"], "test-version")
         self.assertEqual(config["theme"], "light")
+        self.assertEqual(config["retry"], {"provider": {"maxRetries": 2}})
+        self.assertEqual(config["mcp"], {"test": "local"})
         self.assertEqual(config["defaultModel"], "gpt-6.1-sol")
-        self.assertEqual(config["packages"], ["npm:pi-verdict@0.15.0"])
+        self.assertEqual(config["packages"], ["npm:@calesennett/pi-codex-fast"])
+        self.assertNotIn("permissionGate", config)
+
+    def test_no_permission_gate_on_new_machine(self):
+        self.assertNotIn("permissionGate", merge("{}"))
 
     def test_idempotent(self):
         first = merge("{}")
@@ -47,47 +55,26 @@ class PiConfigTests(unittest.TestCase):
         with self.assertRaises(subprocess.CalledProcessError):
             merge("[]")
 
-    def test_verdict_config(self):
-        config = json.loads((AGENT / "config/pi-verdict.json").read_text())
-        self.assertEqual(config["classifierModel"], "permission-chat/luna")
-        self.assertTrue(config["builtinDenyFloor"])
-        self.assertEqual(config["codemodeNestedCalls"], "gate")
-        self.assertTrue(config["audit"])
-        self.assertTrue(config["auditRedactSecrets"])
-        self.assertIsNone(config["toggleShortcut"])
-        self.assertIsNone(config["classifierFallbackModel"])
-        self.assertIn("codemode", config["ignoreTools"])
-        self.assertNotIn("bash", config["ignoreTools"])
-        self.assertNotIn("migration_probe", config["ignoreTools"])
+    def test_retired_review_removed_on_apply(self):
+        removals = (ROOT / ".chezmoiremove").read_text().splitlines()
+        for name in ["20-permission-luna-chat.ts", "permission-review"]:
+            self.assertFalse((AGENT / "extensions" / name).exists())
+            self.assertIn(f".pi/agent/extensions/{name}", removals)
 
-    def test_sensitive_path_regexes(self):
-        config = json.loads((AGENT / "config/pi-verdict.json").read_text())
-        deny = [re.compile(pattern) for pattern in config["deny"]]
-        sensitive = [
-            "/home/user/.ssh/config", "cat ~/.ssh/id_rsa",
-            "/Users/user/.gnupg/key", "/home/user/.aws/credentials",
-            "cat /home/user/.pi/agent/auth.json",
-            "/home/user/.pi/agent/extensions/20-permission-luna-chat.ts",
-            "/project/.env", "/project/app.env", "/project/.env.production",
-        ]
-        for value in sensitive:
-            with self.subTest(value=value):
-                self.assertTrue(any(pattern.search(value) for pattern in deny))
-        for value in ["/project/.env.example", "/project/README.md", "git status --short"]:
-            with self.subTest(value=value):
-                self.assertFalse(any(pattern.search(value) for pattern in deny))
-
-    def test_retired_configs_not_managed(self):
+    def test_retired_configs_not_deployed(self):
+        ignore = (ROOT / ".chezmoiignore").read_text()
+        self.assertIn(".pi/agent/config/pi-verdict.json", ignore)
         self.assertFalse((AGENT / "extensions/pi-permission-classifier/config.json").exists())
         self.assertFalse((AGENT / "extensions/private_pi-permission-system/config.json").exists())
 
-    def test_alias_exists(self):
-        content = (AGENT / "extensions/20-permission-luna-chat.ts").read_text()
-        self.assertIn('id: "luna"', content)
-        self.assertIn('type: "chat"', content)
-        self.assertIn('reasoning: "off"', content)
-        self.assertIn('AbortSignal.timeout(15000)', content)
-        self.assertNotIn('readFile', content)
+    def test_generated_files_and_audit_excluded(self):
+        gitignore = (ROOT / ".gitignore").read_text()
+        chezignore = (ROOT / ".chezmoiignore").read_text()
+        self.assertIn("/dot_pi/agent/extensions/**/node_modules/", gitignore)
+        self.assertIn(".pi/agent/extensions/*/node_modules", chezignore)
+        self.assertIn("/dot_pi/pi-permission-gate.jsonl", gitignore)
+        self.assertIn(".pi/pi-permission-gate.jsonl", chezignore)
+
 
 
 if __name__ == "__main__":

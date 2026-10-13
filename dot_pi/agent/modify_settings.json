@@ -8,11 +8,15 @@ settings = json.loads(raw) if raw.strip() else {}
 if not isinstance(settings, dict):
     raise SystemExit("Pi settings must be a JSON object")
 
+# Retired AI permission review must not survive on previously configured devices.
+settings.pop("permissionGate", None)
+
 settings.update({
     "defaultProvider": "openai",
     "defaultModel": "gpt-6.1-sol",
     "defaultTools": ["+codemode"],
-    "packages": ["npm:pi-verdict@0.15.0"],
+    # Permission extensions are managed by Home Manager; keep the active npm tool.
+    "packages": ["npm:@calesennett/pi-codex-fast"],
 })
 json.dump(settings, sys.stdout, ensure_ascii=False, indent=2)
 sys.stdout.write("\n")
