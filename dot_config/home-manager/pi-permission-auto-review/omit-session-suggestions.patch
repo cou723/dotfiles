@@ -1,0 +1,14 @@
+--- a/dist/verdict-VFGyevZ2.js
++++ b/dist/verdict-VFGyevZ2.js
+@@ -240,11 +240,9 @@
+ 	"command",
+ 	"target",
+ 	"toolInputPreview",
+-	"sessionLabel",
+ 	"surface",
+ 	"value",
+ 	"forwarding",
+-	"sessionApproval",
+ 	"accessIntent"
+ ];
+ /** The request is never truncated: a reviewer must not approve an action it saw only in part. */

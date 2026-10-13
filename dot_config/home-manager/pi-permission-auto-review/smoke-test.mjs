@@ -38,6 +38,22 @@ try {
   assert.ok(prompt.systemPrompt.includes(config.additionalPolicy));
   assert.equal(config.includeBaselinePolicy, false);
   assert.ok(prompt.userPrompt.includes('"timeout": 10'));
+  // UI suggestions must not look like already granted session permissions.
+  // Keep the gated unit and the actual complete tool input separately intact.
+  const fullCommand = 'git diff --check; git add example; git commit -m example';
+  const suggestionPrompt = review.buildReviewPrompt(config, review.renderTranscript(branch), {
+    toolName: 'bash', command: 'git diff --check',
+    sessionLabel: 'git diff *',
+    sessionApproval: { grants: [{ surface: 'bash', pattern: 'git diff *' }] },
+  }, { command: fullCommand });
+  const requestText = suggestionPrompt.userPrompt.split('>>> PERMISSION REQUEST START\n')[1]
+    .split('\n>>> PERMISSION REQUEST END')[0];
+  const request = JSON.parse(requestText);
+  assert.equal(Object.hasOwn(request, 'sessionLabel'), false);
+  assert.equal(Object.hasOwn(request, 'sessionApproval'), false);
+  assert.equal(request.command, 'git diff --check');
+  assert.equal(request.toolInput.command, fullCommand);
+  assert.ok(!requestText.includes('git diff *'));
   for (const outcome of ['allow', 'deny']) {
     assert.equal(review.parseReviewAssessment(JSON.stringify({
       risk_level: 'low', user_authorization: 'high', outcome, rationale: 'test',
@@ -58,7 +74,7 @@ try {
   assert.equal(tree.rootNode.hasError, false);
   tree.delete();
   parser.delete();
-  console.log('PASS: real Pi loader, permission/reviewer hooks, routing config, editable policy, complete direct-call args, allow/deny/malformed verdicts, Bash WASM. No API calls.');
+  console.log('PASS: real Pi loader, permission/reviewer hooks, routing config, editable policy, complete direct-call args, session suggestions omitted, allow/deny/malformed verdicts, Bash WASM. No API calls.');
 } finally {
   loaded.runtime.invalidate();
 }

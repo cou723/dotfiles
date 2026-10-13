@@ -7,9 +7,15 @@ let
     mkdir -p "$out/node_modules/${source.name}"
     tar -xzf ${tarball} --strip-components=1 -C "$out/node_modules/${source.name}"
   '';
-in pkgs.runCommand "pi-permission-auto-review-0.8.0" {} (''
+in pkgs.runCommand "pi-permission-auto-review-0.8.0" {
+  nativeBuildInputs = [ pkgs.patch ];
+} (''
   mkdir -p "$out/node_modules/@earendil-works"
 '' + pkgs.lib.concatMapStrings unpack sources + ''
+  # These fields describe a possible future session grant, not existing approval.
+  # They belong to the permission UI/recorder, not the classifier's evidence.
+  patch --batch --fuzz=0 -p1 -d "$out/node_modules/@mzwing/pi-permission-auto-review" \
+    < ${./omit-session-suggestions.patch}
   for name in pi-ai pi-coding-agent pi-tui; do
     ln -s ${piPackage}/lib/pi/node_modules/@earendil-works/$name "$out/node_modules/@earendil-works/$name"
   done
