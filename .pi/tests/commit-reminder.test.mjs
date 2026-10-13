@@ -9,20 +9,21 @@ import { ReminderState, snapshot } from "../lib/commit-reminder.mjs";
 
 const git = (root, ...args) => execFileSync("git", ["-C", root, ...args], { encoding: "utf8" });
 
-test("baseline, duplicate suppression, clean reset and one continuation per run", () => {
+test("one notification per prompt, including new edits and a clean worktree", () => {
   const state = new ReminderState();
   state.initialize("preexisting"); state.start();
+  assert.equal(state.observe(null), false);
   assert.equal(state.observe("preexisting"), false);
   assert.equal(state.observe("new"), true);
   assert.equal(state.observe("new"), false);
-  assert.equal(state.settle(false), false);
-  assert.equal(state.settle(true), true);
-  assert.equal(state.observe("newer"), true);
-  assert.equal(state.settle(true), false);
-  state.start();
+  assert.equal(state.observe("newer"), false);
   assert.equal(state.observe(""), false);
-  assert.equal(state.settle(true), false);
-  assert.equal(state.observe("new"), true);
+  assert.equal(state.observe("after-commit"), false, "committing does not replenish the allowance");
+  state.start();
+  assert.equal(state.observe("after-commit"), false, "suppressed changes still update the baseline");
+  assert.equal(state.observe("next-prompt-edit"), true);
+  state.initialize("baseline");
+  assert.equal(state.observe("other"), true);
 });
 
 test("Git snapshot covers staged, unstaged and untracked contents without modifying Git", async () => {
@@ -48,7 +49,7 @@ test("Git snapshot covers staged, unstaged and untracked contents without modify
   } finally { await rm(root, { recursive: true, force: true }); }
 });
 
-test("real Pi loader registers hooks; abort and same-baseline settlement never continue", async () => {
+test("real Pi hooks suppress duplicate settlement, continuations and retries until a new prompt", async () => {
   const piDir = process.env.PI_PACKAGE_DIR;
   assert.ok(piDir, "set PI_PACKAGE_DIR to the installed Pi lib/pi directory");
   const { loadExtensions } = await import(pathToFileURL(join(piDir,
@@ -60,15 +61,16 @@ test("real Pi loader registers hooks; abort and same-baseline settlement never c
   const loaded = await loadExtensions([join(root, ".pi/extensions/commit-reminder.ts")], root);
   assert.deepEqual(loaded.errors, []);
   const handlers = loaded.extensions[0].handlers;
-  for (const name of ["session_start", "agent_start", "turn_end", "agent_before_settle"])
+  for (const name of ["session_start", "before_agent_start", "turn_end", "agent_before_settle"])
     assert.ok(handlers.has(name), name);
+  assert.equal(handlers.has("agent_start"), false, "loop restarts must not reset notification allowance");
   const ctx = { cwd: root, hasUI: false, ui: {} };
   const invoke = async (name, event = {}) => {
     let result;
     for (const handler of handlers.get(name)) result = await handler(event, ctx);
     return result;
   };
-  await invoke("session_start"); await invoke("agent_start");
+  await invoke("session_start"); await invoke("before_agent_start");
   const event = { outcome: "completed", entries: [], context: { canContinue: false } };
   assert.equal(await invoke("turn_end", event), undefined);
   assert.equal(await invoke("agent_before_settle", event), undefined);
@@ -79,11 +81,34 @@ test("real Pi loader registers hooks; abort and same-baseline settlement never c
   assert.equal(notified.continue, undefined);
   assert.equal(await invoke("turn_end", event), undefined);
   assert.equal(await invoke("agent_before_settle", { ...event, outcome: "aborted" }), undefined);
-  const continued = await invoke("agent_before_settle", event);
-  assert.equal(continued.continue, true);
-  assert.equal(continued.entries[0].type, "custom_message");
+  assert.equal(await invoke("agent_before_settle", event), undefined, "no duplicate reminder or forced continuation");
   await writeFile(join(root, "work"), "another change");
-  const once = await invoke("agent_before_settle", event);
-  assert.equal(once.continue, undefined);
+  assert.equal(await invoke("turn_end", event), undefined, "new edits after notification stay silent");
+  assert.equal(await invoke("agent_before_settle", event), undefined);
+
+  await invoke("before_agent_start");
+  assert.equal(await invoke("turn_end", event), undefined, "next prompt does not repeat old changes");
+  await writeFile(join(root, "work"), "settlement-only change");
+  const sentinel = { type: "custom_message", customType: "other", content: "keep", display: false };
+  const canContinue = { ...event, entries: [sentinel], context: { canContinue: true } };
+  const continued = await invoke("agent_before_settle", canContinue);
+  assert.equal(continued.continue, true);
+  assert.equal(continued.entries.length, 2);
+  assert.equal(continued.entries[0], sentinel, "preserve other boundary entries");
+  assert.equal(continued.entries[1].type, "custom_message");
+  assert.match(continued.entries[1].content, /再試行は不要/);
+  await writeFile(join(root, "work"), "after failed commit or continuation");
+  assert.equal(await invoke("turn_end", event), undefined);
+  assert.equal(await invoke("agent_before_settle", canContinue), undefined);
+
+  await invoke("before_agent_start");
+  await writeFile(join(root, "work"), "no continuation allowed");
+  for (const outcome of ["aborted", "error"])
+    assert.equal(await invoke("agent_before_settle", { ...event, outcome }), undefined);
+  const notificationOnly = await invoke("agent_before_settle", event);
+  assert.equal(notificationOnly.entries.length, 1);
+  assert.equal(notificationOnly.continue, undefined, "respect canContinue=false");
+  assert.equal(await invoke("agent_before_settle", event), undefined);
+  loaded.runtime.invalidate();
   } finally { await rm(root, { recursive: true, force: true }); }
 });

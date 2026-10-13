@@ -24,7 +24,7 @@ export default function (pi: ExtensionAPI) {
   pi.on("session_start", async (_event, ctx) => {
     state.initialize(await inspect(ctx));
   });
-  pi.on("agent_start", () => { state.start(); });
+  pi.on("before_agent_start", () => { state.start(); });
   pi.on("turn_end", async (event, ctx) => {
     if (event.outcome !== "completed") return;
     if (state.observe(await inspect(ctx))) return { entries: [...event.entries, entry()] };
@@ -33,11 +33,12 @@ export default function (pi: ExtensionAPI) {
     if (event.outcome !== "completed") return;
     const fingerprint = await inspect(ctx);
     if (fingerprint === null) return;
-    const changed = state.observe(fingerprint);
-    const entries = changed ? [...event.entries, entry()] : event.entries;
-    // At most one extra provider request per run, including if committing fails.
-    // Add runnable custom-message context even when the last message is an assistant reply.
-    if (state.settle(true)) return { entries: changed ? entries : [...entries, entry()], continue: true };
-    if (changed) return { entries };
+    // A turn_end notification already consumes the prompt's allowance.
+    // Only a first change discovered at settlement can request an extra run.
+    if (!state.observe(fingerprint)) return;
+    return {
+      entries: [...event.entries, entry()],
+      ...(event.context.canContinue ? { continue: true } : {}),
+    };
   });
 }
