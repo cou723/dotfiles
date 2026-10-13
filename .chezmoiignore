@@ -2,6 +2,11 @@ README.md
 bun.lockb
 .gitignore
 .github
+# Repository-local Pi trial; never deploy these hooks into ~/.pi.
+.pi/extensions
+.pi/lib
+.pi/tests
+.pi/README.md
 # Pi credentials, generated packages, session history, and learned personal data.
 .pi/agent/auth.json
 .pi/agent/mcp-auth.json
