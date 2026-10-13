@@ -15,7 +15,7 @@
 
 上流の Skill ディレクトリ全体を、スクリプト・参照資料・資産・ライセンスを含めて、変更せず Nix store に保持します。
 Home Manager は各 Skill を `~/.pi/agent/skills/` にリンクします。既存の Pi 設定と認証ファイルは変更しません。
-Python 3、Node.js 24、D2 は、固定した nixpkgs リビジョンから提供します。
+Python 3、Node.js 24は固定したnixpkgsから提供します。D2はTALA同梱の公式v0.9.0を版・ハッシュで固定した専用パッケージから提供します。[D2の構成・検査・適用](../pi-toolsets/d2/README.md)を参照してください。
 `coura`（Linux）と `yuki.ueyama`（macOS）は、同じ共通モジュールを使います。
 
 ## 適用と検査
@@ -60,8 +60,8 @@ PATH="$HOME/.nix-profile/bin:$PATH" PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD=1 npm ci --
 Playwright のブラウザは固定した Playwright バージョンに合わせ、Nix またはブラウザの構成を別途用意する必要があります。
 ブラウザの互換性や HTML・図の描画は、ここでは検査していません。
 
-first-reader が使う TALA、TLC/Apalache、fresh subagent の実行環境も追加機能で、導入・設定していません。
-Nix の D2 パッケージだけでは TALA は含まれません。適切な subagent 連携がない場合は、first-reader の fresh subagent を使う検査を実施済みと報告しないでください。
+D2のTALAと内蔵SVG・端末テキスト・PNG描画は、専用Nixパッケージが提供し、Linuxで動作確認しています。
+TLC/Apalache等は引き続き追加依存です。fresh subagentの基盤は別のツールセットが提供しますが、first-readerの全手順を検証済みという意味ではありません。適切なsubagent連携を実際に確認せず、fresh-reader検査を実施済みと報告しないでください。
 
 ## 明示的な更新
 

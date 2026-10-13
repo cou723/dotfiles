@@ -79,7 +79,7 @@ home-manager switch --flake .#coura
 - **gitWorkflow**：個人の Git 方針を持つ Skill と、fresh context で作業する `git-committer` Agent を提供します。親には短い結果だけを返します。同じ作業ツリーで直列実行し、コミットは依頼・許可の範囲のみ。pi-subagents 基盤は別途選択した `subagents` が供給します。登録のみでは実際のコミット動作の確認にはなりません。
 - **todoist**：Skill と Pi 標準 MCP の登録拡張を一つの完成パッケージにまとめています。HTTP 接続先の固定はリモート実装の固定ではありません。[Todoist の説明](todoist/README.md)を参照してください。
 - **yomiyasu**：固定した Skill と Python を提供します。
-- **explainer**：固定した5つの Skills、Node 24、Python、D2 を提供します。プロジェクトの JS 依存、ブラウザ、TALA、形式手法ツール、fresh subagent の実行環境は、すべてが整っているわけではありません。Linux で固定している D2 v0.7.1 は、新しい端末レンダラー・TALA を使う手順には対応しません。
+- **explainer**：固定した5つのSkills、Node 24、Python、TALA同梱のD2 v0.9.0を提供します。D2は公式アーカイブを版・SHA-256で固定し、LinuxでTALA・SVG・端末テキスト・PNG描画を確認しています。[D2の構成と検査](d2/README.md)を参照してください。文書検査用のプロジェクトJS依存とブラウザ、形式手法ツール、fresh-readerの全手順は別途準備・確認が必要です。
 - **context7**：MCP アダプターではなく、固定した Pi ネイティブ拡張を使います。ネットワークと認証は実行時の条件です。
 - **subagents**：固定した pi-subagents 0.77.0 と Claude 定義の互換アダプター。子にも既存の権限拡張を必須ロードします。ネイティブ子の fresh 実行は決定論的なテストモデルで検証済みですが、実認証を使う背景・再開・worktree の全手順は別途検証が必要です。[対応範囲と差分](../pi-subagents/README.md)を参照してください。
 - **permissions/history/question**：既存の固定済み拡張パッケージを維持しています。
