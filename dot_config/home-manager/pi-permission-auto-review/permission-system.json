@@ -8,6 +8,7 @@
   "piInfrastructureReadPaths": [],
   "permission": {
     "*": "ask",
+    "read": "allow",
     "codemode": "allow",
     "subagent": "allow",
     "contact_supervisor": "allow",
