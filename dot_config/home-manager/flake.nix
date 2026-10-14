@@ -55,6 +55,8 @@
       touch $out
     '';
 
+    packages.x86_64-linux.pi-toolset-lcsc = (toolsetsFor nixpkgs-linux.legacyPackages.x86_64-linux).lcsc;
+    packages.aarch64-darwin.pi-toolset-lcsc = (toolsetsFor nixpkgs.legacyPackages.aarch64-darwin).lcsc;
     packages.x86_64-linux.pi-toolset-gmail = (toolsetsFor nixpkgs-linux.legacyPackages.x86_64-linux).gmail;
     packages.aarch64-darwin.pi-toolset-gmail = (toolsetsFor nixpkgs.legacyPackages.aarch64-darwin).gmail;
     packages.x86_64-linux.pi-toolset-yomiyasu = (toolsetsFor nixpkgs-linux.legacyPackages.x86_64-linux).yomiyasu;

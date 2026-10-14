@@ -78,6 +78,7 @@ home-manager switch --flake .#coura
 
 - **gitWorkflow**：個人の Git 方針を持つ Skill と、fresh context で作業する `git-committer` Agent を提供します。親には短い結果だけを返します。同じ作業ツリーで直列実行し、コミットは依頼・許可の範囲のみ。pi-subagents 基盤は別途選択した `subagents` が供給します。登録のみでは実際のコミット動作の確認にはなりません。
 - **todoist**：Skill と Pi 標準 MCP の登録拡張を一つの完成パッケージにまとめています。HTTP 接続先の固定はリモート実装の固定ではありません。[Todoist の説明](todoist/README.md)を参照してください。
+- **lcsc**：部品検索だけの Skill と Python。固定した候補検索スクリプトと、LCSC 通販の価格・在庫・パラメーターを直接取得する補助を提供します。MCP・KiCad 操作・発注機能は追加しません。[構成と制限](lcsc/README.md)を参照してください。
 - **yomiyasu**：固定した Skill と Python を提供します。
 - **explainer**：固定した5つのSkills、Node 24、Python、TALA同梱のD2 v0.9.0を提供します。D2は公式アーカイブを版・SHA-256で固定し、LinuxでTALA・SVG・端末テキスト・PNG描画を確認しています。[D2の構成と検査](d2/README.md)を参照してください。文書検査用のプロジェクトJS依存とブラウザ、形式手法ツール、fresh-readerの全手順は別途準備・確認が必要です。
 - **context7**：MCP アダプターではなく、固定した Pi ネイティブ拡張を使います。ネットワークと認証は実行時の条件です。

@@ -23,6 +23,15 @@ in {
     # Skill と MCP 登録拡張を一つの完成パッケージにまとめる。
     components = [ todoistMcp ];
   };
+  lcsc = mkToolset {
+    name = "pi-toolset-lcsc";
+    source = import ./lcsc/package.nix { inherit pkgs; };
+    resources.skills = [ "lcsc" ];
+    runtimePackages = [ pkgs.python3 ];
+    requirements = [
+      "Network access to jlcsearch.tscircuit.com for discovery and wmsc.lcsc.com for LCSC retail details; no API key required. Public endpoints and live stock/prices are not pinned."
+    ];
+  };
   yomiyasu = mkToolset {
     name = "pi-toolset-yomiyasu";
     source = import ../pi-skills/yomiyasu.nix { inherit pkgs; };
