@@ -1,5 +1,10 @@
 { pkgs }:
 {
+  kicadHappy = pkgs.fetchzip {
+    extension = "tar.gz";
+    url = "https://codeload.github.com/aklofas/kicad-happy/tar.gz/06840467ad0f5d76af45f64449b1f5ecb10f052f";
+    hash = "sha256-nnlQ3wNipgi5X+fimRlgzKXyTMOypR7Sw3JzlTpt0hg=";
+  };
   yomiyasu = pkgs.fetchzip {
     extension = "tar.gz";
     url = "https://codeload.github.com/nanaism/yomiyasu/tar.gz/373356eb874af5184962c88e925ea7eb58450318";
