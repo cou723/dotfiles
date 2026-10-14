@@ -22,9 +22,25 @@ npm のライフサイクルスクリプトは実行しません。Bash パー�
 設定の管理元は、この README と同じディレクトリにあります。chezmoi のテンプレートは、次のファイルを取り込みます。
 
 - `permission-system.json` → `~/.pi/agent/extensions/pi-permission-system/config.json`
-- `auto-review.json` → `~/.pi/agent/extensions/pi-permission-auto-review/config.json`
+- `auto-review.json` ＋ `additional-policy.md` → `~/.pi/agent/extensions/pi-permission-auto-review/config.json`
 
-分類ポリシーを変えるには、`auto-review.json` の `additionalPolicy` を編集してください。
+モデルやタイムアウトは `auto-review.json`、分類ポリシー本文は `additional-policy.md` を編集してください。
+chezmoiテンプレートがJSON設定を読み、Markdown本文を `additionalPolicy` に挿入してJSONとして出力します。改行・引用符のエスケープは生成側が処理します。本文末尾の改行は1つ除きます。
+Nixのテストも同じ2ファイルから設定を合成し、本文の一致を確認します。`auto-review.json` 単体は拡張の完成設定ではないため、実環境に直接コピーしないでください。
+
+```text
+auto-review.json ────┐
+                    ├─ chezmoi ─→ config.json ─→ 分類器
+additional-policy.md┘             additionalPolicy: 文字列
+```
+
+反映は対象の設定だけに限定できます。
+
+```sh
+chezmoi apply ~/.pi/agent/extensions/pi-permission-auto-review/config.json
+```
+
+その後、`/permission-auto-review show` で確認してください。上流0.8.0はファイルをポリシーとして直接読み込む機能を持たないので、Markdownのパスを `additionalPolicy` に指定する方式ではありません。
 `includeBaselinePolicy: false` は同梱の Guardian ポリシーを無効にしますが、上流の固定出力プロトコルは無効にしません。
 レビューモデルは既存の `openai` ログインと `gpt-6-luna` を使います。別の登録済みモデルを使うには、`provider` / `model` を変更してください。
 レビューする操作ごとに、別の有料モデルリクエストが発生します。設定された合計30秒のタイムアウト内で再試行する場合もあります。

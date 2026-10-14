@@ -27,6 +27,8 @@ try {
   for (const surface of ['path', 'external_directory']) assert.equal(policy.permission[surface], 'allow');
   assert.deepEqual(policy.piInfrastructureReadPaths, []);
   const config = JSON.parse(readFileSync(process.env.REVIEW_CONFIG, 'utf8'));
+  assert.equal(config.additionalPolicy,
+    readFileSync(process.env.REVIEW_POLICY, 'utf8').replace(/\n$/, ''));
   const review = await import(pathToFileURL(join(root, 'node_modules/@mzwing/pi-permission-auto-review/dist/review.js')));
   const args = { command: 'printf safe', timeout: 10 };
   const branch = [{ type: 'message', message: { role: 'assistant', content: [

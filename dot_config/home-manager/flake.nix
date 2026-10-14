@@ -132,12 +132,19 @@
       pkgs = nixpkgs-linux.legacyPackages.x86_64-linux;
       piPackage = pi.packages.x86_64-linux.default;
       extension = import ./pi-permission-auto-review/package.nix { inherit pkgs piPackage; };
+      reviewConfig = pkgs.writeText "pi-auto-review-config.json" (builtins.toJSON (
+        (builtins.fromJSON (builtins.readFile ./pi-permission-auto-review/auto-review.json)) // {
+          additionalPolicy = pkgs.lib.removeSuffix "\n"
+            (builtins.readFile ./pi-permission-auto-review/additional-policy.md);
+        }
+      ));
     in pkgs.runCommand "pi-permission-auto-review-tests" { nativeBuildInputs = [ pkgs.nodejs_24 ]; } ''
       export HOME="$TMPDIR/home"
       mkdir -p "$HOME"
       PI_PACKAGE_DIR=${piPackage}/lib/pi REVIEW_ROOT=${extension} \
         POLICY_CONFIG=${./pi-permission-auto-review/permission-system.json} \
-        REVIEW_CONFIG=${./pi-permission-auto-review/auto-review.json} \
+        REVIEW_CONFIG=${reviewConfig} \
+        REVIEW_POLICY=${./pi-permission-auto-review/additional-policy.md} \
         node ${./pi-permission-auto-review/smoke-test.mjs}
       touch $out
     '';
