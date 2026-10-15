@@ -55,6 +55,28 @@
       touch $out
     '';
 
+    checks.x86_64-linux.pi-easyeda = import ./pi-toolsets/easyeda/check.nix {
+      pkgs = nixpkgs-linux.legacyPackages.x86_64-linux;
+    };
+    packages.x86_64-linux.pi-toolset-easyeda = (toolsetsFor nixpkgs-linux.legacyPackages.x86_64-linux).easyeda;
+    devShells.x86_64-linux.easyeda = let
+      pkgs = nixpkgs-linux.legacyPackages.x86_64-linux;
+      toolset = (toolsetsFor pkgs).easyeda;
+      eda = import ./pi-toolsets/easyeda/package.nix { inherit pkgs; };
+      projectPi = pkgs.writeShellScriptBin "project-pi" ''
+        export COPILOT_ROUTER_PYTHON=${eda.python}/bin/python3
+        export COPILOT_ROUTER_KRT_DIR=${eda.krt}/share/krt
+        export PYTHONNOUSERSITE=1
+        export PYTHONDONTWRITEBYTECODE=1
+        export SPICE_NGSPICE=${pkgs.ngspice}/bin/ngspice
+        export PI_SKIP_VERSION_CHECK=1
+        export PATH="${pkgs.lib.makeBinPath toolset.piToolset.runtimePackages}:$PATH"
+        exec ${pi.packages.x86_64-linux.default}/bin/pi -e ${toolset} "$@"
+      '';
+    in pkgs.mkShell {
+      packages = [ projectPi ] ++ toolset.piToolset.runtimePackages;
+    };
+
     packages.x86_64-linux.pi-toolset-lcsc = (toolsetsFor nixpkgs-linux.legacyPackages.x86_64-linux).lcsc;
     packages.aarch64-darwin.pi-toolset-lcsc = (toolsetsFor nixpkgs.legacyPackages.aarch64-darwin).lcsc;
     packages.x86_64-linux.pi-toolset-gmail = (toolsetsFor nixpkgs-linux.legacyPackages.x86_64-linux).gmail;

@@ -8,6 +8,7 @@ let
   todoistMcp = import ./todoist/mcp.nix { inherit pkgs; };
   d2 = import ./d2/package.nix { inherit pkgs; };
 in {
+  easyeda = import ./easyeda { inherit pkgs; };
   gmail = import ./gmail { inherit pkgs; };
   hasdataAmazon = import ./hasdata-amazon { inherit pkgs; };
   subagents = mkToolset {
