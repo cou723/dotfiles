@@ -9,6 +9,7 @@ let
   d2 = import ./d2/package.nix { inherit pkgs; };
 in {
   gmail = import ./gmail { inherit pkgs; };
+  hasdataAmazon = import ./hasdata-amazon { inherit pkgs; };
   subagents = mkToolset {
     name = "pi-toolset-subagents";
     source = import ../pi-subagents/package.nix { inherit pkgs piPackage; };
