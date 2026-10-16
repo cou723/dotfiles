@@ -86,6 +86,7 @@ in {
     runtimePackages = [ pkgs.git ];
     requirements = [ "pi-subagents native runtime and Pi model authentication; supplied globally by the selected subagents toolset, not bundled here." ];
   };
+  chromeDevtools = import ./chrome-devtools { inherit pkgs; };
   nixToolsets = mkToolset {
     name = "pi-toolset-nix-management";
     source = ./management-skill;

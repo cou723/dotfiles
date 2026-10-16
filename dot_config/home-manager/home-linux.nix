@@ -1,5 +1,12 @@
-{ pkgs, ... }:
-{
+{ pkgs, pi, ... }:
+let
+  toolsets = import ./pi-toolsets {
+    inherit pkgs;
+    piPackage = pi.packages.${pkgs.stdenv.hostPlatform.system}.default;
+  };
+in {
+  programs.pi.toolsets = [ toolsets.chromeDevtools ];
+
   home.username = "coura";
   home.homeDirectory = "/home/coura";
 

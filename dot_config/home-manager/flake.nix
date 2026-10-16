@@ -79,6 +79,7 @@
 
     packages.x86_64-linux.pi-toolset-lcsc = (toolsetsFor nixpkgs-linux.legacyPackages.x86_64-linux).lcsc;
     packages.aarch64-darwin.pi-toolset-lcsc = (toolsetsFor nixpkgs.legacyPackages.aarch64-darwin).lcsc;
+    packages.x86_64-linux.pi-toolset-chrome-devtools = (toolsetsFor nixpkgs-linux.legacyPackages.x86_64-linux).chromeDevtools;
     packages.x86_64-linux.pi-toolset-gmail = (toolsetsFor nixpkgs-linux.legacyPackages.x86_64-linux).gmail;
     packages.aarch64-darwin.pi-toolset-gmail = (toolsetsFor nixpkgs.legacyPackages.aarch64-darwin).gmail;
     packages.x86_64-linux.pi-toolset-yomiyasu = (toolsetsFor nixpkgs-linux.legacyPackages.x86_64-linux).yomiyasu;
@@ -121,6 +122,16 @@
       mkdir -p "$HOME"
       PI_PACKAGE_DIR=${pi.packages.x86_64-linux.default}/lib/pi GMAIL_ROOT=${toolset} \
         node ${./pi-toolsets/gmail/smoke-test.mjs}
+      touch $out
+    '';
+    checks.x86_64-linux.pi-chrome-devtools = let
+      pkgs = nixpkgs-linux.legacyPackages.x86_64-linux;
+      toolset = (toolsetsFor pkgs).chromeDevtools;
+    in pkgs.runCommand "pi-chrome-devtools-registration-tests" { nativeBuildInputs = [ pkgs.nodejs_24 ]; } ''
+      export HOME="$TMPDIR/home"
+      mkdir -p "$HOME"
+      PI_PACKAGE_DIR=${pi.packages.x86_64-linux.default}/lib/pi CHROME_TOOLSET_ROOT=${toolset} \
+        node ${./pi-toolsets/chrome-devtools/smoke-test.mjs} --registration-only
       touch $out
     '';
     checks.x86_64-linux.pi-toolset-module = import ./pi-toolsets/module-check.nix {

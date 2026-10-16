@@ -76,6 +76,7 @@ home-manager switch --flake .#coura
 
 ## 各パッケージの対応範囲
 
+- **chromeDevtools**：Linux x86_64 用の Chrome DevTools MCP、Google Chrome、Node 24、操作・デバッグ用 Skill。専用の永続プロファイルを使い、利用統計・CrUX URL 送信・自動更新確認を無効にしています。[構成と検証](chrome-devtools/README.md)を参照してください。
 - **gitWorkflow**：個人の Git 方針を持つ Skill と、fresh context で作業する `git-committer` Agent を提供します。親には短い結果だけを返します。同じ作業ツリーで直列実行し、コミットは依頼・許可の範囲のみ。pi-subagents 基盤は別途選択した `subagents` が供給します。登録のみでは実際のコミット動作の確認にはなりません。
 - **todoist**：Skill と Pi 標準 MCP の登録拡張を一つの完成パッケージにまとめています。HTTP 接続先の固定はリモート実装の固定ではありません。[Todoist の説明](todoist/README.md)を参照してください。
 - **lcsc**：部品検索だけの Skill と Python。固定した候補検索スクリプトと、LCSC 通販の価格・在庫・パラメーターを直接取得する補助を提供します。MCP・KiCad 操作・発注機能は追加しません。[構成と制限](lcsc/README.md)を参照してください。
