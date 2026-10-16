@@ -68,6 +68,21 @@ let
     '';
     meta = { license = lib.licenses.mit; platforms = [ "x86_64-linux" ]; };
   };
+  # Keep local operational knowledge separate from the pinned upstream runtime.
+  # Copy only SKILL.md; all other upstream resources retain their relative layout.
+  skill = pkgs.runCommand "easyeda-copilot-local-skill-1.3.1" {} ''
+    mkdir -p $out
+    cp -rs ${runtime}/. $out/
+    guide=$out/skills/easyeda-copilot
+    chmod u+w "$guide"
+    rm "$guide/SKILL.md"
+    cp ${runtime}/skills/easyeda-copilot/SKILL.md "$guide/SKILL.md"
+    chmod u+w "$guide/SKILL.md"
+    substituteInPlace "$guide/SKILL.md" --replace-fail '# EasyEDA Copilot' '# EasyEDA Copilot
+
+Before connecting or editing in this locally packaged environment, read [the local operation guide](local-operation-guide.md) for connection checks, version-specific findings, preview limitations and recovery precautions. Then follow the upstream stage guides below.'
+    cp ${./local-operation-guide.md} "$guide/local-operation-guide.md"
+  '';
   cli = pkgs.writeShellScriptBin "easyeda-copilot-cli" ''
     export COPILOT_ROUTER_PYTHON=${python}/bin/python3
     export COPILOT_ROUTER_KRT_DIR=${krt}/share/krt
@@ -78,5 +93,5 @@ let
     exec ${pkgs.nodejs_24}/bin/node ${runtime}/skills/easyeda-copilot/scripts/easyeda-copilot-cli.js "$@"
   '';
 in {
-  inherit runtime cli krt python;
+  inherit runtime skill cli krt python;
 }

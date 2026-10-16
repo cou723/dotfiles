@@ -9,7 +9,7 @@ in pkgs.runCommand "easyeda-runtime-check" {
   export COPILOT_ROUTER_PYTHON=${eda.python}/bin/python3
   export COPILOT_ROUTER_KRT_DIR=${eda.krt}/share/krt
   export PYTHONNOUSERSITE=1 PYTHONDONTWRITEBYTECODE=1
-  export EASYEDA_TEST_SKILL=${eda.runtime}/skills/easyeda-copilot
+  export EASYEDA_TEST_SKILL=${eda.skill}/skills/easyeda-copilot
   mkdir -p "$HOME"
   easyeda-copilot-cli --help
   node ${./smoke-test.mjs}
