@@ -17,7 +17,7 @@
     "query-docs": "allow",
     "bash": "ask",
     "mcp": "ask",
-    "skill": "ask",
+    "skill": "allow",
     "path": "allow",
     "external_directory": "allow"
   }

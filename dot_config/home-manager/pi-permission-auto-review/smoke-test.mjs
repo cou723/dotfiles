@@ -23,7 +23,9 @@ try {
   for (const name of ['codemode', 'subagent', 'ask_user_question', 'resolve-library-id', 'query-docs']) {
     assert.equal(policy.permission[name], 'allow');
   }
-  for (const surface of ['bash', 'mcp', 'skill']) assert.equal(policy.permission[surface], 'ask');
+  for (const surface of ['bash', 'mcp']) assert.equal(policy.permission[surface], 'ask');
+  // Skill loading must be allowed before the auto-review authorizer is consulted.
+  assert.equal(policy.permission.skill, 'allow');
   for (const surface of ['path', 'external_directory']) assert.equal(policy.permission[surface], 'allow');
   assert.deepEqual(policy.piInfrastructureReadPaths, []);
   const config = JSON.parse(readFileSync(process.env.REVIEW_CONFIG, 'utf8'));

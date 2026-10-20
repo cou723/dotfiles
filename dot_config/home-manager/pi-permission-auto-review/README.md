@@ -48,6 +48,7 @@ chezmoi apply ~/.pi/agent/extensions/pi-permission-auto-review/config.json
 ツールの権限設定は既定で `ask` になり、`auto-review` の認可処理が判定します。
 モデルのレビューを省略するのは、`codemode`、`subagent`、`contact_supervisor`、`ask_user_question` と、公式 Context7 拡張の `resolve-library-id` / `query-docs` の名前に一致するツールです。`contact_supervisor` は子から親への進捗・相談を許可するためのグローバルな例外で、Researcher 以外の子にも適用されます。連絡内容に秘密情報を含めないでください。`codemode` 自体は許可しますが、内部で呼ぶツールの権限チェックは省略しません。
 MCP 全般やシェルを対象とする例外は追加していません。Context7 のクエリは同サービスの API に送信されるため、引数に秘密情報、個人情報、非公開のソースコードを含めないでください。
+スキルの読み込みは `skill: "allow"` とし、AI分類器を通さず自動許可します。これはスキル本文の読み込みに対する許可であり、スキルの指示による Bash・MCP などの実行は引き続き個別に審査します。通常の `read` も既存設定で `allow` です。
 `path` と `external_directory` は一律に `allow` です。これらはディレクトリの安全性を判定せず、後続のツール・Bash・MCP のレビューも省略しません。
 ディレクトリごとの許可・拒否パターンはありません。`yoloMode` は無効です。
 
