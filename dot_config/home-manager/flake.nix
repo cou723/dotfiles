@@ -80,8 +80,6 @@
     packages.x86_64-linux.pi-toolset-lcsc = (toolsetsFor nixpkgs-linux.legacyPackages.x86_64-linux).lcsc;
     packages.aarch64-darwin.pi-toolset-lcsc = (toolsetsFor nixpkgs.legacyPackages.aarch64-darwin).lcsc;
     packages.x86_64-linux.pi-toolset-chrome-devtools = (toolsetsFor nixpkgs-linux.legacyPackages.x86_64-linux).chromeDevtools;
-    packages.x86_64-linux.pi-toolset-gmail = (toolsetsFor nixpkgs-linux.legacyPackages.x86_64-linux).gmail;
-    packages.aarch64-darwin.pi-toolset-gmail = (toolsetsFor nixpkgs.legacyPackages.aarch64-darwin).gmail;
     packages.x86_64-linux.pi-toolset-yomiyasu = (toolsetsFor nixpkgs-linux.legacyPackages.x86_64-linux).yomiyasu;
     packages.x86_64-linux.pi-toolset-explainer = (toolsetsFor nixpkgs-linux.legacyPackages.x86_64-linux).explainer;
     packages.x86_64-linux.pi-d2 = import ./pi-toolsets/d2/package.nix {
@@ -112,16 +110,6 @@
       PI_PACKAGE_DIR=${piPackage}/lib/pi SUBAGENTS_ROOT=${extension} \
         MOCK_PROVIDER=${./pi-subagents/mock-provider.ts} \
         node ${./pi-subagents/smoke-test.mjs}
-      touch $out
-    '';
-    checks.x86_64-linux.pi-gmail = let
-      pkgs = nixpkgs-linux.legacyPackages.x86_64-linux;
-      toolset = (toolsetsFor pkgs).gmail;
-    in pkgs.runCommand "pi-gmail-tests" { nativeBuildInputs = [ pkgs.nodejs_24 ]; } ''
-      export HOME="$TMPDIR/home"
-      mkdir -p "$HOME"
-      PI_PACKAGE_DIR=${pi.packages.x86_64-linux.default}/lib/pi GMAIL_ROOT=${toolset} \
-        node ${./pi-toolsets/gmail/smoke-test.mjs}
       touch $out
     '';
     checks.x86_64-linux.pi-chrome-devtools = let

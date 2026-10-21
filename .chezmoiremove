@@ -1,3 +1,4 @@
 .config/opencode
+.config/home-manager/pi-toolsets/gmail
 .pi/agent/extensions/20-permission-luna-chat.ts
 .pi/agent/extensions/permission-review

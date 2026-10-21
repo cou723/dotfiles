@@ -10,7 +10,7 @@ in
     enable = true;
     package = piPackage;
     toolsets = with toolsets; [
-      permissions history askUserQuestion context7 yomiyasu explainer nixToolsets lcsc todoist gmail hasdataAmazon subagents gitWorkflow
+      permissions history askUserQuestion context7 yomiyasu explainer nixToolsets lcsc todoist hasdataAmazon subagents gitWorkflow
     ];
   };
 
